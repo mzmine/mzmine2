@@ -25,6 +25,7 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
 import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
+import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
 import net.sf.mzmine.util.ExitCode;
 
@@ -34,9 +35,25 @@ public class ExactMassDetectorParameters extends SimpleParameterSet {
 	    "Noise level",
 	    "Intensities less than this value are interpreted as noise.",
 	    MZmineCore.getConfiguration().getIntensityFormat());
+    
+    public static final BooleanParameter massDefectFilter = new BooleanParameter(
+            "Mass defect filter",
+            "The mass defect is defined as the difference between the mass of the monoisotopic\n" +
+                "molecule or ion calculated with exact masses and with integer masses.",
+            false);
 
+    public static final DoubleParameter massDefect = new DoubleParameter(
+	    "Mass defect",
+	    "Expected value of mass defect of data points which should be included to resulted mass list. All data points with mass defect outside that are ignored.",
+	    MZmineCore.getConfiguration().getMZFormat());
+
+    public static final DoubleParameter absoluteError = new DoubleParameter(
+	    "Mass defect tolerance",
+	    "Maximum allowed mass defect difference.",
+	    MZmineCore.getConfiguration().getMZFormat());
+    
     public ExactMassDetectorParameters() {
-	super(new UserParameter[] { noiseLevel });
+	super(new UserParameter[] { noiseLevel, massDefectFilter, massDefect, absoluteError });
     }
 
     public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {

@@ -17,6 +17,7 @@ It first searches for all local maxima within the spectrum. These form candidate
 After that, exact mass is determined for each candidate ion using the FWHM paradigm (Full Width at Half Maximum).
 First, the method locates the nearest data points to the peak center at half of the maximum intenstiy (P1, P2, P3, P4).
 With these four points it is possible to calculate two points (cP1, cP2) that define the width of the peak and the exact mass (the center of the width is considered as exact mass).
+The mass defect is defined as the difference between the mass of the monoisotopic molecule or ion calculated with exact masses and with integer masses. This filter excludes from the results data points with mass defect outside that defined user.
 </p>
 
 <p>
@@ -27,10 +28,20 @@ With these four points it is possible to calculate two points (cP1, cP2) that de
 <dl>
 <dt>Noise level</dt>
 <dd>The minimum intensity level for a data point to be considered part of a chromatogram. All data points below this intensity level are ignored.</dd>
+<dt>Mass defect filter</dt>
+<dd>Enable mass defect detection</dd>
+<dt>Mass defect</dt>
+<dd>Expected value of mass defect of data points which should be included to resulted mass list. All data points with mass defect outside that are ignored.</dd>
+<dt>Mass defect tolerance</dt>
+<dd>Maximum allowed mass defect difference.</dd>
 </dl>
 
 <p>
 <img src="ExactMassPreview.png">
+</p>
+
+<p>
+<img src="ExactMassExPreview.png">
 </p>
 
 </body>
