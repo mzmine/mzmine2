@@ -93,6 +93,9 @@ public class ExactMassDetector implements MassDetector {
      * descending order.
      * 
      * @param scan
+     * @param isDefectFilter
+     * @param massDefect
+     * @param absTolerance
      * @return
      */
     private void getLocalMaxima(Scan scan,
@@ -135,7 +138,7 @@ public class ExactMassDetector implements MassDetector {
 
 		// Add the m/z peak if it is above the noise level
 		if (localMaximum.getIntensity() > noiseLevel) {
-                    // Add m/z peak if it is above mass defect
+                    // Add m/z peak if the defect filter is off or pass this filter.
                     if(isDefectFilter(localMaximum, isDefectFilter, massDefect, absTolerance)) {
                         DataPoint[] rawDataPoints = rangeDataPoints
                                 .toArray(new DataPoint[0]);
@@ -153,7 +156,18 @@ public class ExactMassDetector implements MassDetector {
 
     }
     
-    boolean isDefectFilter(DataPoint localMaximum, boolean isDefectFilter, double massDefect, double absTolerance) {
+    /**
+     * This method return flag necessity to add new MZPeak to Array.
+     * If there is no filter set then it return every time true, or
+     * looking for mass defect and if it places in necessary interval
+     * then also return true.
+     * @param localMaximum
+     * @param isDefectFilter
+     * @param massDefect
+     * @param absTolerance
+     * @return
+     */
+    private boolean isDefectFilter(DataPoint localMaximum, boolean isDefectFilter, double massDefect, double absTolerance) {
         if(!isDefectFilter)
             return true;
         double defect = localMaximum.getMZ() - (double)Math.round(localMaximum.getMZ());
