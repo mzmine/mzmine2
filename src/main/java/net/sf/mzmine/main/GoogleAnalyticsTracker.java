@@ -20,6 +20,8 @@
 package net.sf.mzmine.main;
 
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.net.InetAddress;
 import java.net.URL;
@@ -40,7 +42,6 @@ public class GoogleAnalyticsTracker implements Runnable {
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); // Screen Size
     String systemLocale = Locale.getDefault().toString().replace("_", "-"); // Language
     String pageTitle, pageUrl;
-
     Random random = new Random();
 
     public GoogleAnalyticsTracker(String title, String url) {
@@ -49,12 +50,25 @@ public class GoogleAnalyticsTracker implements Runnable {
     }
 
     public void run() {
+	
 	// Only send data if SendStatistics variable is not set to 0
 	String SendStatistics = System.getenv().get("MZ_STATISTICS");
 	if (SendStatistics == null) {
 	    SendStatistics = "1";
 	}
 	if (!SendStatistics.equals("0")) {
+	    
+	    // Find screen size for multiple screen setup
+	    GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    GraphicsDevice[] devices = g.getScreenDevices();
+	    if (devices.length > 1) {
+		int totalWidth = 0;
+		for (int i = 0; i < devices.length; i++) {
+		    totalWidth += devices[i].getDisplayMode().getWidth();
+		}
+		screenSize = new Dimension(totalWidth,(int) screenSize.getHeight());
+	    }
+	    
 	    if (hostName.equals("localhost")) {
 		try {
 		    hostName = InetAddress.getLocalHost().getHostName();
@@ -122,7 +136,7 @@ public class GoogleAnalyticsTracker implements Runnable {
 		UC.setRequestMethod("GET");
 		UC.setRequestProperty("User-agent", userAgent + " (" + os + ")");
 		UC.connect();
-		
+
 		int responseCode = UC.getResponseCode();
 		if (responseCode != HttpURLConnection.HTTP_OK) {
 		    // Ignore
