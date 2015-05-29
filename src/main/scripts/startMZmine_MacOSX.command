@@ -29,6 +29,11 @@ TMP_FILE_DIRECTORY=/tmp
 export TMP_FILE_DIRECTORY=$TMP_FILE_DIRECTORY/$MZMINE_UNID
 mkdir $TMP_FILE_DIRECTORY
 
+# If you do not want MZmine to sends anonymous statistics of the module
+# usage in the software then please set the MZ_STATISTICS parameter to 0.
+# 1 = activated, 0 = deactivated.
+export MZ_STATISTICS=1
+
 # Set R environment variables.
 export R_HOME=/Library/Frameworks/R.framework/Versions/Current/Resources/
 

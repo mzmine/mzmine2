@@ -28,6 +28,7 @@ import net.sf.mzmine.datamodel.PeakIdentity;
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.main.GoogleAnalyticsTracker;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.AbstractTask;
 import net.sf.mzmine.taskcontrol.TaskStatus;
@@ -79,6 +80,10 @@ class CSVExportTask extends AbstractTask {
     public void run() {
 
         setStatus(TaskStatus.PROCESSING);
+
+        // Tracker
+        GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("CSV Export", "/JAVA/Export/CSV");
+        new Thread(GAT).start();
 
         // Open file
         FileWriter writer;

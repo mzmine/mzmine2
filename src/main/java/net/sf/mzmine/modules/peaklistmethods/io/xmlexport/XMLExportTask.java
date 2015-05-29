@@ -31,6 +31,7 @@ import java.util.zip.ZipOutputStream;
 
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.main.GoogleAnalyticsTracker;
 import net.sf.mzmine.modules.projectmethods.projectsave.PeakListSaveHandler;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.AbstractTask;
@@ -90,6 +91,10 @@ public class XMLExportTask extends AbstractTask {
      * @see java.lang.Runnable#run()
      */
     public void run() {
+
+        // Tracker
+        GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("XML Export", "/JAVA/Export/XML");
+        new Thread(GAT).start();
 
         try {
 

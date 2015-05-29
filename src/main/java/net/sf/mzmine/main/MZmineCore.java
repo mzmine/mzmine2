@@ -220,6 +220,10 @@ public final class MZmineCore {
 	    NewVersionCheck NVC = new NewVersionCheck(CheckType.DESKTOP);
 	    new Thread(NVC).start();
 
+	    // Tracker
+	    GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("GUI Loaded", "/JAVA/Main/GUI");
+	    new Thread(GAT).start();
+	    
 	    // register shutdown hook only if we have GUI - we don't want to
 	    // save configuration on exit if we only run a batch
 	    ShutDownHook shutDownHook = new ShutDownHook();
@@ -229,6 +233,11 @@ public final class MZmineCore {
 	// if arguments were specified (= running without GUI), run the batch
 	// mode
 	if (args.length > 0) {
+	    
+	    // Tracker
+	    GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("Batch Loaded", "/JAVA/Main/Batch");
+	    new Thread(GAT).start();
+	    
 	    File batchFile = new File(args[0]);
 	    if ((!batchFile.exists()) || (!batchFile.canRead())) {
 		logger.severe("Cannot read batch file " + batchFile);

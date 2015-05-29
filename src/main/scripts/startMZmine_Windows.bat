@@ -50,6 +50,11 @@ set MZMINE_UNID=MZmine%ldt%
 set TMP_FILE_DIRECTORY=%TMP_FILE_DIRECTORY%\\%MZMINE_UNID%
 mkdir %TMP_FILE_DIRECTORY%
 
+rem If you do not want MZmine to sends anonymous statistics of the module
+rem usage in the software then please set the MZ_STATISTICS parameter to 0.
+rem 1 = activated, 0 = deactivated.
+set MZ_STATISTICS=1
+
 rem Set R environment variables.
 set R_HOME=C:\Program Files\R\R-2.12.0
 set R_SHARE_DIR=%R_HOME%\share 
