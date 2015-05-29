@@ -1105,7 +1105,7 @@ public class Rsession implements Logger {
      * @param tryEval encapsulate command in try() to cacth errors
      */
     public boolean voidEval(String expression, boolean tryEval) {
-        log(HEAD_EVAL + (tryEval ? HEAD_TRY : " ") + expression, Level.INFO);
+        //log(HEAD_EVAL + (tryEval ? HEAD_TRY : " ") + expression, Level.INFO);
 
         boolean done = silentlyVoidEval(expression, tryEval);
 
@@ -1206,7 +1206,7 @@ public class Rsession implements Logger {
      * @return REXP R expression
      */
     public REXP eval(String expression, boolean tryEval) {
-        log(HEAD_EVAL + (tryEval ? HEAD_TRY : "") + expression, Level.INFO);
+        //log(HEAD_EVAL + (tryEval ? HEAD_TRY : "") + expression, Level.INFO);
 
         REXP e = silentlyEval(expression, tryEval);
 
