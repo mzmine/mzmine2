@@ -35,8 +35,6 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
-import net.sf.mzmine.main.GoogleAnalyticsTracker;
-import net.sf.mzmine.modules.peaklistmethods.io.mztabexport.MzTabExportParameters;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.AbstractTask;
 import net.sf.mzmine.taskcontrol.TaskStatus;
@@ -85,10 +83,6 @@ class SQLExportTask extends AbstractTask {
 
     public void run() {
         setStatus(TaskStatus.PROCESSING);
-
-        // Tracker
-        GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("SQL Export", "/JAVA/Export/SQL");
-        new Thread(GAT).start();
 
         // Get number of rows
         totalRows = peakList.getNumberOfRows();
