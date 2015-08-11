@@ -21,18 +21,20 @@ package net.sf.mzmine.modules.projectmethods.projectload;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
+import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.sf.mzmine.datamodel.PeakList;
@@ -58,6 +60,8 @@ import net.sf.mzmine.util.StreamCopy;
 
 import org.xml.sax.SAXException;
 
+import com.google.common.io.CountingInputStream;
+
 public class ProjectOpeningTask extends AbstractTask {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
@@ -69,7 +73,8 @@ public class ProjectOpeningTask extends AbstractTask {
     private PeakListOpenHandler peakListOpenHandler;
     private UserParameterOpenHandler userParameterOpenHandler;
 
-    private int currentStage;
+    private CountingInputStream cis;
+    private long totalBytes;
     private String currentLoadedObjectName;
 
     // This hashtable maps stored IDs to raw data file objects
@@ -95,24 +100,10 @@ public class ProjectOpeningTask extends AbstractTask {
      * @see net.sf.mzmine.taskcontrol.Task#getFinishedPercentage()
      */
     public double getFinishedPercentage() {
-	switch (currentStage) {
-	case 2:
-	    if (rawDataFileOpenHandler == null)
-		return 0;
-	    return rawDataFileOpenHandler.getProgress();
-	case 3:
-	    if (peakListOpenHandler == null)
-		return 0;
-	    return peakListOpenHandler.getProgress();
-	case 4:
-	    if (userParameterOpenHandler == null)
-		return 0;
-	    return userParameterOpenHandler.getProgress();
-	case 5:
-	    return 1;
-	default:
-	    return 0;
-	}
+        if (cis != null && totalBytes > 0) {
+            return (double) cis.getCount()/totalBytes;
+        }
+        return 0;
     }
 
     /**
@@ -121,68 +112,75 @@ public class ProjectOpeningTask extends AbstractTask {
     public void run() {
 
 	try {
+            // Check if existing raw data files are present
+            ProjectManager projectManager = MZmineCore.getProjectManager();
+            if (projectManager.getCurrentProject().getDataFiles().length > 0) {
+                int dialogResult = JOptionPane
+                        .showConfirmDialog(
+                                null,
+                                "Loading the project will replace the existing raw data files and peak lists. Do you want to proceed?",
+                                "Warning", JOptionPane.YES_NO_OPTION);
 
-	    logger.info("Started opening project " + openFile);
-	    setStatus(TaskStatus.PROCESSING);
+                if (dialogResult != JOptionPane.YES_OPTION) {
+                    cancel();
+                    return;
+                }
+            }
 
-	    // Create a new project
-	    newProject = new MZmineProjectImpl();
-	    newProject.setProjectFile(openFile);
+            logger.info("Started opening project " + openFile);
+            setStatus(TaskStatus.PROCESSING);
 
-	    // Get project ZIP stream
-	    ZipFile zipFile = new ZipFile(openFile);
+            // Create a new project
+            newProject = new MZmineProjectImpl();
+            newProject.setProjectFile(openFile);
 
-	    // Stage 1 - check version and load configuration
-	    currentStage++;
-	    loadVersion(zipFile);
-	    loadConfiguration(zipFile);
-	    if (isCanceled()) {
-		zipFile.close();
-		return;
-	    }
+    	    // Close all windows related to previous project
+    	    GUIUtils.closeAllWindows();
 
-	    // Stage 2 - load raw data files
-	    currentStage++;
-	    loadRawDataFiles(zipFile);
-	    if (isCanceled()) {
-		zipFile.close();
-		return;
-	    }
+    	    // Replace the current project with the new one
+    	    projectManager.setCurrentProject(newProject);
 
-	    // Stage 3 - load peak lists
-	    currentStage++;
-	    loadPeakLists(zipFile);
-	    if (isCanceled()) {
-		zipFile.close();
-		return;
-	    }
+    	    // ZIP file size
+    	    totalBytes = openFile.length();
 
-	    // Stage 4 - load user parameters
-	    currentStage++;
-	    loadUserParameters(zipFile);
-	    if (isCanceled()) {
-		zipFile.close();
-		return;
-	    }
+    	    // Get project ZIP stream
+    	    FileInputStream fis = new FileInputStream(openFile);
+    	    cis = new CountingInputStream(fis);
+    	    MyZIS zis = new MyZIS(cis);
+    	    ZipFile zipFile = new ZipFile(openFile);
 
-	    // Stage 5 - finish and close the project ZIP file
-	    currentStage++;
-	    zipFile.close();
+            // Stage 1 - check version and load configuration
+            loadVersion(zis);
+            loadConfiguration(zis);
+            if (isCanceled()) {
+                zis.closeZIS();
+    	        return;
+    	    }
 
-	    // Final check for cancel
-	    if (isCanceled())
-		return;
+            // Stage 2 - load raw data files and peak lists
+           loadData(zis, zipFile);
+            if (isCanceled()) {
+                zis.closeZIS();
+    	        return;
+    	    }
 
-	    // Close all windows related to previous project
-	    GUIUtils.closeAllWindows();
+            // Stage 3 - load user parameters
+            loadUserParameters(zis);
+            if (isCanceled()) {
+                zis.closeZIS();
+    	        return;
+            }
 
-	    // Replace the current project with the new one
-	    ProjectManager projectManager = MZmineCore.getProjectManager();
-	    projectManager.setCurrentProject(newProject);
+            // Stage 4 - finish and close the project ZIP file
+            zis.closeZIS();
 
-	    logger.info("Finished opening project " + openFile);
+            // Final check for cancel
+            if (isCanceled())
+                return;
 
-	    setStatus(TaskStatus.FINISHED);
+            logger.info("Finished opening project " + openFile);
+
+            setStatus(TaskStatus.FINISHED);
 
 	} catch (Throwable e) {
 
@@ -219,12 +217,12 @@ public class ProjectOpeningTask extends AbstractTask {
      * Load the version info from the ZIP file and checks whether such version
      * can be opened with this MZmine
      */
-    private void loadVersion(ZipFile zipFile) throws IOException {
+    private void loadVersion(ZipInputStream zis) throws IOException {
 
 	logger.info("Checking project version");
 
-	ZipEntry versionEntry = zipFile
-		.getEntry(ProjectSavingTask.VERSION_FILENAME);
+        ZipEntry versionEntry = findFile(ProjectSavingTask.VERSION_FILENAME,
+                zis);
 
 	if (versionEntry == null) {
 	    throw new IOException(
@@ -233,12 +231,8 @@ public class ProjectOpeningTask extends AbstractTask {
 
 	Pattern versionPattern = Pattern.compile("^(\\d+)\\.(\\d+)");
 
-	InputStream versionInputStream = zipFile.getInputStream(versionEntry);
-	BufferedReader reader = new BufferedReader(new InputStreamReader(
-		versionInputStream));
-	String projectVersionString = reader.readLine();
-	reader.close();
-
+	BufferedReader reader = new BufferedReader(new InputStreamReader(zis));
+        String projectVersionString = reader.readLine();
 	String mzmineVersionString = MZmineCore.getMZmineVersion();
 
 	Matcher m = versionPattern.matcher(mzmineVersionString);
@@ -305,19 +299,18 @@ public class ProjectOpeningTask extends AbstractTask {
     /**
      * Load the configuration file from the project zip file
      */
-    private void loadConfiguration(ZipFile zipFile) throws IOException {
+    private void loadConfiguration(ZipInputStream zis) throws IOException {
 
 	logger.info("Loading configuration file");
 
-	ZipEntry configEntry = zipFile
-		.getEntry(ProjectSavingTask.CONFIG_FILENAME);
+	ZipEntry configEntry = findFile(ProjectSavingTask.CONFIG_FILENAME, zis);
 
 	if (configEntry == null) {
 	    throw new IOException(
 		    "This file is not valid MZmine 2 project. It does not contain configuration data.");
 	}
 
-	InputStream configInputStream = zipFile.getInputStream(configEntry);
+	InputStream configInputStream = zis;
 	File tempConfigFile = File.createTempFile("mzmineconfig", ".tmp");
 	FileOutputStream fileStream = new FileOutputStream(tempConfigFile);
 	StreamCopy copyMachine = new StreamCopy();
@@ -334,81 +327,57 @@ public class ProjectOpeningTask extends AbstractTask {
 	tempConfigFile.delete();
     }
 
-    private void loadRawDataFiles(ZipFile zipFile) throws IOException,
-	    ParserConfigurationException, SAXException, InstantiationException,
-	    IllegalAccessException {
+    private void loadData(ZipInputStream zis, ZipFile zipFile)
+            throws IOException, ParserConfigurationException, SAXException,
+            InstantiationException, IllegalAccessException {
 
-	logger.info("Loading raw data files");
+        logger.info("Loading raw data files and peak lists");
 
-	Pattern filePattern = Pattern
-		.compile("Raw data file #([\\d]+) (.*)\\.xml$");
+        Pattern rawFilePattern = Pattern.compile("Raw data file #([\\d]+) (.*)\\.xml$");
+        Pattern peakListPattern = Pattern.compile("Peak list #([\\d]+) (.*)\\.xml$");
 
-	Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-	while (zipEntries.hasMoreElements()) {
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
 
-	    // Canceled
-	    if (isCanceled())
-		return;
+            // Canceled
+            if (isCanceled())
+                return;
 
-	    ZipEntry entry = zipEntries.nextElement();
-	    String entryName = entry.getName();
-	    Matcher fileMatcher = filePattern.matcher(entryName);
+            String entryName = entry.getName();
+            Matcher rawFileMatcher = rawFilePattern.matcher(entryName);
+            Matcher peakListMatcher = peakListPattern.matcher(entryName);
 
-	    if (fileMatcher.matches()) {
-		String fileID = fileMatcher.group(1);
-		currentLoadedObjectName = fileMatcher.group(2);
+            if (rawFileMatcher.matches()) {
+                String fileID = rawFileMatcher.group(1);
+                currentLoadedObjectName = rawFileMatcher.group(2);
 
-		String scansFileName = entryName.replaceFirst("\\.xml$",
-			".scans");
-		ZipEntry scansEntry = zipFile.getEntry(scansFileName);
-		RawDataFile newFile = rawDataFileOpenHandler.readRawDataFile(
-			zipFile, scansEntry, entry);
-		newProject.addFile(newFile);
-		dataFilesIDMap.put(fileID, newFile);
-	    }
+                String scansFileName = entryName.replaceFirst("\\.xml$",
+                        ".scans");
 
-	}
+                ZipEntry scansEntry = zipFile.getEntry(scansFileName);
 
-    }
+                RawDataFile newFile = rawDataFileOpenHandler.readRawDataFile(
+                        zipFile, scansEntry, entry);
+                newProject.addFile(newFile);
+                dataFilesIDMap.put(fileID, newFile);
+            }
 
-    private void loadPeakLists(ZipFile zipFile) throws IOException,
-	    ParserConfigurationException, SAXException, InstantiationException,
-	    IllegalAccessException {
+            else if (peakListMatcher.matches()) {
 
-	logger.info("Loading peak lists");
+                currentLoadedObjectName = peakListMatcher.group(2);
 
-	Pattern filePattern = Pattern
-		.compile("Peak list #([\\d]+) (.*)\\.xml$");
+                InputStream peakListStream = zis;
 
-	Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-	while (zipEntries.hasMoreElements()) {
+                PeakList newPeakList = peakListOpenHandler
+                        .readPeakList(peakListStream);
 
-	    // Canceled
-	    if (isCanceled())
-		return;
-
-	    ZipEntry entry = zipEntries.nextElement();
-	    String entryName = entry.getName();
-
-	    Matcher fileMatcher = filePattern.matcher(entryName);
-
-	    if (fileMatcher.matches()) {
-
-		currentLoadedObjectName = fileMatcher.group(2);
-
-		InputStream peakListStream = zipFile.getInputStream(entry);
-
-		PeakList newPeakList = peakListOpenHandler
-			.readPeakList(peakListStream);
-
-		newProject.addPeakList(newPeakList);
-	    }
-
-	}
+                newProject.addPeakList(newPeakList);
+            }
+        }
 
     }
 
-    private void loadUserParameters(ZipFile zipFile) throws IOException,
+    private void loadUserParameters(ZipInputStream zis) throws IOException,
 	    ParserConfigurationException, SAXException, InstantiationException,
 	    IllegalAccessException {
 
@@ -418,7 +387,7 @@ public class ProjectOpeningTask extends AbstractTask {
 
 	logger.info("Loading user parameters");
 
-	ZipEntry entry = zipFile.getEntry("User parameters.xml");
+	ZipEntry entry = findFile("User parameters.xml",zis);
 
 	// If there are no parameters, just ignore
 	if (entry == null)
@@ -426,10 +395,27 @@ public class ProjectOpeningTask extends AbstractTask {
 
 	currentLoadedObjectName = "User parameters";
 
-	InputStream userParamStream = zipFile.getInputStream(entry);
+	InputStream userParamStream = zis;
 
 	userParameterOpenHandler.readUserParameters(userParamStream);
 
+    }
+
+    public ZipEntry findFile(String name, ZipInputStream zis)
+    {
+        ZipEntry entry;
+        try {
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().equals(name)) {
+                    return entry;
+                }
+             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return null;
     }
 
 }
