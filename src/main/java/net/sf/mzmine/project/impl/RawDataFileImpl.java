@@ -36,11 +36,14 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
+import veritomyxSaaS.VeritomyxSaaS;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.RawDataFileWriter;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
+import net.sf.mzmine.main.MZmineCore;
 
 import com.google.common.collect.Range;
 import com.google.common.primitives.Ints;
@@ -73,6 +76,9 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
     private final TreeMap<Integer, Long> dataPointsOffsets;
     private final TreeMap<Integer, Integer> dataPointsLengths;
 
+ // Remote job information
+    private ArrayList<RemoteJob> jobs_info = null;
+    
     // Temporary file for scan data storage
     private File dataPointsFileName;
     private RandomAccessFile dataPointsFile;
@@ -95,7 +101,7 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
 	scans = new Hashtable<Integer, StorableScan>();
 	dataPointsOffsets = new TreeMap<Integer, Long>();
 	dataPointsLengths = new TreeMap<Integer, Integer>();
-
+	jobs_info         = new ArrayList<RemoteJob>();
     }
 
     /**
@@ -409,6 +415,37 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
 
     }
 
+    /**
+     * Add a remote job descriptor to the data file
+     */
+    public synchronized void addJob(String name, RawDataFile raw, String targetName, VeritomyxSaaS vtmx)
+    {
+    	RemoteJob job = new RemoteJob(name, raw, targetName, vtmx);
+    	this.jobs_info.add(job);
+    	MZmineCore.getProjectManager().getCurrentProject().addJob(job);
+    }
+        
+    /**
+     * Remove a remote job descriptor from the data file
+     */
+    public synchronized void removeJob(String name)
+    {
+    	for (RemoteJob job : jobs_info)
+    	{
+    		if (job.getName().equals(name))
+    		{
+    			jobs_info.remove(job);
+    			MZmineCore.getProjectManager().getCurrentProject().removeJob(job);
+    			break;
+    		}
+    	}
+    }
+    
+    public ArrayList<RemoteJob> getJobs()
+    {
+    	return jobs_info;
+    }
+    
     /**
      * @see net.sf.mzmine.datamodel.RawDataFileWriter#finishWriting()
      */

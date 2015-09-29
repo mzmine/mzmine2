@@ -31,8 +31,8 @@ public class MassListParameter implements
     private String name, description, value;
 
     public MassListParameter() {
-	this.name = "Mass list";
-	this.description = "Please select a mass list name";
+	this.name = "Peaks(mass) list";
+	this.description = "Please select a peaks(mass) list name";
     }
 
     /**

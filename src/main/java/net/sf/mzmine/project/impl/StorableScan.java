@@ -20,10 +20,16 @@
 package net.sf.mzmine.project.impl;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
 import javax.annotation.Nonnull;
 import javax.swing.SwingUtilities;
@@ -36,7 +42,12 @@ import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.desktop.impl.projecttree.RawDataTreeModel;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.modules.masslistmethods.listexport.ListExportTask;
 import net.sf.mzmine.util.ScanUtils;
+
+import org.apache.commons.io.FilenameUtils;
+
+import veritomyxSaaS.FileChecksum;
 
 import com.google.common.collect.Range;
 

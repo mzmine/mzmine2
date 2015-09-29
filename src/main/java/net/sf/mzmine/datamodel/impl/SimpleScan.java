@@ -365,4 +365,16 @@ public class SimpleScan implements Scan {
 	    scanMZRange = getDataPointMZRange();
 	return scanMZRange;
     }
+    
+    @Override
+    public String exportFilename(@Nonnull String massListName) {
+    // TODO Auto-generated method stub
+    return null;
+    }
+    
+    @Override
+    public int exportToFile(@Nonnull String massListName, @Nonnull String filename) {
+    // TODO Auto-generated method stub
+    	return 0;
+    }
 }

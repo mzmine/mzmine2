@@ -66,16 +66,16 @@ public class RawDataFileUtils {
     }
 
     /**
-     * Returns true if the given data file has mass lists for all MS1 scans
+     * Returns true if the given data file has mass lists for some or all msLevel scans
      * 
      */
-    public static boolean hasMassLists(RawDataFile dataFile) {
-	for (int scanNum : dataFile.getScanNumbers(1)) {
+    public static boolean hasMassLists(RawDataFile dataFile, int msLevel) {
+	for (int scanNum : dataFile.getScanNumbers(msLevel)) {
 	    Scan scan = dataFile.getScan(scanNum);
-	    if (scan.getMassLists().length == 0)
-		return false;
+	    if (scan.getMassLists().length > 0)
+	    	return true;
 	}
-	return true;
+	return false;
     }
 
 }
