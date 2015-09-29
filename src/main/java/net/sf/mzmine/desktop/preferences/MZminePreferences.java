@@ -26,8 +26,11 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
+import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.parameters.parametertypes.OptionalModuleParameter;
+import net.sf.mzmine.parameters.parametertypes.PasswordParameter;
+import net.sf.mzmine.parameters.parametertypes.StringParameter;
 import net.sf.mzmine.parameters.parametertypes.WindowSettingsParameter;
 import net.sf.mzmine.parameters.parametertypes.filenames.FileNameParameter;
 import net.sf.mzmine.util.ExitCode;
@@ -65,10 +68,21 @@ public class MZminePreferences extends SimpleParameterSet {
 
     public static final WindowSettingsParameter windowSetttings = new WindowSettingsParameter();
 
+    public static final StringParameter vtmxUsername = new StringParameter(
+    			"Veritomyx Username",
+    			"Login name (email address) for Veritomyx SaaS.");
+    public static final PasswordParameter vtmxPassword = new PasswordParameter(
+    			"Veritomyx Password",
+    			"Password for Veritomyx SaaS.");
+    public static final IntegerParameter vtmxProject = new IntegerParameter(
+    			"Veritomyx Account Number",
+    			"Veritomyx account to which jobs will be assigned within the Veritomyx system.",
+    			0);
+    		
     public MZminePreferences() {
         super(new Parameter[] { mzFormat, rtFormat, intensityFormat,
                 numOfThreads, proxySettings, rExecPath, sendStatistics,
-                windowSetttings });
+                windowSetttings, vtmxUsername, vtmxPassword, vtmxProject  });
     }
 
     @Override
@@ -107,8 +121,8 @@ public class MZminePreferences extends SimpleParameterSet {
             System.setProperty("http.proxyHost", address);
             System.setProperty("http.proxyPort", port);
         } else {
-            System.clearProperty("http.proxySet");
-            System.clearProperty("http.proxyHost");
+        	System.clearProperty("http.proxySet");
+        	System.clearProperty("http.proxyHost");
             System.clearProperty("http.proxyPort");
         }
     }

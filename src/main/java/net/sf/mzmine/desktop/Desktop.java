@@ -21,6 +21,7 @@ package net.sf.mzmine.desktop;
 
 import java.awt.Color;
 import java.awt.Window;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.swing.JFrame;
@@ -78,14 +79,20 @@ public interface Desktop extends MZmineModule {
      *            Message box title
      * @param msg
      *            Text to show
+     * @param log 
+     * 			  if not null logger
      */
     public void displayMessage(Window window, String title, String msg);
+    
+    public void displayMessage(Window window, String title, String msg, Logger log);
 
     /**
      * Displays an error message box with a given text
      * 
      * @param msg
      *            Text to show
+     * @param log 
+     * 			  if not null logger
      */
     public void displayErrorMessage(Window window, String msg);
 
@@ -99,6 +106,8 @@ public interface Desktop extends MZmineModule {
      */
     public void displayErrorMessage(Window window, String title, String msg);
 
+    public void displayErrorMessage(Window window, String title, String msg, Logger log);
+    
     /**
      * Displays an error message
      *
