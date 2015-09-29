@@ -23,7 +23,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -194,7 +198,14 @@ public class MZmineConfigurationImpl implements MZmineConfiguration {
             configRoot.appendChild(modulesElement);
 
             // traverse modules
-            for (MZmineModule module : MZmineCore.getAllModules()) {
+         // traverse modules (in sorted order so the config.xml file doesn't change wildly
+            List<MZmineModule> sortedModules = new ArrayList<MZmineModule>(MZmineCore.getAllModules());
+            Collections.sort(sortedModules, new Comparator<MZmineModule>() {
+            public int compare (MZmineModule a, MZmineModule b) {
+            return a.getName().compareTo(b.getName());
+            }
+            });
+            for (MZmineModule module : sortedModules){
 
                 String className = module.getClass().getName();
 

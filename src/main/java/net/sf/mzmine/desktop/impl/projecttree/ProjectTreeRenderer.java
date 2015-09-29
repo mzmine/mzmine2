@@ -97,7 +97,7 @@ class ProjectTreeRenderer extends DefaultTreeCellRenderer {
 	    label.setFont(smallerFont);
 
 	    boolean hasMassList = RawDataFileUtils
-		    .hasMassLists((RawDataFile) embeddedObject);
+		    .hasMassLists((RawDataFile) embeddedObject, 1);
 	    if (hasMassList)
 		label.setIcon(fileWithMassListIcon);
 	    else

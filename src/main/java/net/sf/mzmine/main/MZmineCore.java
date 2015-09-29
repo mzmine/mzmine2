@@ -20,6 +20,7 @@
 package net.sf.mzmine.main;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -59,6 +60,13 @@ import net.sf.mzmine.util.ExitCode;
  */
 public final class MZmineCore {
 
+	public static final String MZmineName      = "MZmine PeakInvestigator™ Edition";
+	public static final String MZmineShortName = "MZminePI";
+	
+	public static       boolean VtmxLive       = true;			// live or test server (also affects debug level)
+	public static       String  MZmineVersion  = "2.17.01";
+	public static final String  MZmineDate     = "2015-09-29";	// Java has no compile time variable
+	
     private static Logger logger = Logger.getLogger(MZmineCore.class.getName());
 
     private static TaskControllerImpl taskController;
@@ -78,12 +86,25 @@ public final class MZmineCore {
 	// problems with conversion of numbers etc. (e.g. decimal separator may
 	// be . or , depending on the locale)
 	Locale.setDefault(new Locale("en", "US"));
+	
+	// find the single argument if it exists while still picking up the -t option
+	String param = null;
+	if (args.length > 0)
+	{
+		if (args[0].equals("-t"))
+		{
+			VtmxLive       = false;
+			MZmineVersion += "test";
+			if (args.length > 1)
+				param = args[1];
+			}
+			else
+				param = args[0];
+	 		}
 
 	// Configure the logging properties before we start logging
 	try {
-	    ClassLoader cl = MZmineCore.class.getClassLoader();
-	    InputStream loggingProperties = cl
-		    .getResourceAsStream("logging.properties");
+	    InputStream loggingProperties = new FileInputStream("resources/" + MZmineShortName + ".logging.properties");
 	    LogManager logMan = LogManager.getLogManager();
 	    logMan.readConfiguration(loggingProperties);
 	    loggingProperties.close();
@@ -91,7 +112,8 @@ public final class MZmineCore {
 	    e.printStackTrace();
 	}
 
-	logger.info("Starting MZmine " + getMZmineVersion());
+	logger.info("Starting " + MZmineName + " " + MZmineVersion + " built " + MZmineDate);
+	logger.info("CWD is " + new File(".").getAbsolutePath());
 
 	// Remove old temporary files, if we find any
 	TmpFileCleanup.removeOldTemporaryFiles();
@@ -146,7 +168,7 @@ public final class MZmineCore {
 	}
 
 	// If we have no arguments, run in GUI mode, otherwise run in batch mode
-	if (args.length == 0) {
+	if (param == null) {
 
 	    // Create the Swing GUI in the event-dispatching thread, as is
 	    // generally recommended
@@ -214,7 +236,7 @@ public final class MZmineCore {
 	    desktop.getMainWindow().setVisible(true);
 
 	    // show the welcome message
-	    desktop.setStatusBarText("Welcome to MZmine 2!");
+	    desktop.setStatusBarText("Welcome to " + MZmineName + " " + MZmineVersion + " built " + MZmineDate);
 
 	    // Check for updated version
 	    NewVersionCheck NVC = new NewVersionCheck(CheckType.DESKTOP);
@@ -236,15 +258,15 @@ public final class MZmineCore {
 
 	// if arguments were specified (= running without GUI), run the batch
 	// mode
-	if (args.length > 0) {
-
+	if (param != null) {
+		
 	    // Tracker
 	    GoogleAnalyticsTracker GAT = new GoogleAnalyticsTracker("GUI Loaded", "/JAVA/Main/GUI");
 	    Thread gatThread = new Thread(GAT);
 	    gatThread.setPriority(Thread.MIN_PRIORITY);
 	    gatThread.start();
 
-	    File batchFile = new File(args[0]);
+	    File batchFile = new File(param);
 	    if ((!batchFile.exists()) || (!batchFile.canRead())) {
 		logger.severe("Cannot read batch file " + batchFile);
 		System.exit(1);
