@@ -395,6 +395,26 @@
 			<version>2.4</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.xeustechnologies</groupId>
+			<artifactId>jtar</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf</groupId>
+			<artifactId>opensftp-api</artifactId>
+			<version>0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf</groupId>
+			<artifactId>opensftp-impl</artifactId>
+			<version>0.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jasypt</groupId>
+			<artifactId>jasypt</artifactId>
+			<version>1.9.2</version>
+		</dependency>
 	</dependencies>
 
 </project>
