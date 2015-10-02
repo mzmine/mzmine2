@@ -19,6 +19,9 @@
 
 package net.sf.mzmine.modules.masslistmethods.listexport;
 
+import java.awt.Window;
+
+import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
@@ -41,7 +44,8 @@ public class ListExportParameters extends SimpleParameterSet
 
 	public ExitCode showSetupDialog()
 	{
-		ListExportSetupDialog dialog = new ListExportSetupDialog(this);
+		ListExportSetupDialog dialog = new ListExportSetupDialog(MZmineCore.getDesktop().getMainWindow(),
+			    true, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();
 	}

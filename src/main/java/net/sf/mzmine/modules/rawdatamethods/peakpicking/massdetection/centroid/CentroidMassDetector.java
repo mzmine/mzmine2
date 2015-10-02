@@ -24,31 +24,36 @@ import java.util.ArrayList;
 import javax.annotation.Nonnull;
 
 import net.sf.mzmine.datamodel.DataPoint;
+import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
 
 public class CentroidMassDetector implements MassDetector {
 
-    public DataPoint[] getMassValues(Scan scan, ParameterSet parameters) {
+	public String getDescription(String job, String str) { return str;}
+	public String filterTargetName(String name) { return name; }
+	public String startMassValuesJob(RawDataFile raw, String targetName, ParameterSet parameters, int scanCount) { return null; }
+	
+	public DataPoint[] getMassValues(Scan scan, boolean selected, String job, ParameterSet parameters) {
+    	if (!selected)	// only process selected scans
+    		return null;
 
-	double noiseLevel = parameters.getParameter(
-		CentroidMassDetectorParameters.noiseLevel).getValue();
-
-	ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
-
-	DataPoint dataPoints[] = scan.getDataPoints();
-
-	// Find possible mzPeaks
-	for (int j = 0; j < dataPoints.length; j++) {
-
-	    // Is intensity above the noise level?
-	    if (dataPoints[j].getIntensity() >= noiseLevel) {
-		// Yes, then mark this index as mzPeak
-		mzPeaks.add(dataPoints[j]);
-	    }
-	}
-	return mzPeaks.toArray(new DataPoint[0]);
+		double noiseLevel = parameters.getParameter(CentroidMassDetectorParameters.noiseLevel).getValue();
+	
+		ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
+	
+		DataPoint dataPoints[] = scan.getDataPoints();
+	
+		// Find possible mzPeaks
+		for (int j = 0; j < dataPoints.length; j++) {
+		    // Is intensity above the noise level?
+		    if (dataPoints[j].getIntensity() >= noiseLevel) {
+				// Yes, then mark this index as mzPeak
+				mzPeaks.add(dataPoints[j]);
+		    }
+		}
+		return mzPeaks.toArray(new DataPoint[0]);
     }
 
     public @Nonnull String getName() {
@@ -60,4 +65,5 @@ public class CentroidMassDetector implements MassDetector {
 	return CentroidMassDetectorParameters.class;
     }
 
+    public void finishMassValuesJob(String job) {}
 }

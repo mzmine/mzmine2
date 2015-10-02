@@ -24,7 +24,9 @@ import java.awt.Window;
 import net.sf.mzmine.datamodel.MassSpectrumType;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.Veritomyx.Veritomyx;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.centroid.CentroidMassDetector;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.exactmass.ExactMassDetector;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.localmaxima.LocalMaxMassDetector;
@@ -37,14 +39,19 @@ import net.sf.mzmine.parameters.parametertypes.StringParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelection;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelectionParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesSelection;
 import net.sf.mzmine.util.ExitCode;
 
 public class MassDetectionParameters extends SimpleParameterSet {
 
     public static final MassDetector massDetectors[] = {
-            new CentroidMassDetector(), new ExactMassDetector(),
-            new LocalMaxMassDetector(), new RecursiveMassDetector(),
-            new WaveletMassDetector() };
+            new CentroidMassDetector(),
+            new ExactMassDetector(),
+            new LocalMaxMassDetector(),
+            new RecursiveMassDetector(),
+            new WaveletMassDetector(),
+            new Veritomyx()
+    };
 
     public static final RawDataFilesParameter dataFiles = new RawDataFilesParameter();
 
@@ -109,6 +116,45 @@ public class MassDetectionParameters extends SimpleParameterSet {
 
         return exitCode;
 
+    }
+    
+    /**
+     * Allow setting the name externally
+     * 
+     * @param n
+     */
+    public void setName(String n)
+    {
+    	name.setValue(n);
+    }
+    
+    /**
+     * Setup parameters based on the given raw file and job or, if no job, open a dialog
+     * 
+     * @param raw
+     * @param job
+     * @return 
+     */
+    public ExitCode setJobParams(RawDataFile raw, RemoteJob job)
+    {
+    	ExitCode ret = ExitCode.OK;
+    	if (job != null)	// set Veritomyx parameters
+    	{
+    		raw = job.getRawDataFile();
+    		massDetector.setValueToVeritomxy();
+    		// encode the job into the name field so it can be detected as a retrieval job
+    		name.setValue("|" + job.getName() + "[" + job.getTargetName() + "]");
+    	}
+    
+    	RawDataFile[] newValue = new RawDataFile[1];
+    	newValue[0] = raw;
+    	RawDataFilesSelection newSelection = new RawDataFilesSelection();
+    	newSelection.setSpecificFiles(newValue);
+    	dataFiles.setValue(newSelection);
+    
+    	if (job == null)	// bring up the dialog if all parameters were not set
+    		ret = this.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), true);
+    	return ret;
     }
 
 }

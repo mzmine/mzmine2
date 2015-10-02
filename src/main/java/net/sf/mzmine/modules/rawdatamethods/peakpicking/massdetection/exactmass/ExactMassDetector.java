@@ -25,6 +25,7 @@ import java.util.TreeSet;
 import javax.annotation.Nonnull;
 
 import net.sf.mzmine.datamodel.DataPoint;
+import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
@@ -37,50 +38,57 @@ public class ExactMassDetector implements MassDetector {
     /**
      * @see net.sf.mzmine.modules.peakpicking.threestep.massdetection.MassDetector#getMassValues(net.sf.mzmine.datamodel.Scan)
      */
-    public DataPoint[] getMassValues(Scan scan, ParameterSet parameters) {
+	public String getDescription(String job, String str) { return str;}
+	
+	public String filterTargetName(String name) { return name; }
+	public String startMassValuesJob(RawDataFile raw, String targetName, ParameterSet parameters, int scanCount) { return null; }
 
-	double noiseLevel = parameters.getParameter(
-		ExactMassDetectorParameters.noiseLevel).getValue();
+	public DataPoint[] getMassValues(Scan scan, boolean selected, String job, ParameterSet parameters) {
+    	if (!selected)	// only process selected scans
+    		return null;
+	
+		double noiseLevel = parameters.getParameter(
+			ExactMassDetectorParameters.noiseLevel).getValue();
+	
+		// Create a tree set of detected mzPeaks sorted by MZ in ascending order
+		TreeSet<ExactMzDataPoint> mzPeaks = new TreeSet<ExactMzDataPoint>(
+			new DataPointSorter(SortingProperty.MZ,
+				SortingDirection.Ascending));
+	
+		// Create a tree set of candidate mzPeaks sorted by intensity in
+		// descending order.
+		TreeSet<ExactMzDataPoint> candidatePeaks = new TreeSet<ExactMzDataPoint>(
+			new DataPointSorter(SortingProperty.Intensity,
+				SortingDirection.Descending));
+	
+		// First get all candidate peaks (local maximum)
+		getLocalMaxima(scan, candidatePeaks, noiseLevel);
+	
+		// We calculate the exact mass for each peak,
+		// starting with biggest intensity peak and so on
+		while (candidatePeaks.size() > 0) {
+	
+		    // Always take the biggest (intensity) peak
+		    ExactMzDataPoint currentCandidate = candidatePeaks.first();
+	
+		    // Calculate the exact mass and update value in current candidate
+		    // (MzPeak)
+		    double exactMz = calculateExactMass(currentCandidate);
+		    currentCandidate.setMZ(exactMz);
+	
+		    // Add this candidate to the final tree set sorted by MZ and remove
+		    // from tree set sorted by intensity
+		    mzPeaks.add(currentCandidate);
+		    candidatePeaks.remove(currentCandidate);
 
-	// Create a tree set of detected mzPeaks sorted by MZ in ascending order
-	TreeSet<ExactMzDataPoint> mzPeaks = new TreeSet<ExactMzDataPoint>(
-		new DataPointSorter(SortingProperty.MZ,
-			SortingDirection.Ascending));
-
-	// Create a tree set of candidate mzPeaks sorted by intensity in
-	// descending order.
-	TreeSet<ExactMzDataPoint> candidatePeaks = new TreeSet<ExactMzDataPoint>(
-		new DataPointSorter(SortingProperty.Intensity,
-			SortingDirection.Descending));
-
-	// First get all candidate peaks (local maximum)
-	getLocalMaxima(scan, candidatePeaks, noiseLevel);
-
-	// We calculate the exact mass for each peak,
-	// starting with biggest intensity peak and so on
-	while (candidatePeaks.size() > 0) {
-
-	    // Always take the biggest (intensity) peak
-	    ExactMzDataPoint currentCandidate = candidatePeaks.first();
-
-	    // Calculate the exact mass and update value in current candidate
-	    // (MzPeak)
-	    double exactMz = calculateExactMass(currentCandidate);
-	    currentCandidate.setMZ(exactMz);
-
-	    // Add this candidate to the final tree set sorted by MZ and remove
-	    // from tree set sorted by intensity
-	    mzPeaks.add(currentCandidate);
-	    candidatePeaks.remove(currentCandidate);
-
-	}
-
-	// Return an array of detected MzPeaks sorted by MZ
-	return mzPeaks.toArray(new ExactMzDataPoint[0]);
+		}
+	
+		// Return an array of detected MzPeaks sorted by MZ
+		return mzPeaks.toArray(new ExactMzDataPoint[0]);
 
     }
-
-    /**
+	
+	/**
      * This method gets all possible MzPeaks using local maximum criteria from
      * the current scan and return a tree set of MzPeaks sorted by intensity in
      * descending order.
@@ -244,4 +252,5 @@ public class ExactMassDetector implements MassDetector {
 	return ExactMassDetectorParameters.class;
     }
 
+    public void finishMassValuesJob(String job) {}
 }

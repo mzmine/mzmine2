@@ -25,6 +25,7 @@ import java.util.Vector;
 import javax.annotation.Nonnull;
 
 import net.sf.mzmine.datamodel.DataPoint;
+import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
@@ -33,26 +34,33 @@ import net.sf.mzmine.util.SortingDirection;
 import net.sf.mzmine.util.SortingProperty;
 
 public class RecursiveMassDetector implements MassDetector {
+	@Override
+	public String getDescription(String job, String str) { return str;}
 
-    public DataPoint[] getMassValues(Scan scan, ParameterSet parameters) {
+	public String filterTargetName(String name) { return name; }
+	public String startMassValuesJob(RawDataFile raw, String targetName, ParameterSet parameters, int scanCount) { return null; }
 
-	double noiseLevel = parameters.getParameter(
-		RecursiveMassDetectorParameters.noiseLevel).getValue();
-	double minimumMZPeakWidth = parameters.getParameter(
-		RecursiveMassDetectorParameters.minimumMZPeakWidth).getValue();
-	double maximumMZPeakWidth = parameters.getParameter(
-		RecursiveMassDetectorParameters.maximumMZPeakWidth).getValue();
+    public DataPoint[] getMassValues(Scan scan, boolean selected, String job, ParameterSet parameters) {
+    	if (!selected)	// only process selected scans
+    		return null;
 
-	DataPoint dataPoints[] = scan.getDataPoints();
-	TreeSet<DataPoint> mzPeaks = new TreeSet<DataPoint>(
-		new DataPointSorter(SortingProperty.MZ,
-			SortingDirection.Ascending));
+		double noiseLevel = parameters.getParameter(
+				RecursiveMassDetectorParameters.noiseLevel).getValue();
+		double minimumMZPeakWidth = parameters.getParameter(
+				RecursiveMassDetectorParameters.minimumMZPeakWidth).getValue();
+		double maximumMZPeakWidth = parameters.getParameter(
+				RecursiveMassDetectorParameters.maximumMZPeakWidth).getValue();
 
-	// Find MzPeaks
-	recursiveThreshold(mzPeaks, dataPoints, 1, dataPoints.length - 1,
-		noiseLevel, minimumMZPeakWidth, maximumMZPeakWidth, 0);
-	return mzPeaks.toArray(new DataPoint[0]);
-    }
+		DataPoint dataPoints[] = scan.getDataPoints();
+		TreeSet<DataPoint> mzPeaks = new TreeSet<DataPoint>(
+				new DataPointSorter(SortingProperty.MZ,
+						SortingDirection.Ascending));
+
+		// Find MzPeaks
+		recursiveThreshold(mzPeaks, dataPoints, 1, dataPoints.length - 1,
+				noiseLevel, minimumMZPeakWidth, maximumMZPeakWidth, 0);
+		return mzPeaks.toArray(new DataPoint[0]);
+	}
 
     /**
      * This function searches for maxima from given part of a spectrum
@@ -154,4 +162,5 @@ public class RecursiveMassDetector implements MassDetector {
 	return RecursiveMassDetectorParameters.class;
     }
 
+    public void finishMassValuesJob(String job) {}
 }

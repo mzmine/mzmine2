@@ -28,7 +28,7 @@ import java.util.Vector;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.MassList;
 import net.sf.mzmine.datamodel.Scan;
-import net.sf.mzmine.modules.visualization.spectra.PlotMode;
+import net.sf.mzmine.datamodel.MassSpectrumType;
 import net.sf.mzmine.modules.visualization.spectra.SpectraPlot;
 import net.sf.mzmine.modules.visualization.spectra.SpectraVisualizerWindow;
 import net.sf.mzmine.modules.visualization.spectra.datasets.DataPointsDataSet;
@@ -82,7 +82,7 @@ public class ListExportSetupDialog extends ParameterSetupDialogWithScanPreview {
 		spectrumPlot.addDataSet(scanDataSet, SpectraVisualizerWindow.scanColor, false);
 
 		// If the scan is centroided, switch to centroid mode
-		spectrumPlot.setPlotMode(previewScan.isCentroided() ? PlotMode.CENTROID : PlotMode.CONTINUOUS);
+		spectrumPlot.setPlotMode(previewScan.isCentroided() ? MassSpectrumType.CENTROIDED : MassSpectrumType.PROFILE);
 		
 		// If the parameters are not complete, exit
 		ArrayList<String> errors = new ArrayList<String>();

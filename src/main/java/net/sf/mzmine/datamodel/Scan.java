@@ -67,6 +67,28 @@ public interface Scan extends MassSpectrum {
     public @Nonnull Range<Double> getScanningMZRange();
 
     /**
+     * Returns the top intensity data point. May return null if there are no
+     * data points in this Scan.
+     * 
+     * @return Base peak
+     */
+    @Nullable
+    public DataPoint getBasePeak();
+
+    /**
+     * Returns the sum of intensities of all data points.
+     * 
+     * @return Total ion current
+     */
+    public double getTIC();
+    
+    /**
+     * 
+     * @return True if the scan data is centroided
+     */
+    public boolean isCentroided();
+    
+    /**
      * 
      * @return Precursor m/z or 0 if this is not MSn scan
      */

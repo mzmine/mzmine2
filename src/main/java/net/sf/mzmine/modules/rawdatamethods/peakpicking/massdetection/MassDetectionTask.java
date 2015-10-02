@@ -69,7 +69,7 @@ public class MassDetectionTask extends AbstractTask {
      * @see net.sf.mzmine.taskcontrol.Task#getTaskDescription()
      */
     public String getTaskDescription() {
-        return "Detecting masses in " + dataFile;
+        return massDetector.getModule().getDescription(name, "Detecting masses in " + dataFile);
     }
 
     /**
@@ -105,7 +105,7 @@ public class MassDetectionTask extends AbstractTask {
                 return;
 
             MassDetector detector = massDetector.getModule();
-            DataPoint mzPeaks[] = detector.getMassValues(scan,
+            DataPoint mzPeaks[] = detector.getMassValues(scan, false, "", 
                     massDetector.getParameterSet());
 
             SimpleMassList newMassList = new SimpleMassList(name, scan, mzPeaks);

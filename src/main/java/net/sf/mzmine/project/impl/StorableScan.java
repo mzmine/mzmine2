@@ -73,6 +73,7 @@ public class StorableScan implements Scan {
     private PolarityType polarity;
     private String scanDefinition;
     private Range<Double> scanMZRange;
+	private boolean centroided;
 
     private int storageID;
 
@@ -100,6 +101,8 @@ public class StorableScan implements Scan {
 	this.polarity = originalScan.getPolarity();
 	this.scanDefinition = originalScan.getScanDefinition();
 	this.scanMZRange = originalScan.getScanningMZRange();
+	this.basePeak = originalScan.getBasePeak();
+	this.centroided = originalScan.isCentroided();
 
     }
 
@@ -108,7 +111,7 @@ public class StorableScan implements Scan {
 	    double retentionTime, double precursorMZ, int precursorCharge,
 	    int fragmentScans[], MassSpectrumType spectrumType,
 	    PolarityType polarity, String scanDefinition,
-	    Range<Double> scanMZRange) {
+	    Range<Double> scanMZRange, boolean centroided) {
 
 	this.rawDataFile = rawDataFile;
 	this.numberOfDataPoints = numberOfDataPoints;
@@ -124,6 +127,7 @@ public class StorableScan implements Scan {
 	this.polarity = polarity;
 	this.scanDefinition = scanDefinition;
 	this.scanMZRange = scanMZRange;
+	this.centroided = centroided;
     }
 
     /**
@@ -280,6 +284,15 @@ public class StorableScan implements Scan {
     }
 
     /**
+	 * @see net.sf.mzmine.data.Scan#getBasePeakMZ()
+	 */
+	public DataPoint getBasePeak() {
+		if ((basePeak == null) && (numberOfDataPoints > 0))
+			updateValues();
+		return basePeak;
+	}
+
+	/**
      * @see net.sf.mzmine.datamodel.Scan#getBasePeakMZ()
      */
     public DataPoint getHighestDataPoint() {
@@ -313,7 +326,14 @@ public class StorableScan implements Scan {
 	return spectrumType;
     }
 
-    public double getTIC() {
+    /**
+	 * @see net.sf.mzmine.data.Scan#isCentroided()
+	 */
+	public boolean isCentroided() {
+		return centroided;
+	}
+	
+	public double getTIC() {
 	if (totalIonCurrent == null)
 	    updateValues();
 	return totalIonCurrent;
@@ -446,5 +466,113 @@ public class StorableScan implements Scan {
 	    scanMZRange = getDataPointMZRange();
 	return scanMZRange;
     }
-
+    
+    /**
+     * Get the filename that the scan or mass list would be exported to by default
+     * 
+     * @param massListName	// if empty, return scan export filename
+     * @return
+     */
+    public String exportFilename(String massListName)
+    {
+    	String filename = FilenameUtils.removeExtension(getDataFile().getName())
+    			+ ".ms" + getMSLevel() + "scan" + String.format("%04d", getScanNumber())
+    			+ (massListName.isEmpty() ? "" : ".peaks_" + massListName)
+    			+ ".txt";
+    	return filename;
+    }
+    
+    /**
+     * Open the proper type of buffered file depending on the .gz suffix
+     * 
+     * @param path
+     * @param filedata
+     * @return
+     * @throws IOException
+     */
+    private BufferedWriter openFile(String path) throws IOException
+    {
+    	BufferedWriter fd;
+    	if (path.endsWith(".gz"))
+    		fd = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(path))));
+    	else
+    		fd = new BufferedWriter(new FileWriter(path));
+    	return fd;
+    	}
+    
+    /**
+     * Export the scan or mass list to a text file in two column tab-delimited format.
+     * Return the number of datapoints in the scan or mass list.
+     * 
+     * @param massListName		// if empty, export scan data points
+     * @param filename			// if empty, filename will be generated from scan information
+     * @return					// number of points, 0 if requested mass list not found not found
+     */
+    public int exportToFile(String massListName, String filename)
+    {
+    	int exported = 0;
+    	if (filename.isEmpty())
+    		filename = exportFilename(massListName);
+    
+    	if (massListName.isEmpty())	// export scan
+    	{
+    		logger.info("Exporting scan " + getScanNumber() + " to file " + filename);
+    		try
+    		{
+    			BufferedWriter fd = openFile(filename);
+    			DataPoint pts[] = getDataPoints();
+    			int num = pts.length;
+    			fd.write("# Scan Number: "      + getScanNumber()   + "\n");
+    			fd.write("# Scan MS Level: "    + getMSLevel()      + "\n");
+    			fd.write("# Scan Data Points: " + num               + "\n");
+    			fd.write("# Scan Mass Range: "  + (mzRange.upperEndpoint() - mzRange.lowerEndpoint()) + "\n");
+    			fd.write("# Scan Min Mass: "    + mzRange.lowerEndpoint()  + "\n");
+    			fd.write("# Scan Max Mass: "    + mzRange.upperEndpoint()  + "\n\n");
+    			for (int p = 0; p < num; p++)
+    				fd.write(pts[p].getMZ() + "\t" + pts[p].getIntensity() + "\n");
+    			fd.close();
+    			FileChecksum chksum = new FileChecksum(filename);
+    			chksum.hash_file();
+    			chksum.append_txt(false);
+    			exported = num;
+    		}
+    		catch (Exception ex)
+    		{
+    			Logger.getLogger(ListExportTask.class.getName()).log(Level.SEVERE, "Failed writing scan file, " + filename, ex);
+    		}
+    	}
+    	else						// export given mass list
+    	{
+    		MassList massList = getMassList(massListName);
+    		if (massList != null)	// Skip those scans which do not have a mass list of given name
+    		{
+    			logger.info("Exporting mass list " + massListName + " for scan "+ getScanNumber() + " to file " + filename);
+    			try
+    			{
+    				BufferedWriter fd = openFile(filename);
+    				DataPoint mzPeaks[] = massList.getDataPoints();
+    				int num = mzPeaks.length;
+    				fd.write("# MS Level: "    + getMSLevel()    + "\n");
+    				fd.write("# Scan: "        + getScanNumber() + "\n");
+    				fd.write("# Mass List: "   + massListName    + "\n");
+    				fd.write("# Data Points: " + num             + "\n");
+    				for (int p = 0; p < num; p++)
+    				{
+    					DataPoint pt = mzPeaks[p];
+    					fd.write(pt.getMZ() + "\t" + pt.getIntensity() + "\n");
+    				}
+    				fd.close();
+    				FileChecksum chksum = new FileChecksum(filename);
+    				chksum.hash_file();
+    				chksum.append_txt(false);
+    				exported = num;
+    			}
+    			catch (Exception ex)
+    			{
+    				Logger.getLogger(ListExportTask.class.getName()).log(Level.SEVERE, "Failed writing mass list file, " + filename, ex);
+    			}
+    		}
+    	}
+    	return exported;
+    }
 }
