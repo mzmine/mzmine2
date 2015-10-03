@@ -23,14 +23,17 @@ import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
-import net.sf.mzmine.data.PeakList;
-import net.sf.mzmine.data.PeakListRow;
+import net.sf.mzmine.datamodel.PeakList;
+import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.project.ProjectManager;
+import net.sf.mzmine.datamodel.MZmineProject;
 import net.sf.mzmine.modules.MZmineModuleCategory;
 import net.sf.mzmine.modules.MZmineProcessingModule;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.Task;
 import net.sf.mzmine.util.ExitCode;
+
 
 /**
  * Module for identifying peaks by searching on-line databases.
@@ -52,11 +55,11 @@ public class OnlineDBSearchModule implements MZmineProcessingModule {
 
     @Override
     @Nonnull
-    public ExitCode runModule(@Nonnull ParameterSet parameters,
+    public ExitCode runModule(@Nonnull MZmineProject project, @Nonnull ParameterSet parameters,
 	    @Nonnull Collection<Task> tasks) {
 
 	final PeakList[] peakLists = parameters.getParameter(
-		PeakListIdentificationParameters.peakLists).getValue();
+		PeakListIdentificationParameters.peakLists).getValue().getMatchingPeakLists();
 	for (final PeakList peakList : peakLists) {
 	    Task newTask = new PeakListIdentificationTask(parameters, peakList);
 	    tasks.add(newTask);
@@ -89,10 +92,10 @@ public class OnlineDBSearchModule implements MZmineProcessingModule {
 	}
 
 	// Run task.
-	if (parameters.showSetupDialog() == ExitCode.OK) {
+	if (parameters.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) == ExitCode.OK) {
 
 	    MZmineCore.getTaskController().addTask(
-		    new SingleRowIdentificationTask(parameters.cloneParameter(), row));
+		    new SingleRowIdentificationTask(parameters.cloneParameterSet(), row));
 	}
     }
 

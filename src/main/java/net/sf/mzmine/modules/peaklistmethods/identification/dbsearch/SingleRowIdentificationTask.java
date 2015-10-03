@@ -29,10 +29,10 @@ import java.text.NumberFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.sf.mzmine.data.IonizationType;
-import net.sf.mzmine.data.IsotopePattern;
-import net.sf.mzmine.data.PeakIdentity;
-import net.sf.mzmine.data.PeakListRow;
+import net.sf.mzmine.datamodel.IonizationType;
+import net.sf.mzmine.datamodel.IsotopePattern;
+import net.sf.mzmine.datamodel.PeakIdentity;
+import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.desktop.Desktop;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.MZmineProcessingStep;
@@ -40,7 +40,7 @@ import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepatternscore.Isotop
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepatternscore.IsotopePatternScoreParameters;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopeprediction.IsotopePatternCalculator;
 import net.sf.mzmine.parameters.ParameterSet;
-import net.sf.mzmine.parameters.parametertypes.MZTolerance;
+import net.sf.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import net.sf.mzmine.taskcontrol.AbstractTask;
 import net.sf.mzmine.taskcontrol.TaskStatus;
 import net.sf.mzmine.util.ExceptionUtils;
@@ -137,7 +137,7 @@ public class SingleRowIdentificationTask extends AbstractTask {
         if ((isotopeFilter) && (detectedPattern == null)) {
             final String msg = "Cannot calculate isotope pattern scores, because selected"
                     + " peak does not have any isotopes. Have you run the isotope peak grouper?";
-            MZmineCore.getDesktop().displayMessage(msg);
+            MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), msg);
         }
 
         try {
@@ -223,8 +223,8 @@ public class SingleRowIdentificationTask extends AbstractTask {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not connect to " + db, e);
             setStatus(TaskStatus.ERROR);
-            errorMessage = "Could not connect to " + db + ": "
-                    + ExceptionUtils.exceptionToString(e);
+            setErrorMessage("Could not connect to " + db + ": "
+                    + ExceptionUtils.exceptionToString(e));
             return;
         }
 

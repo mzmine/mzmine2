@@ -17,25 +17,33 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.modules.peaklistmethods.identification.dbsearch;
+package net.sf.mzmine.datamodel;
 
-import java.io.IOException;
-
-import net.sf.mzmine.parameters.ParameterSet;
-import net.sf.mzmine.parameters.parametertypes.tolerances.MZTolerance;
-
-public interface DBGateway {
-
-    /**
-     * Retrieves candidate compounds
-     */
-    public String[] findCompounds(double mass, MZTolerance mzTolerance,
-	    int numOfResults, ParameterSet parameters) throws IOException;
+/**
+ * This enum defines the detection status of a picked peak (one cell of a
+ * PeakList table).
+ * 
+ */
+public enum PeakStatus {
 
     /**
-     * This method retrieves the details about a compound
+     * Peak was not found
      */
-    public DBCompound getCompound(String ID, ParameterSet parameters)
-	    throws IOException;
+    UNKNOWN,
+
+    /**
+     * Peak was found in primary peak picking
+     */
+    DETECTED,
+
+    /**
+     * Peak was estimated in secondary peak picking
+     */
+    ESTIMATED,
+
+    /**
+     * Peak was defined manually
+     */
+    MANUAL
 
 }

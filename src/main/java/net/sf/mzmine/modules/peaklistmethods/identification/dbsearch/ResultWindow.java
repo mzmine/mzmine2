@@ -38,13 +38,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableRowSorter;
 
-import net.sf.mzmine.data.ChromatographicPeak;
-import net.sf.mzmine.data.IsotopePattern;
-import net.sf.mzmine.data.PeakIdentity;
-import net.sf.mzmine.data.PeakListRow;
-import net.sf.mzmine.data.RawDataFile;
-import net.sf.mzmine.desktop.Desktop;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.datamodel.IsotopePattern;
+import net.sf.mzmine.datamodel.PeakIdentity;
+import net.sf.mzmine.datamodel.PeakListRow;
+import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.Feature;
+import net.sf.mzmine.desktop.Desktop;
 import net.sf.mzmine.modules.visualization.molstructure.MolStructureViewer;
 import net.sf.mzmine.modules.visualization.spectra.SpectraVisualizerModule;
 import net.sf.mzmine.taskcontrol.Task;
@@ -124,7 +124,7 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 			int index = IDList.getSelectedRow();
 
 			if (index < 0) {
-				MZmineCore.getDesktop().displayMessage(
+				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(),
 						"Select one result to add as compound identity");
 				return;
 
@@ -135,11 +135,11 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 					false);
 
 			// Notify the GUI about the change in the project
-			MZmineCore.getCurrentProject().notifyObjectChanged(peakListRow,
+			MZmineCore.getProjectManager().getCurrentProject().notifyObjectChanged(peakListRow,
 					false);
 
 			// Repaint the window to reflect the change in the peak list
-			MZmineCore.getDesktop().getMainFrame().repaint();
+			MZmineCore.getDesktop().getMainWindow().repaint();
 
 			dispose();
 		}
@@ -149,7 +149,7 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 			int index = IDList.getSelectedRow();
 
 			if (index < 0) {
-				MZmineCore.getDesktop().displayMessage(
+				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(),
 						"Select one result to display molecule structure");
 				return;
 			}
@@ -172,7 +172,7 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 			int index = IDList.getSelectedRow();
 
 			if (index < 0) {
-				MZmineCore.getDesktop().displayMessage(
+				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(),
 						"Select one result to display the isotope pattern");
 				return;
 			}
@@ -185,7 +185,7 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 			if (predictedPattern == null)
 				return;
 
-			ChromatographicPeak peak = peakListRow.getBestPeak();
+			Feature peak = peakListRow.getBestPeak();
 
 			RawDataFile dataFile = peak.getDataFile();
 			int scanNumber = peak.getRepresentativeScanNumber();
@@ -198,7 +198,7 @@ public class ResultWindow extends JInternalFrame implements ActionListener {
 			int index = IDList.getSelectedRow();
 
 			if (index < 0) {
-				MZmineCore.getDesktop().displayMessage(
+				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(),
 						"Select one compound to display in a web browser");
 				return;
 

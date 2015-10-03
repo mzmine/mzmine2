@@ -240,7 +240,7 @@ public class RawDataFileOpenHandler_2_3 extends DefaultHandler implements
                         newStorageID, dataPointsNumber, scanNumber, msLevel,
                         retentionTime, precursorMZ, precursorCharge,
                         fragmentScan, spectrumType, PolarityType.UNKNOWN, "",
-                        null);
+                        null, false);
                 newRawDataFile.addScan(storableScan);
 
                 dataPointsOffsets.put(newStorageID, storageFileOffset);

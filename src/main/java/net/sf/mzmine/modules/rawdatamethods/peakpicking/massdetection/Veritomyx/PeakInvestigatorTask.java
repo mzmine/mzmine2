@@ -91,7 +91,7 @@ public class PeakInvestigatorTask
 		
 		if ((username == null) || username.isEmpty() || (password == null) || password.isEmpty())
 		{
-			if (preferences.showSetupDialog() != ExitCode.OK)
+			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
 				return;
 			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
 			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
@@ -115,11 +115,11 @@ public class PeakInvestigatorTask
 				break;
 
 			desc = vtmx.getPageStr();
-			MZmineCore.getDesktop().displayErrorMessage("Error", desc, logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
 			if ((status != VeritomyxSaaS.W_ERROR_LOGIN) && (status != VeritomyxSaaS.W_ERROR_PID))
 				return;
 
-			if (preferences.showSetupDialog() != ExitCode.OK)
+			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
 				return;
 			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
 			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
@@ -129,7 +129,7 @@ public class PeakInvestigatorTask
 		if (!launch && (vtmx.getPageStatus() <= 0))
 		{
 			desc = vtmx.getPageStr();
-			MZmineCore.getDesktop().displayErrorMessage("Error", desc, logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
 			return;
 		}
 
@@ -194,7 +194,7 @@ public class PeakInvestigatorTask
 			tarfile = new TarOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(intputFilename))));
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Cannot create scans bundle file", logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot create scans bundle file", logger);
 			jobID = null;
 		}
 		desc = "launch started";
@@ -231,7 +231,7 @@ public class PeakInvestigatorTask
 			scanCnt += 1;		// count this scan
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Cannot write to scans bundle file", logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot write to scans bundle file", logger);
 		}
 		desc = "scan " + scan_num + " exported";
 		return null;	// never return peaks from pass 1
@@ -247,7 +247,7 @@ public class PeakInvestigatorTask
 			tarfile.close();
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Cannot close scans bundle file.", logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot close scans bundle file.", logger);
 		}
 		logger.info("Transmit scans bundle, " + intputFilename + ", to SFTP server...");
 		vtmx.putFile(intputFilename);
@@ -257,7 +257,7 @@ public class PeakInvestigatorTask
 		logger.info("Launch job, " + jobID + ", on cloud server...");
 		if (vtmx.getPageRun(scanCnt) < VeritomyxSaaS.W_RUNNING)
 		{
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Failed to launch " + jobID, logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch " + jobID, logger);
 			return;
 		}
 
@@ -286,7 +286,7 @@ public class PeakInvestigatorTask
 		{
 			desc = "Remote job not complete";
 			logger.info("Remote job, " + jobID + ", not complete");
-			MZmineCore.getDesktop().displayMessage("Warning", "Remote job not complete. Please try again later.", logger);
+			MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "Remote job not complete. Please try again later.", logger);
 			errors++;
 			return;
 		}
@@ -296,7 +296,7 @@ public class PeakInvestigatorTask
 		{
 			desc = "Error";
 			logger.info(vtmx.getPageStr());
-			MZmineCore.getDesktop().displayErrorMessage("Error", vtmx.getPageStr(), logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", vtmx.getPageStr(), logger);
 			errors++;
 			return;
 		}
@@ -310,7 +310,7 @@ public class PeakInvestigatorTask
 		int scans = Integer.parseInt(results.substring(results.lastIndexOf(" ") + 1));
 		if (valid < scans)
 		{
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Only " + valid + " of " + scans + " scans were successful.\n" +
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Only " + valid + " of " + scans + " scans were successful.\n" +
 																"The valid results will be loaded now.\n" + 
 																"You have been credited for the incomplete scans.", logger);
 		}
@@ -340,7 +340,7 @@ public class PeakInvestigatorTask
 				f.delete();			// remove the local copy of the results tar file
 			} catch (Exception e1) {
 				logger.finest(e1.getMessage());
-				MZmineCore.getDesktop().displayErrorMessage("Error", "Cannot parse results file", logger);
+				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse results file", logger);
 				errors++;
 				e1.printStackTrace();
 			} finally {
@@ -395,7 +395,7 @@ public class PeakInvestigatorTask
 		catch (Exception e)
 		{
 			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage("Error", "Cannot parse peaks file, " + pfilename + " (" + e.getMessage() + ")", logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse peaks file, " + pfilename + " (" + e.getMessage() + ")", logger);
 		}
 
 		desc = "scan " + scan_num + " parsed";
@@ -415,7 +415,7 @@ public class PeakInvestigatorTask
 		vtmx.getPageDone();
 		rawDataFile.removeJob(jobID);
 		desc = "retrieve finished";
-		MZmineCore.getDesktop().displayMessage("Warning", "PeakInvestigator results successfully downloaded.\n" + 
+		MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "PeakInvestigator results successfully downloaded.\n" + 
 											"All your job files will now be deleted from the Veritomyx servers.\n" +
 											"Remember to save your project before closing MZminePI.", logger);
 	}
