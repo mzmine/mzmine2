@@ -48,6 +48,13 @@ public interface Desktop extends MZmineModule {
     public JFrame getMainWindow();
 
     /**
+     * Adds a new internal frame (JInternalFrame) to the desktop pane
+     * 
+     * @param frame Internal frame to add
+     */
+    public void addInternalFrame(JInternalFrame frame);
+
+    /**
      * Displays a given text on the application status bar in black color
      * 
      * @param text

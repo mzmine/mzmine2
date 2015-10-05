@@ -24,7 +24,8 @@ import java.util.Arrays;
 
 import net.sf.mzmine.modules.peaklistmethods.identification.formulaprediction.elements.ElementRule;
 import net.sf.mzmine.modules.peaklistmethods.identification.formulaprediction.elements.ElementRuleSorterByMass;
-import net.sf.mzmine.util.Range;
+
+import com.google.common.collect.Range;
 
 import org.openscience.cdk.formula.MolecularFormula;
 
@@ -41,7 +42,7 @@ public class FormulaGenerator {
 	private static final BigInteger maximumToCalculate = BigInteger.TEN.pow(15);
 
 	// Let's use two doubles instead of Range, to avoid unnecessary method calls
-	private double minMass, maxMass;
+	private Double minMass, maxMass;
 
 	private ElementRule elementRules[];
 	private double elementMasses[];
@@ -53,7 +54,7 @@ public class FormulaGenerator {
 
 	private boolean canceled = false;
 
-	public FormulaGenerator(Range massRange, ElementRule selectedElements[]) {
+	public FormulaGenerator(Range<Double> massRange, ElementRule selectedElements[]) {
 
 		// Sort the elements by mass in ascending order. That greatly speeds up
 		// the search.
@@ -73,8 +74,8 @@ public class FormulaGenerator {
 			currentMass += elementRules[i].getMinCount()
 					* elementRules[i].getMass();
 		}
-		this.minMass = massRange.getMin();
-		this.maxMass = massRange.getMax();
+		minMass = massRange.lowerEndpoint();
+		maxMass = massRange.upperEndpoint();
 
 		testedCombinations = 0;
 

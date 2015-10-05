@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
 import javax.help.HelpBroker;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -89,6 +90,10 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 	return help;
     }
 
+    public void addInternalFrame(JInternalFrame frame) {
+    	mainPanel.addInternalFrame(frame);
+    }
+    
     /**
      * WindowListener interface implementation
      */
