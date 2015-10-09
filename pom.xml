@@ -411,7 +411,7 @@
 			<version>0.3.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jasypt</groupId>
+			<groupId>org</groupId>
 			<artifactId>jasypt</artifactId>
 			<version>1.9.2</version>
 		</dependency>
