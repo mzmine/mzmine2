@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 The Veritomyx
+ * Copyright 2013-2014 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -17,7 +17,7 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package veritomyxSaaS;
+package com.veritomyx;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

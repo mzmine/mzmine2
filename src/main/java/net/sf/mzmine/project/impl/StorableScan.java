@@ -47,7 +47,7 @@ import net.sf.mzmine.util.ScanUtils;
 
 import org.apache.commons.io.FilenameUtils;
 
-import veritomyxSaaS.FileChecksum;
+import com.veritomyx.FileChecksum;
 
 import com.google.common.collect.Range;
 

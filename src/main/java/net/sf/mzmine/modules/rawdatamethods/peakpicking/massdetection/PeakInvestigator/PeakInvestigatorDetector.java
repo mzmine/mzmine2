@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 The Veritomyx
+ * Copyright 2013-2014 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -17,7 +17,7 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.Veritomyx;
+package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -31,13 +31,13 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
 
-public class Veritomyx implements MassDetector
+public class PeakInvestigatorDetector implements MassDetector
 {
 	private Logger logger;	
 	private ArrayList<PeakInvestigatorTask> jobs;
 	private String desc;
 
-	public Veritomyx()
+	public PeakInvestigatorDetector()
 	{
 		logger = Logger.getLogger(this.getClass().getName());
 		logger.setLevel(MZmineCore.VtmxLive ? Level.INFO : Level.FINEST);
@@ -68,7 +68,7 @@ public class Veritomyx implements MassDetector
 	}
 
 	@Override
-	public Class<? extends ParameterSet> getParameterSetClass() { return VeritomyxParameters.class; }
+	public Class<? extends ParameterSet> getParameterSetClass() { return PeakInvestigatorParameters.class; }
 
 	/**
 	 * Return target name and filter out possible job name from "|job-########-#####[target]"

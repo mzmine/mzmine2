@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
-import veritomyxSaaS.VeritomyxSaaS;
+import com.veritomyx.VeritomyxSaaS;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.RawDataFileWriter;

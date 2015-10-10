@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 The Veritomyx
+ * Copyright 2013-2015 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -19,7 +19,7 @@
 
 package net.sf.mzmine.datamodel.impl;
 
-import veritomyxSaaS.VeritomyxSaaS;
+import com.veritomyx.VeritomyxSaaS;
 import net.sf.mzmine.datamodel.RemoteJobInfo;
 import net.sf.mzmine.datamodel.RawDataFile;
 

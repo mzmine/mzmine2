@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 The Veritomyx
+ * Copyright 2013-2014 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -17,7 +17,7 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.Veritomyx;
+package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -47,8 +47,8 @@ import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
 import org.xeustechnologies.jtar.TarOutputStream;
 
-import veritomyxSaaS.FileChecksum;
-import veritomyxSaaS.VeritomyxSaaS;
+import com.veritomyx.FileChecksum;
+import com.veritomyx.VeritomyxSaaS;
 
 /**
  * This class is used to run a set of scans through the Veritomyx SaaS servers

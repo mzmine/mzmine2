@@ -17,7 +17,7 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.Veritomyx;
+package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.awt.Window;
 
@@ -26,17 +26,17 @@ import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.util.ExitCode;
 
-public class VeritomyxParameters extends SimpleParameterSet
+public class PeakInvestigatorParameters extends SimpleParameterSet
 {
 
-	public VeritomyxParameters()
+	public PeakInvestigatorParameters()
 	{
 		super(new UserParameter[] {});
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
-		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, Veritomyx.class, this);
+		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();
 	}

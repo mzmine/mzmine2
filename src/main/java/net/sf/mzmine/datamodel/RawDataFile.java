@@ -22,7 +22,7 @@ package net.sf.mzmine.datamodel;
 import java.util.ArrayList;
 import javax.annotation.Nonnull;
 
-import veritomyxSaaS.VeritomyxSaaS;
+import com.veritomyx.VeritomyxSaaS;
 import net.sf.mzmine.datamodel.impl.RemoteJob;
 import com.google.common.collect.Range;
 

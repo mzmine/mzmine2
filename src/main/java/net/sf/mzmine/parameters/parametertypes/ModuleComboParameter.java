@@ -24,7 +24,7 @@ import java.util.Collection;
 import net.sf.mzmine.modules.MZmineModule;
 import net.sf.mzmine.modules.MZmineProcessingStep;
 import net.sf.mzmine.modules.impl.MZmineProcessingStepImpl;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.Veritomyx.Veritomyx;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorDetector;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.UserParameter;
@@ -148,7 +148,7 @@ public class ModuleComboParameter<ModuleType extends MZmineModule> implements
     	for (int i = 0; i < modulesWithParams.length; i++)
     	{
     		ModuleType mod = modulesWithParams[i].getModule();
-    		if (mod.getClass() == Veritomyx.class)
+    		if (mod.getClass() == PeakInvestigatorDetector.class)
     			value = modulesWithParams[i];
     	}
     }

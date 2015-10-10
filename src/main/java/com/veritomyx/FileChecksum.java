@@ -1,4 +1,4 @@
-package veritomyxSaaS;
+package com.veritomyx;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
