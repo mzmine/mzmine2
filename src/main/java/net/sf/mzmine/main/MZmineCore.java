@@ -61,7 +61,6 @@ import net.sf.mzmine.util.ExitCode;
 public final class MZmineCore {
 
 	public static final String MZmineName      = "MZmine PeakInvestigator™ Edition";
-	public static final String MZmineShortName = "MZminePI";
 	
 	public static       boolean VtmxLive       = true;			// live or test server (also affects debug level)
 	public static       String  MZmineVersion  = "2.17.01";
@@ -104,7 +103,9 @@ public final class MZmineCore {
 
 	// Configure the logging properties before we start logging
 	try {
-	    InputStream loggingProperties = new FileInputStream("resources/" + MZmineShortName + ".logging.properties");
+	    ClassLoader cl = MZmineCore.class.getClassLoader();
+	    InputStream loggingProperties = cl
+		    .getResourceAsStream("logging.properties");
 	    LogManager logMan = LogManager.getLogManager();
 	    logMan.readConfiguration(loggingProperties);
 	    loggingProperties.close();
