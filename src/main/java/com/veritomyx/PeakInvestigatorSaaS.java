@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
  * 
  * @author dschmidt
  */
-public class VeritomyxSaaS
+public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
 	public static final String reqVeritomyxCLIVersion = "1.25";
@@ -90,7 +90,7 @@ public class VeritomyxSaaS
 	 * @param reqVersion
 	 * @param live
 	 */
-	public VeritomyxSaaS(boolean live)
+	public PeakInvestigatorSaaS(boolean live)
 	{
 		log        = Logger.getLogger(this.getClass().getName());
 		log.setLevel(live ? Level.INFO : Level.DEBUG);

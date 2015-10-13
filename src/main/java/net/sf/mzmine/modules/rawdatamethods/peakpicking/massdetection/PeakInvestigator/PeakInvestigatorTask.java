@@ -48,7 +48,7 @@ import org.xeustechnologies.jtar.TarInputStream;
 import org.xeustechnologies.jtar.TarOutputStream;
 
 import com.veritomyx.FileChecksum;
-import com.veritomyx.VeritomyxSaaS;
+import com.veritomyx.PeakInvestigatorSaaS;
 
 /**
  * This class is used to run a set of scans through the Veritomyx SaaS servers
@@ -66,7 +66,7 @@ public class PeakInvestigatorTask
 	private String          targetName;
 	private String          intputFilename;
 	private String          outputFilename;
-	private VeritomyxSaaS   vtmx;
+	private PeakInvestigatorSaaS   vtmx;
 	private String          username;
 	private String          password;
 	private int             pid;
@@ -107,7 +107,7 @@ public class PeakInvestigatorTask
 
 		// make sure we have access to the Veritomyx Server
 		// this also gets the job_id and SFTP credentials
-		vtmx = new VeritomyxSaaS(MZmineCore.VtmxLive);
+		vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
 		while (true)
 		{
 			int status = vtmx.init(username, password, pid, pickup_job, scanCount);
@@ -116,7 +116,7 @@ public class PeakInvestigatorTask
 
 			desc = vtmx.getPageStr();
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
-			if ((status != VeritomyxSaaS.W_ERROR_LOGIN) && (status != VeritomyxSaaS.W_ERROR_PID))
+			if ((status != PeakInvestigatorSaaS.W_ERROR_LOGIN) && (status != PeakInvestigatorSaaS.W_ERROR_PID))
 				return;
 
 			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
@@ -255,7 +255,7 @@ public class PeakInvestigatorTask
 		//####################################################################
 		// start for remote job
 		logger.info("Launch job, " + jobID + ", on cloud server...");
-		if (vtmx.getPageRun(scanCnt) < VeritomyxSaaS.W_RUNNING)
+		if (vtmx.getPageRun(scanCnt) < PeakInvestigatorSaaS.W_RUNNING)
 		{
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch " + jobID, logger);
 			return;
@@ -282,7 +282,7 @@ public class PeakInvestigatorTask
 		logger.info("Checking previously launched job, " + jobID);
 
 		// see if remote job is complete
-		if ((status = vtmx.getPageStatus()) == VeritomyxSaaS.W_RUNNING)
+		if ((status = vtmx.getPageStatus()) == PeakInvestigatorSaaS.W_RUNNING)
 		{
 			desc = "Remote job not complete";
 			logger.info("Remote job, " + jobID + ", not complete");
@@ -292,7 +292,7 @@ public class PeakInvestigatorTask
 		}
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
-		if (status != VeritomyxSaaS.W_DONE)
+		if (status != PeakInvestigatorSaaS.W_DONE)
 		{
 			desc = "Error";
 			logger.info(vtmx.getPageStr());

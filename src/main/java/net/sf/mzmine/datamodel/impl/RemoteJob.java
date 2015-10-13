@@ -19,7 +19,7 @@
 
 package net.sf.mzmine.datamodel.impl;
 
-import com.veritomyx.VeritomyxSaaS;
+import com.veritomyx.PeakInvestigatorSaaS;
 import net.sf.mzmine.datamodel.RemoteJobInfo;
 import net.sf.mzmine.datamodel.RawDataFile;
 
@@ -31,9 +31,9 @@ public class RemoteJob implements RemoteJobInfo
 	private String        jobID;
 	private RawDataFile   rawDataFile;
 	private String        targetName;
-	private VeritomyxSaaS vtmx;
+	private PeakInvestigatorSaaS vtmx;
 	
-	public RemoteJob(String name, RawDataFile raw, String target, VeritomyxSaaS vtmxConn)
+	public RemoteJob(String name, RawDataFile raw, String target, PeakInvestigatorSaaS vtmxConn)
 	{
 		jobID       = name;
 		rawDataFile = raw;
@@ -48,5 +48,5 @@ public class RemoteJob implements RemoteJobInfo
     public String      toString()       { return jobID; }
     public RawDataFile getRawDataFile() { return rawDataFile; }
     public String      getTargetName()  { return targetName; }
-    public int         getStatus()      { return (vtmx != null) ? vtmx.getPageStatus() : VeritomyxSaaS.W_UNDEFINED; }
+    public int         getStatus()      { return (vtmx != null) ? vtmx.getPageStatus() : PeakInvestigatorSaaS.W_UNDEFINED; }
 }
