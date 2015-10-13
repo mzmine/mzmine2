@@ -28,6 +28,8 @@ import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -102,8 +104,9 @@ public final class MZmineCore {
 	 		}
 
 	// Configure the logging properties before we start logging
+	ClassLoader cl = MZmineCore.class.getClassLoader();
+
 	try {
-	    ClassLoader cl = MZmineCore.class.getClassLoader();
 	    InputStream loggingProperties = cl
 		    .getResourceAsStream("logging.properties");
 	    LogManager logMan = LogManager.getLogManager();
@@ -113,7 +116,17 @@ public final class MZmineCore {
 	    e.printStackTrace();
 	}
 
-	logger.info("Starting " + MZmineName + " " + MZmineVersion + " built " + MZmineDate);
+	String name = null, buildDate = null;
+	try {
+	    Manifest manifest = new Manifest(cl.getResourceAsStream("META-INF/MANIFEST.MF"));
+	    Attributes attributes = manifest.getMainAttributes();
+	    name = attributes.getValue("Implementation-Title");
+	    buildDate = attributes.getValue("Implementation-Build");
+	} catch (IOException e1) {
+	    // TODO Auto-generated catch block
+	    e1.printStackTrace();
+	}
+	logger.info("Starting " + name + " " + MZmineVersion + " built " + buildDate);
 	logger.info("CWD is " + new File(".").getAbsolutePath());
 
 	// Remove old temporary files, if we find any
