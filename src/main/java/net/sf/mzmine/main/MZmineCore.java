@@ -28,6 +28,8 @@ import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -61,7 +63,6 @@ import net.sf.mzmine.util.ExitCode;
 public final class MZmineCore {
 
 	public static final String MZmineName      = "MZmine PeakInvestigator™ Edition";
-	public static final String MZmineShortName = "MZminePI";
 	
 	public static       boolean VtmxLive       = true;			// live or test server (also affects debug level)
 	public static       String  MZmineVersion  = "2.17.01";
@@ -103,8 +104,11 @@ public final class MZmineCore {
 	 		}
 
 	// Configure the logging properties before we start logging
+	ClassLoader cl = MZmineCore.class.getClassLoader();
+
 	try {
-	    InputStream loggingProperties = new FileInputStream("resources/" + MZmineShortName + ".logging.properties");
+	    InputStream loggingProperties = cl
+		    .getResourceAsStream("logging.properties");
 	    LogManager logMan = LogManager.getLogManager();
 	    logMan.readConfiguration(loggingProperties);
 	    loggingProperties.close();
@@ -112,7 +116,17 @@ public final class MZmineCore {
 	    e.printStackTrace();
 	}
 
-	logger.info("Starting " + MZmineName + " " + MZmineVersion + " built " + MZmineDate);
+	String name = null, buildDate = null;
+	try {
+	    Manifest manifest = new Manifest(cl.getResourceAsStream("META-INF/MANIFEST.MF"));
+	    Attributes attributes = manifest.getMainAttributes();
+	    name = attributes.getValue("Implementation-Title");
+	    buildDate = attributes.getValue("Implementation-Build");
+	} catch (IOException e1) {
+	    // TODO Auto-generated catch block
+	    e1.printStackTrace();
+	}
+	logger.info("Starting " + name + " " + MZmineVersion + " built " + buildDate);
 	logger.info("CWD is " + new File(".").getAbsolutePath());
 
 	// Remove old temporary files, if we find any
