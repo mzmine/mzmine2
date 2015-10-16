@@ -62,7 +62,7 @@ import net.sf.mzmine.util.ExitCode;
  */
 public final class MZmineCore {
 
-	public static final String MZmineName      = "MZmine PeakInvestigator™ Edition";
+	public static 		String MZmineName      = "MZmine PeakInvestigator™ Edition";
 	
 	public static       boolean VtmxLive       = true;			// live or test server (also affects debug level)
 	public static       String  MZmineVersion  = "2.17.01";
@@ -116,17 +116,17 @@ public final class MZmineCore {
 	    e.printStackTrace();
 	}
 
-	String name = null, buildDate = null;
+	String buildDate = null;
 	try {
 	    Manifest manifest = new Manifest(cl.getResourceAsStream("META-INF/MANIFEST.MF"));
 	    Attributes attributes = manifest.getMainAttributes();
-	    name = attributes.getValue("Implementation-Title");
+	    MZmineName = attributes.getValue("Implementation-Title");
 	    buildDate = attributes.getValue("Implementation-Build");
 	} catch (IOException e1) {
 	    // TODO Auto-generated catch block
 	    e1.printStackTrace();
 	}
-	logger.info("Starting " + name + " " + MZmineVersion + " built " + buildDate);
+	logger.info("Starting " + MZmineName + " " + MZmineVersion + " built " + buildDate);
 	logger.info("CWD is " + new File(".").getAbsolutePath());
 
 	// Remove old temporary files, if we find any
