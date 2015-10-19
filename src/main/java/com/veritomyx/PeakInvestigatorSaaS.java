@@ -26,6 +26,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
+import net.sf.mzmine.util.ExitCode;
 import net.sf.opensftp.SftpException;
 import net.sf.opensftp.SftpResult;
 import net.sf.opensftp.SftpSession;
@@ -35,6 +37,9 @@ import net.sf.opensftp.SftpUtilFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import javax.swing.JOptionPane;
+
+import com.veritomyx.PeakInvestigatorInitDialog;
 /**
  * This class is used to access the Veritomyx SaaS servers
  * 
@@ -90,6 +95,11 @@ public class PeakInvestigatorSaaS
 	private int    aid;
 	private String jobID;				// name of the job and the scans tar file
 	private String dir;
+	private String funds;
+	private String[] SLAs;
+	private String[] PIversions;
+	private String   SLA;
+	private String   PIversion;
 
 	private String    host;
 	private String    sftp_host;
@@ -128,6 +138,11 @@ public class PeakInvestigatorSaaS
 		sftp_file  = null;
 		web_result = W_UNDEFINED;
 		web_str    = null;
+		funds 	   = null;
+		SLAs	   = null;
+		PIversions = null;
+		SLA	   	   = null;
+		PIversion  = null;
 		
 		prep_status     = prep_status_type.PREP_ANALYZING;
 		prep_scan_count = 0;
@@ -158,6 +173,23 @@ public class PeakInvestigatorSaaS
 		{
 			if (getPage(JOB_INIT, scanCount) != W_INFO)
 				return web_result;
+			// Ask user which SLA and PIversion
+			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
+                    .getDesktop().getMainWindow(),
+	                SLAs, PIversions);
+			if(dialog.getExitCode() == ExitCode.OK) 
+			{
+				String[] Scomp = dialog.getSLA().split(":");
+				SLA = Scomp[0];
+				PIversion = dialog.getPIversion();
+			}
+			
+			
+	        dialog.setVisible(true);
+			if (getPage(JOB_SFTP, 0) != W_INFO)
+				return web_result;
+			if (getPage(JOB_PREP, 0) != W_INFO)
+				return web_result;
 		}
 		else
 		{
@@ -168,15 +200,19 @@ public class PeakInvestigatorSaaS
 				jobID = null;
 				return web_result;
 			}
+			// Ask user which SLA and PIversion
+			if (getPage(JOB_SFTP, 0) != W_INFO)
+			{
+				jobID = null;
+				return web_result;
+			}
+			if (getPage(JOB_PREP, 0) != W_INFO)
+			{
+				jobID = null;
+				return web_result;
+			}
 			scanCount = 0;	// job pickup has no scan cost
 		}
-
-		// got a valid result from JOB_INIT, parse it
-		String sa[] = web_str.split(" ");
-		aid         = Integer.parseInt(sa[1]);
-		jobID       = sa[2];
-		sftp_user   = sa[3];
-		sftp_pw     = sa[4];
 
 		if (jobID != null)	// we have a valid job
 		{
@@ -204,6 +240,10 @@ public class PeakInvestigatorSaaS
 	public int    getPageRun(int count) { return getPage(JOB_RUN,    count); }
 	public int    getPageDone()         { return getPage(JOB_DONE,       0); }
 	public String getPageStr()          { return web_str; }
+	
+	public String	getFunds()			{ return funds; }
+	public String[] getSLAs()			{ return SLAs; }
+	public String[] getPIversions()		{ return PIversions; }
 
 	/**
 	 * Get the first line of a web page from the Veritomyx server
@@ -236,8 +276,10 @@ public class PeakInvestigatorSaaS
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
 				page += "&ID=" + aid +
-						"&ScanCount=" + count;
-				// TODO:  Add CalibrationCount, MinMass, MaxMass parameters when we have them.
+						"&ScanCount=" + count; // +
+				//		"&CalibrationCount=" + calibrationCount +
+				//		"&MinMass=" + minMass +
+				//		"&MaxMass=" + maxMass;
 			}
 			else if (action == JOB_PREP)
 			{
@@ -248,8 +290,9 @@ public class PeakInvestigatorSaaS
 			{
 				page += "&ID=" + aid +
 						"InputFile=" + sftp_file +
-						"PIVersion=" + MZmineCore.MZmineVersion;
-				// TODO:  Add CalibrationFile and SLA, when available
+						"SLA=" + SLA +
+						"PIVersion=" + PIversion;
+				// TODO:  Add CalibrationFile when available
 			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
@@ -280,8 +323,19 @@ public class PeakInvestigatorSaaS
 				if (web_result == W_UNDEFINED)
 				{
 					web_str = decodedString;
-					if      (web_str.startsWith("Info"))    web_result = W_INFO;
-					else if (web_str.startsWith("Sftp")) 	{
+					if      (web_str.startsWith("Info"))    
+					{
+						web_result = W_INFO;
+						String[] split_ret = web_str.split("|");
+						// This assumes a fixed size return ALWAYS
+						aid   = Integer.parseInt(split_ret[1]);
+						jobID = split_ret[2];
+						funds = split_ret[3];
+						SLAs  = split_ret[4].split(",");
+						PIversions = split_ret[5].split(",");
+					}
+					else if (web_str.startsWith("Sftp")) 	
+					{
 						web_result = W_SFTP;
 						String[] split_ret = web_str.split("|");
 						// This assumes a fixed size return ALWAYS
@@ -291,7 +345,8 @@ public class PeakInvestigatorSaaS
 						sftp_user = split_ret[4];
 						sftp_pw   = split_ret[5];
 					}
-					else if (web_str.startsWith("Prep")) 	{
+					else if (web_str.startsWith("Prep")) 	
+					{
 						web_result = W_PREP;
 						
 						String[] split_ret = web_str.split("|");
@@ -307,12 +362,19 @@ public class PeakInvestigatorSaaS
 						}
 						prep_scan_count = Integer.parseInt(split_ret[3]);
 						prep_ms_type    = split_ret[4];
+						
+						if (prep_scan_count != count) 
+						{  
+							JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
+									"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?", 
+									MZmineCore.MZmineName , JOptionPane.QUESTION_MESSAGE);
+						}
 					}
 					else if (web_str.startsWith("Running")) web_result = W_RUNNING;
 					else if (web_str.startsWith("Deleted")) web_result = W_DONE;
 					else if (web_str.startsWith("Error-"))  web_result = - Integer.parseInt(web_str.substring(6, web_str.indexOf(":"))); // "ERROR-#"
 					else                                    web_result = W_EXCEPTION;
-				}
+				} 
 			}
 		}
 		catch (Exception e)
