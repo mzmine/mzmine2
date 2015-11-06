@@ -95,28 +95,40 @@ public class MassDetectionTask extends AbstractTask {
 
         logger.info("Started mass detector on " + dataFile);
 
+        MassDetector detector = massDetector.getModule();
+        
         final Scan scans[] = scanSelection.getMatchingScans(dataFile);
-        totalScans = scans.length;
+        totalScans = scans.length;  
 
+        
+        // start the job
+     		String job = detector.startMassValuesJob(dataFile, name, massDetector.getParameterSet(), scans.length);
+     		name       = detector.filterTargetName(name);	// get the target name, the detector may change it
+ 
         // Process scans one by one
         for (Scan scan : scans) {
 
             if (isCanceled())
                 return;
 
-            MassDetector detector = massDetector.getModule();
+            
             DataPoint mzPeaks[] = detector.getMassValues(scan, false, "", 
                     massDetector.getParameterSet());
 
-            SimpleMassList newMassList = new SimpleMassList(name, scan, mzPeaks);
-
-            // Add new mass list to the scan
-            scan.addMassList(newMassList);
-
+            if (mzPeaks != null)
+		    {
+            	SimpleMassList newMassList = new SimpleMassList(name, scan, mzPeaks);
+		   
+            	// Add new mass list to the scan
+            	scan.addMassList(newMassList);
+		    }
             processedScans++;
         }
-
-        setStatus(TaskStatus.FINISHED);
+        
+        // finish the job
+     	detector.finishMassValuesJob(job);
+        
+     	setStatus(TaskStatus.FINISHED);
 
         logger.info("Finished mass detector on " + dataFile);
 
