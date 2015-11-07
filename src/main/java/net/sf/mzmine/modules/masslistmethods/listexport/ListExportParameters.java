@@ -25,6 +25,7 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
+import net.sf.mzmine.parameters.parametertypes.filenames.DirectoryParameter;
 import net.sf.mzmine.parameters.parametertypes.MassListParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
 import net.sf.mzmine.util.ExitCode;
@@ -36,10 +37,12 @@ public class ListExportParameters extends SimpleParameterSet
 	public static final      BooleanParameter dumpScans = new BooleanParameter(
 			"Export original scans",
 			"If checked, original scan data will be exported to text files");
+	public static final DirectoryParameter saveDirectory = new DirectoryParameter("Save to directory",
+			"Directory to save scans");
 
 	public ListExportParameters()
 	{
-		super(new Parameter[] { dataFiles, dumpScans, massList });
+		super(new Parameter[] { dataFiles, dumpScans, massList, saveDirectory });
 	}
 
 	public ExitCode showSetupDialog()
