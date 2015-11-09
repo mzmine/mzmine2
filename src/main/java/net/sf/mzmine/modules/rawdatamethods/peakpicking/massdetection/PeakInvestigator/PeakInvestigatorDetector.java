@@ -122,20 +122,19 @@ public class PeakInvestigatorDetector implements MassDetector
 	 * Compute the peaks list for the given scan
 	 * 
 	 * @param scan
-	 * @param selected
-	 * @param jobName
 	 * @param parameters
+	 * @param jobName
 	 * @return
 	 * @throws FileNotFoundException 
 	 */
-	public DataPoint[] getMassValues(Scan scan, boolean selected, String jobName, ParameterSet parameters)
+	public DataPoint[] getMassValues(Scan scan, String jobName, ParameterSet parameters)
 	{
 		// get the thread-safe job from jobs list using the jobName
 		PeakInvestigatorTask job = getJobFromName(jobName);
 		logger.finest("getMassValues " + jobName + " - " + ((job != null) ? job.getDesc() : "nojob"));
 		if (job != null)
 		{
-			return job.processScan(scan, selected);
+			return job.processScan(scan);
 		}
 		return null;
 	}
