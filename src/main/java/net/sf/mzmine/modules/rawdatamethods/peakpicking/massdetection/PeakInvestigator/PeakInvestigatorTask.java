@@ -215,7 +215,7 @@ public class PeakInvestigatorTask
 		try {
 			// export the scan to a file
 			String filename = "scan_" + String.format("%04d", scan_num) + ".txt";
-			scan.exportToFile("", filename);
+			scan.exportToFile("", "", filename);
 
 			// put the exported scan into the tar file
 			File f = new File(filename);

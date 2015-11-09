@@ -19,6 +19,7 @@
 
 package net.sf.mzmine.project.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
@@ -48,7 +49,6 @@ import net.sf.mzmine.util.ScanUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import com.veritomyx.FileChecksum;
-
 import com.google.common.collect.Range;
 
 /**
@@ -505,15 +505,20 @@ public class StorableScan implements Scan {
      * Return the number of datapoints in the scan or mass list.
      * 
      * @param massListName		// if empty, export scan data points
+     * @param saveDirectory		// if empty, saveDirectory isn't pre-pended to filename before export
      * @param filename			// if empty, filename will be generated from scan information
      * @return					// number of points, 0 if requested mass list not found not found
      */
-    public int exportToFile(String massListName, String filename)
+    public int exportToFile(String massListName, String saveDirectory, String filename)
     {
     	int exported = 0;
+
     	if (filename.isEmpty())
     		filename = exportFilename(massListName);
-    
+
+	if (!saveDirectory.isEmpty())
+	    	filename = saveDirectory + File.separator + filename;
+
     	if (massListName.isEmpty())	// export scan
     	{
     		logger.info("Exporting scan " + getScanNumber() + " to file " + filename);

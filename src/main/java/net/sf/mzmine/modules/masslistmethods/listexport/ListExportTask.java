@@ -43,6 +43,7 @@ public class ListExportTask extends AbstractTask
 	private boolean dumpScans;
 	private boolean dumpPeaks;
 	private String  massListName;
+	private String  saveDirectory;
 	
 	/**
 	 * @param dataFile
@@ -53,6 +54,7 @@ public class ListExportTask extends AbstractTask
 		this.dataFile = dataFile;
 		dumpScans     = parameters.getParameter(ListExportParameters.dumpScans).getValue();
 		massListName  = parameters.getParameter(ListExportParameters.massList).getValue();
+		saveDirectory = parameters.getParameter(ListExportParameters.saveDirectory).getValue().getPath();
 		dumpPeaks = (massListName.isEmpty() == false);
 	}
 
@@ -97,10 +99,10 @@ public class ListExportTask extends AbstractTask
 
 			Scan scan = dataFile.getScan(scanNumbers[s]);
 			if (dumpScans)
-				scan.exportToFile("", "");
+				scan.exportToFile("", saveDirectory, "");
 
 			if (dumpPeaks)
-				scansWithMassList += (scan.exportToFile(massListName, "") > 0) ? 1 : 0;
+				scansWithMassList += (scan.exportToFile(massListName, saveDirectory, "") > 0) ? 1 : 0;
 
 			processedScans++;
 		}

@@ -131,9 +131,10 @@ public interface Scan extends MassSpectrum {
      * Return the number of datapoints in the scan or mass list.
      * 
      * @param String massListName or if empty to export scan data points
+     * @param String directory to save scan
      * @param String filename to export to, if empty, filename will be generated from scan information
      * @return number of points, 0 if requested mass list not found not found
      */
-    public int exportToFile(@Nonnull String massListName, @Nonnull String filename);
+    public int exportToFile(@Nonnull String massListName, @Nonnull String saveDirectory, @Nonnull String filename);
 
 }
