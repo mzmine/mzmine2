@@ -1,4 +1,4 @@
-package com.veritomyx;
+package com.veritomyx.gamma;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
