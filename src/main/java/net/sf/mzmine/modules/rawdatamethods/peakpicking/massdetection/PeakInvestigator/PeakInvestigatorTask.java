@@ -165,12 +165,12 @@ public class PeakInvestigatorTask
 	 * @param selected
 	 * @return
 	 */
-	public DataPoint[] processScan(Scan scan, boolean selected)
+	public DataPoint[] processScan(Scan scan)
 	{
 		int scan_num = scan.getScanNumber();
 		logger.finest("PeakInvestigatorTask - processScan " + scan_num);
 		DataPoint[] peaks;
-		if (launch) peaks = selected ? processScanLaunch(scan_num, scan) : null;
+		if (launch) peaks = processScanLaunch(scan_num, scan);
 		else        peaks = processScanRetrieve(scan_num);		// ignore selected flag on retrieval
 		return peaks;
 	}

@@ -17,7 +17,7 @@
  * Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package com.veritomyx;
+package com.veritomyx.gamma;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

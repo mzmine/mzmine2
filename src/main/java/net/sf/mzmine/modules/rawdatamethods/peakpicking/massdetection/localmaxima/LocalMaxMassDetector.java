@@ -39,9 +39,7 @@ public class LocalMaxMassDetector implements MassDetector {
 	public String filterTargetName(String name) { return name; }
 	public String startMassValuesJob(RawDataFile raw, String targetName, ParameterSet parameters, int scanCount) { return null; }
 	
-	public DataPoint[] getMassValues(Scan scan, boolean selected, String job, ParameterSet parameters) {
-    	if (!selected)	// only process selected scans
-    		return null;
+	public DataPoint[] getMassValues(Scan scan, String job, ParameterSet parameters) {
 	
 		double noiseLevel = parameters.getParameter(
 			LocalMaxMassDetectorParameters.noiseLevel).getValue();
