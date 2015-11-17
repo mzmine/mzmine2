@@ -112,7 +112,7 @@ public class MassDetectionTask extends AbstractTask {
                 return;
 
             
-            DataPoint mzPeaks[] = detector.getMassValues(scan, "", massDetector.getParameterSet());
+            DataPoint mzPeaks[] = detector.getMassValues(scan, job, massDetector.getParameterSet());
 
             if (mzPeaks != null)
 		    {

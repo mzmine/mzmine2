@@ -22,6 +22,7 @@ package net.sf.mzmine.modules.projectmethods.projectsave;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -37,6 +38,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import net.sf.mzmine.datamodel.MassList;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 import net.sf.mzmine.project.impl.StorableMassList;
 import net.sf.mzmine.project.impl.StorableScan;
@@ -219,8 +221,29 @@ class RawDataFileSaveHandler {
 	    progress = 0.9 + (0.1 * ((double) completedScans / numOfScans));
 	}
 
-	hd.endElement("", "", RawDataElementName.RAWDATA.getElementName());
+        // JOBS
+        ArrayList<RemoteJob> jobs = rawDataFile.getJobs();
+        hd.startElement("", "", RawDataElementName.JOB_COUNT.getElementName(),
+                atts);
+        hd.characters(String.valueOf(jobs.size()).toCharArray(), 0, String
+                .valueOf(jobs.size()).length());
+        hd.endElement("", "", RawDataElementName.JOB_COUNT.getElementName());
+        for (RemoteJob job : jobs) {
+            atts.addAttribute("", "",
+                    RawDataElementName.JOB_NAME.getElementName(), "CDATA",
+                    job.getName());
+            atts.addAttribute("", "",
+                    RawDataElementName.JOB_TARGET_NAME.getElementName(),
+                    "CDATA", job.getTargetName());
+            hd.startElement("", "", RawDataElementName.JOB.getElementName(),
+                    atts);
+            String s = String.valueOf(job.getStatus());
+            hd.characters(s.toCharArray(), 0, s.length());
+            hd.endElement("", "", RawDataElementName.JOB.getElementName());
+            atts.clear();
+        }
 
+        hd.endElement("", "", RawDataElementName.RAWDATA.getElementName());
     }
 
     /**

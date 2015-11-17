@@ -26,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -36,11 +37,14 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.peaklistmethods.orderpeaklists.OrderPeakListsModule;
 import net.sf.mzmine.modules.peaklistmethods.orderpeaklists.OrderPeakListsParameters;
 import net.sf.mzmine.modules.rawdatamethods.orderdatafiles.OrderDataFilesModule;
 import net.sf.mzmine.modules.rawdatamethods.orderdatafiles.OrderDataFilesParameters;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectionModule;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectionParameters;
 import net.sf.mzmine.modules.visualization.ida.IDAVisualizerModule;
 import net.sf.mzmine.modules.visualization.infovisualizer.InfoVisualizerModule;
 import net.sf.mzmine.modules.visualization.peaklisttable.PeakListTableModule;
@@ -70,7 +74,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
 
     private ProjectTree tree;
     private JPopupMenu dataFilePopupMenu, peakListPopupMenu, scanPopupMenu,
-            massListPopupMenu, peakListRowPopupMenu;
+            massListPopupMenu, peakListRowPopupMenu, jobPopupMenu;
 
     /**
      * Constructor
@@ -95,6 +99,12 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         GUIUtils.addMenuItem(dataFilePopupMenu, "Remove file extension", this,
                 "REMOVE_EXTENSION");
         GUIUtils.addMenuItem(dataFilePopupMenu, "Remove", this, "REMOVE_FILE");
+
+        jobPopupMenu = new JPopupMenu();
+        GUIUtils.addMenuItem(jobPopupMenu, "Retrieve job results", this,
+                "RETRIEVE_JOB");
+        GUIUtils.addMenuItem(jobPopupMenu,
+                "Remove job without picking up results", this, "REMOVE_JOB");
 
         scanPopupMenu = new JPopupMenu();
 
@@ -229,6 +239,24 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
                 }
                 MZmineCore.getProjectManager().getCurrentProject()
                         .removeFile(file);
+            }
+        }
+
+        if (command.equals("RETRIEVE_JOB")) {
+            for (RemoteJob job : tree.getSelectedObjects(RemoteJob.class))
+                startJob(job.getRawDataFile(), job);
+        }
+
+        if (command.equals("REMOVE_JOB")) {
+            for (RemoteJob job : tree.getSelectedObjects(RemoteJob.class)) {
+                int selectedValue = JOptionPane.showInternalConfirmDialog(
+                        MZmineCore.getDesktop().getMainWindow(),
+                        "Unretrieved results, will be lost.\n"
+                                + "Are you sure you want to delete "
+                                + job.getName() + "?", "Remove Job",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (selectedValue == 0) // yes response
+                    job.getRawDataFile().removeJob(job.getName());
             }
         }
 
@@ -384,6 +412,8 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             peakListPopupMenu.show(e.getComponent(), e.getX(), e.getY());
         if (clickedObject instanceof PeakListRow)
             peakListRowPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+        if (clickedObject instanceof RemoteJob)
+            jobPopupMenu.show(e.getComponent(), e.getX(), e.getY());
     }
 
     private void handleDoubleClickEvent(MouseEvent e) {
@@ -426,6 +456,36 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             PeakSummaryVisualizerModule.showNewPeakSummaryWindow(clickedPeak);
         }
 
+        if (clickedObject instanceof RemoteJob) {
+            RemoteJob job = (RemoteJob) clickedObject;
+            startJob(job.getRawDataFile(), job);
+        }
+
+    }
+
+    /**
+     * Retrieve the given job from remote server
+     * 
+     * @param raw
+     * @param job
+     */
+    private void startJob(RawDataFile raw, RemoteJob job) {
+        MassDetectionModule module = MZmineCore
+                .getModuleInstance(MassDetectionModule.class);
+        MassDetectionParameters parameters = (MassDetectionParameters) MZmineCore
+                .getConfiguration().getModuleParameters(
+                        MassDetectionModule.class);
+        ExitCode exitCode = parameters.setJobParams(raw, job); // set params for
+                                                               // this job
+        if (exitCode == ExitCode.OK) {
+            ParameterSet parametersCopy = parameters.cloneParameterSet();
+            ArrayList<Task> tasks = new ArrayList<Task>();
+            module.runModule(
+                    MZmineCore.getProjectManager().getCurrentProject(),
+                    parametersCopy, tasks);
+            MZmineCore.getTaskController().addTasks(tasks.toArray(new Task[0]));
+            parameters.setName(""); // clear name field
+        }
     }
 
 }

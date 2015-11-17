@@ -29,7 +29,8 @@ enum RawDataElementName {
 	    "num_dp"), MASS_LIST("mass_list"), STORED_DATAPOINTS(
 	    "stored_datapoints"), STORED_DATA("stored_data"), STORAGE_ID(
 	    "storage_id"), POLARITY("polarity"), SCAN_DESCRIPTION(
-	    "scan_description"), SCAN_MZ_RANGE("scan_mz_range");
+	    "scan_description"), SCAN_MZ_RANGE("scan_mz_range"),
+	    JOB_COUNT("num_jobs"), JOB("job"), JOB_NAME("name"), JOB_TARGET_NAME("target_name");
 
     private String elementName;
 
