@@ -332,8 +332,6 @@ public class PeakInvestigatorSaaS
 			return false;
 
 		sftp.cd(session, "batches");
-		try { sftp.rm(session, fname); } catch (Exception e) {}
-		try { sftp.rm(session, fname + ".filepart"); } catch (Exception e) {}
 		result = sftp.put(session, fname, fname + ".filepart");
 		sftp.cd(session, "..");
 		if (!result.getSuccessFlag())
