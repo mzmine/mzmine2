@@ -155,6 +155,15 @@ public class RawDataFileOpenHandler_2_5 extends DefaultHandler
                     storageID, name, null);
             massLists.add(newML);
         }
+
+        if (qName.equals(RawDataElementName_2_5.JOB.getElementName())) {
+            String jobName = attrs.getValue(RawDataElementName_2_5.JOB_NAME
+                    .getElementName());
+            String targetName = attrs
+                    .getValue(RawDataElementName_2_5.JOB_TARGET_NAME
+                            .getElementName());
+            newRawDataFile.addJob(jobName, newRawDataFile, targetName, null);
+        }
     }
 
     /**
@@ -264,6 +273,10 @@ public class RawDataFileOpenHandler_2_5 extends DefaultHandler
             for (StorableMassList newML : massLists) {
                 newML.setScan(storableScan);
                 storableScan.addMassList(newML);
+            }
+
+            if (qName.equals(RawDataElementName_2_5.JOB_COUNT.getElementName())) {
+                getTextOfElement(); // must remove this from the text buffer
             }
 
             // Cleanup
