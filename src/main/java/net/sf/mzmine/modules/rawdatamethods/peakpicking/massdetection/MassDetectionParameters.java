@@ -37,6 +37,7 @@ import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.ModuleComboParameter;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesSelectionType;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelection;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelectionParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesSelection;
@@ -150,6 +151,7 @@ public class MassDetectionParameters extends SimpleParameterSet {
     	newValue[0] = raw;
     	RawDataFilesSelection newSelection = new RawDataFilesSelection();
     	newSelection.setSpecificFiles(newValue);
+        newSelection.setSelectionType(RawDataFilesSelectionType.SPECIFIC_FILES);
     	dataFiles.setValue(newSelection);
     
     	if (job == null)	// bring up the dialog if all parameters were not set
