@@ -33,10 +33,10 @@ import net.sf.mzmine.util.ExitCode;
 public class ListExportParameters extends SimpleParameterSet
 {
 	public static final RawDataFilesParameter dataFiles = new RawDataFilesParameter();
-	public static final     MassListParameter massList  = new MassListParameter();
+	public static final     MassListParameter massList  = new MassListParameter(false);
 	public static final      BooleanParameter dumpScans = new BooleanParameter(
 			"Export original scans",
-			"If checked, original scan data will be exported to text files");
+			"If checked, original scan data will also be exported to text files");
 	public static final DirectoryParameter saveDirectory = new DirectoryParameter("Save to directory",
 			"Directory to save scans");
 

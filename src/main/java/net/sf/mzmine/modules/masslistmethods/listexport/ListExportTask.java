@@ -85,6 +85,12 @@ public class ListExportTask extends AbstractTask
 	public void run()
 	{
 		setStatus(TaskStatus.PROCESSING);
+		if (!dumpScans && !dumpPeaks) {
+		    setStatus(TaskStatus.ERROR);
+		    this.setErrorMessage("Neither original scan data nor a valid peaks(mass) list was specified for export.");
+		    return;
+		}
+
 		logger.info("Export of " + (dumpScans ? "Scans" : "") + ((dumpScans && dumpPeaks) ? " and " : "") +
                     (dumpPeaks ? "peaks(mass) list of " + massListName : "") + " from " + dataFile);
 
