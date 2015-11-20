@@ -29,10 +29,16 @@ public class MassListParameter implements
 	UserParameter<String, MassListComponent> {
 
     private String name, description, value;
+    private boolean required = true;
 
     public MassListParameter() {
 	this.name = "Peaks(mass) list";
 	this.description = "Please select a peaks(mass) list name";
+    }
+
+    public MassListParameter(boolean required) {
+        this();
+        this.required = required;
     }
 
     /**
@@ -96,7 +102,11 @@ public class MassListParameter implements
 
     @Override
     public boolean checkValue(Collection<String> errorMessages) {
-	if ((value == null) || (value.trim().length() == 0)) {
+	if (!required) {
+	    return true;
+	}
+
+        if ((value == null) || (value.trim().length() == 0)) {
 	    errorMessages.add(name + " is not set properly");
 	    return false;
 	}
