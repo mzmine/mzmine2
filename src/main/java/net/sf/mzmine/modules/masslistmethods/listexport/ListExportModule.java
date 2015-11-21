@@ -46,7 +46,7 @@ public class ListExportModule implements MZmineProcessingModule
     @Nonnull
     public ExitCode runModule(@Nonnull MZmineProject project, @Nonnull ParameterSet parameters, @Nonnull Collection<Task> tasks)
 	{
-		RawDataFile[] dataFiles = parameters.getParameter(ListExportParameters.dataFiles).getValue().getSpecificFiles();
+		RawDataFile[] dataFiles = parameters.getParameter(ListExportParameters.dataFiles).getValue().getMatchingRawDataFiles();
 		for (RawDataFile dataFile : dataFiles) {
 		    Task newTask = new ListExportTask(dataFile, parameters.cloneParameterSet());
 		    tasks.add(newTask);
