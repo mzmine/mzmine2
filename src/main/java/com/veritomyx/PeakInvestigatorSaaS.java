@@ -39,6 +39,11 @@ import org.apache.log4j.Logger;
 
 import javax.swing.JOptionPane;
 
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+import org.json.simple.parser.ParseException;
+import org.json.simple.parser.JSONParser;
+
 import com.veritomyx.PeakInvestigatorInitDialog;
 /**
  * This class is used to access the Veritomyx SaaS servers
@@ -325,57 +330,65 @@ public class PeakInvestigatorSaaS
 				if (web_result == W_UNDEFINED)
 				{
 					web_str = decodedString;
-					if      (web_str.startsWith("INIT"))    
-					{
-						web_result = W_INFO;
-						String[] split_ret = web_str.split("|");
-						// This assumes a fixed size return ALWAYS
-						aid   = Integer.parseInt(split_ret[1]);
-						jobID = split_ret[2];
-						funds = split_ret[3];
-						SLAs  = split_ret[4].split(",");
-						PIversions = split_ret[5].split(",");
-					}
-					else if (web_str.startsWith("Sftp")) 	
-					{
-						web_result = W_SFTP;
-						String[] split_ret = web_str.split("|");
-						// This assumes a fixed size return ALWAYS
-						sftp_host = split_ret[1];
-						sftp_port = Integer.parseInt(split_ret[2]);
-						dir       = split_ret[3];
-						sftp_user = split_ret[4];
-						sftp_pw   = split_ret[5];
-					}
-					else if (web_str.startsWith("Prep")) 	
-					{
-						web_result = W_PREP;
-						
-						String[] split_ret = web_str.split("|");
-						// This assumes a fixed size return ALWAYS
-						
-						if(split_ret[2] == "Ready")
+					JSONParser parser = new JSONParser();
+					try{
+						JSONObject obj = (JSONObject)parser.parse(web_str);
+
+						if(obj.get("Action") == "INIT")    
 						{
-							prep_status     = prep_status_type.PREP_READY;
-						} 
-						else
+							web_result = W_INFO;
+							aid   = (Integer)obj.get("Job");
+							//jobID = obj.get("Job"));
+							funds = (String)obj.get("Funds");
+							SLAs  = ((String)obj.get("RTOs")).split(",");
+							PIversions = ((String)obj.get("PI_versions")).split(",");
+						}
+						else if (obj.get("Action") == "SFTP") 	
 						{
-							prep_status 	= prep_status_type.PREP_ANALYZING;
+							web_result = W_SFTP;
+							sftp_host = (String)obj.get("Host");
+							sftp_port = (Integer)obj.get("Port");
+							dir       = (String)obj.get("Directory");
+							sftp_user = (String)obj.get("Login");
+							sftp_pw   = (String)obj.get("Password");
 						}
-						prep_scan_count = Integer.parseInt(split_ret[3]);
-						prep_ms_type    = split_ret[4];
+						else if (obj.get("Action") == "PREP") 	
+						{
+							web_result = W_PREP;
+
+							if(obj.get("Status") == "Ready")
+							{
+								prep_status     = prep_status_type.PREP_READY;
+							} 
+							else if (obj.get("Analysis") == "Ready")
+							{
+								prep_status 	= prep_status_type.PREP_ANALYZING;
+							}
+							else // error
+							{
+								JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
+										"Peak Investigator Saas returned an error in the PREP phase.", 
+										MZmineCore.MZmineName , JOptionPane.ERROR_MESSAGE);
+							}
+							prep_scan_count = (Integer)obj.get("ScanCount");
+							prep_ms_type    = (String)obj.get("MSType");
+
+							if (prep_scan_count != count) 
+							{  
+								JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
+										"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?", 
+										MZmineCore.MZmineName , JOptionPane.QUESTION_MESSAGE);
+							}
+						}
+						else if (obj.get("Action") == "Running") web_result = W_RUNNING;
+						else if (obj.get("Action") == "Deleted") web_result = W_DONE;
+						else if (web_str.startsWith("Error-"))  web_result = - Integer.parseInt(web_str.substring(6, web_str.indexOf(":"))); // "ERROR-#"
+						else                                    web_result = W_EXCEPTION;
+					} catch(ParseException pe){
 						
-						if (prep_scan_count != count) 
-						{  
-							JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
-									"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?", 
-									MZmineCore.MZmineName , JOptionPane.QUESTION_MESSAGE);
-						}
-					}
-					else if (web_str.startsWith("Running")) web_result = W_RUNNING;
-					else if (web_str.startsWith("Deleted")) web_result = W_DONE;
-					else if (web_str.startsWith("Error-"))  web_result = - Integer.parseInt(web_str.substring(6, web_str.indexOf(":"))); // "ERROR-#"
-					else                                    web_result = W_EXCEPTION;
+						log.error("JSON Parse Error at position: " + pe.getPosition());
+						log.error(pe);
+				    }
 				} 
 			}
 		}
