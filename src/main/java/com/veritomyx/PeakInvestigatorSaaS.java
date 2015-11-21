@@ -269,39 +269,35 @@ public class PeakInvestigatorSaaS
 		try {
 			// build the URL with parameters
 			String page = "https://" + host + 
-					"?{\"Version\":" + reqVeritomyxCLIVersion +	// online CLI version that matches this interface
-					",\"User\":"     + URLEncoder.encode(username, "UTF-8") +
-					",\"Code\":"     + URLEncoder.encode(password, "UTF-8") +
-					",\"Action\":"   + action;
+					"?{\"Version\": \"" + reqVeritomyxCLIVersion +	"\"" + // online CLI version that matches this interface
+					",\"User\": \""     + URLEncoder.encode(username, "UTF-8") + "\"" +
+					",\"Code\": \""     + URLEncoder.encode(password, "UTF-8") + "\"" +
+					",\"Action\": \""   + action + "\"";
 			
-//					"?Version=" + reqVeritomyxCLIVersion +	// online CLI version that matches this interface
-//					"&User="    + URLEncoder.encode(username, "UTF-8") +
-//					"&Code="    + URLEncoder.encode(password, "UTF-8") +
-//					"&Action="  + action;
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
-				page += ",\"ID\":" + aid +
-						",\"ScanCount\":" + count +
-				//		"&CalibrationCount=" + calibrationCount +
-						",\"MinMass\":" + 0 +
-						",\"MaxMass\":" + Integer.MAX_VALUE;
+				page += ",\"ID\": " + aid +
+						",\"ScanCount\": " + count +
+				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
+						",\"MinMass\": " + 0 +
+						",\"MaxMass\": " + Integer.MAX_VALUE;
 			}
 			else if (action == JOB_PREP)
 			{
-				page += ",\"ID\":" + aid +
-						",\"File\":" + sftp_file;
+				page += ",\"ID\": \"" + aid + "\"" +
+						",\"File\": \"" + sftp_file + "\"";
 			}
 			else if (action == JOB_RUN)
 			{
-				page += ",\"ID\":" + aid +
-						",\"InputFile\":" + sftp_file +
-						",\"SLA\":" + SLA +
-						",\"PIVersion\":" + PIversion;
+				page += ",\"ID\": \"" + aid +
+						",\"InputFile\": " + sftp_file +
+						",\"SLA\": " + SLA +
+						",\"PIVersion\": " + PIversion;
 				// TODO:  Add CalibrationFile when available
 			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
-				page += ",\"ID\":" + URLEncoder.encode(jobID, "UTF-8");
+				page += ",\"ID\": " + URLEncoder.encode(jobID, "UTF-8");
 			}
 			else
 			{
@@ -329,7 +325,7 @@ public class PeakInvestigatorSaaS
 				if (web_result == W_UNDEFINED)
 				{
 					web_str = decodedString;
-					if      (web_str.startsWith("Info"))    
+					if      (web_str.startsWith("INIT"))    
 					{
 						web_result = W_INFO;
 						String[] split_ret = web_str.split("|");
