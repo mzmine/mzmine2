@@ -47,6 +47,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
 
+import java.util.ArrayList;
+
 import com.veritomyx.PeakInvestigatorInitDialog;
 /**
  * This class is used to access the Veritomyx SaaS servers
@@ -360,8 +362,19 @@ public class PeakInvestigatorSaaS
 							aid   = (Integer)obj.get("Job");
 							//jobID = obj.get("Job"));
 							funds = (String)obj.get("Funds");
-							SLAs  = ((String)obj.get("RTOs")).split(",");
+							JSONArray rtos  = (JSONArray)obj.get("RTOs");
+							SLAs  = new String[rtos.size()];
+							int r = 0;
+							for(r = 0; r < rtos.size(); r++) {
+								SLAs[r] = rtos.get(r).toString();
+							}
 							PIversions = ((String)obj.get("PI_versions")).split(",");
+							JSONArray pis  = (JSONArray)obj.get("PI_versions");
+							PIversions  = new String[pis.size()];
+							int p = 0;
+							for(p = 0; p < pis.size(); p++) {
+								PIversions[p] = pis.get(p).toString();
+							}
 						}
 						else if (obj.get("Action") == "SFTP") 	
 						{
