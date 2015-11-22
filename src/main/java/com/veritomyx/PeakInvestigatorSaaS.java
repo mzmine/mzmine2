@@ -21,6 +21,9 @@ package com.veritomyx;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.BufferedWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -273,36 +276,36 @@ public class PeakInvestigatorSaaS
 		HttpURLConnection uc = null;
 		try {
 			// build the URL with parameters
-			String page = "https://" + host + 
-					"?{\"Version\": \"" + reqVeritomyxCLIVersion +	"\"" + // online CLI version that matches this interface
-					",\"User\": \""     + URLEncoder.encode(username, "UTF-8") + "\"" +
-					",\"Code\": \""     + URLEncoder.encode(password, "UTF-8") + "\"" +
-					",\"Action\": \""   + action + "\"";
+			String page = "https://" + host; // +
+			String params = "Version=" + reqVeritomyxCLIVersion + // online CLI version that matches this interface
+					"&User="	+ URLEncoder.encode(username, "UTF-8") + 
+					"&Code="    + URLEncoder.encode(password, "UTF-8") + 
+					"&Action="  + action + "\"";
 			
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
-				page += ",\"ID\": " + aid +
-						",\"ScanCount\": " + count +
+				params += "&ID=" + jobID +
+						"&ScanCount=" + count +
 				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
-						",\"MinMass\": " + 0 +
-						",\"MaxMass\": " + Integer.MAX_VALUE;
+						"&MinMass=" + 0 +
+						"&MaxMass=" + Integer.MAX_VALUE;
 			}
 			else if (action == JOB_PREP)
 			{
-				page += ",\"ID\": \"" + aid + "\"" +
-						",\"File\": \"" + sftp_file + "\"";
+				params += "&ID=" + jobID +
+						"&File=" + sftp_file;
 			}
 			else if (action == JOB_RUN)
 			{
-				page += ",\"ID\": \"" + aid +
-						",\"InputFile\": " + sftp_file +
-						",\"SLA\": " + SLA +
-						",\"PIVersion\": " + PIversion;
+				params += "&ID=" + jobID +
+						"&InputFile=" + sftp_file +
+						"&SLA=" + SLA +
+						"&PIVersion=" + PIversion;
 				// TODO:  Add CalibrationFile when available
 			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
-				page += ",\"ID\": " + URLEncoder.encode(jobID, "UTF-8");
+				params += "&ID=" + jobID;
 			}
 			else
 			{
@@ -310,15 +313,32 @@ public class PeakInvestigatorSaaS
 				web_str    = "Job ID, " + jobID + ", not defined";
 				return web_result;
 			}
-			page += "}";
 			log.debug(page);
+			log.debug(params);
 
 			URL url = new URL(page);
 			uc = (HttpURLConnection)url.openConnection();
 			uc.setUseCaches(false);
 			uc.setRequestMethod("POST");
+			uc.setRequestProperty("Content-Type", 
+			           "application/x-www-form-urlencoded");
+			uc.setRequestProperty("Content-Length", "" + 
+			               Integer.toString(params.getBytes().length));
+			uc.setRequestProperty("Content-Language", "en-US");  
 			uc.setReadTimeout(240 * 1000);	// give it 4 minutes to respond
 			System.setProperty("java.net.preferIPv4Stack", "true");	// without this we get exception in getInputStream
+			uc.setDoInput(true);
+			uc.setDoOutput(true);
+			
+			//Send request
+			OutputStream os = uc.getOutputStream();
+			BufferedWriter writer = new BufferedWriter(
+			        new OutputStreamWriter(os, "UTF-8"));
+			writer.write(params);
+			writer.flush();
+			writer.close();
+			os.close();
+			
 			uc.connect();
 
 			// Read the response from the HTTP server
