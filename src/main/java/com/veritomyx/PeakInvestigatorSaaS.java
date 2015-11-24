@@ -287,7 +287,7 @@ public class PeakInvestigatorSaaS
 			
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
-				params += "&ID=" + jobID +
+				params += "&ID=" + aid +
 						"&ScanCount=" + count +
 				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
 						"&MinMass=" + minMass +
