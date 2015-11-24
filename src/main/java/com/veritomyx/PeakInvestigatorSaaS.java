@@ -169,7 +169,7 @@ public class PeakInvestigatorSaaS
 	 * @param scanCount
 	 * @return
 	 */
-	public int init(String email, String passwd, int account, String existingJobName, int scanCount)
+	public int init(String email, String passwd, int account, String existingJobName, int scanCount, int minMass, int maxMass)
 	{
 		jobID    = null;	// if jobID is set, this is a valid job
 		username = email;
@@ -181,7 +181,7 @@ public class PeakInvestigatorSaaS
 		// this also gets the job_id and SFTP credentials
 		if (!pickup)
 		{
-			if (getPage(JOB_INIT, scanCount) != W_INFO)
+			if (getPage(JOB_INIT, scanCount, minMass, maxMass) != W_INFO)
 				return web_result;
 			// Ask user which SLA and PIversion
 			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
@@ -250,6 +250,7 @@ public class PeakInvestigatorSaaS
 	public int    getPageRun(int count) { return getPage(JOB_RUN,    count); }
 	public int    getPageDone()         { return getPage(JOB_DONE,       0); }
 	public String getPageStr()          { return web_str; }
+	public int	  getPage(String action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
 	
 	public String	getFunds()			{ return funds; }
 	public String[] getSLAs()			{ return SLAs; }
@@ -263,7 +264,7 @@ public class PeakInvestigatorSaaS
 	 * @param count
 	 * @return int
 	 */
-	private int getPage(String action, int count)
+	private int getPage(String action, int count, int minMass, int maxMass)
 	{
 		web_result = W_UNDEFINED;
 		web_str    = "";
@@ -289,8 +290,8 @@ public class PeakInvestigatorSaaS
 				params += "&ID=" + jobID +
 						"&ScanCount=" + count +
 				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
-						"&MinMass=" + 0 +
-						"&MaxMass=" + Integer.MAX_VALUE;
+						"&MinMass=" + minMass +
+						"&MaxMass=" + maxMass;
 			}
 			else if (action == JOB_PREP)
 			{

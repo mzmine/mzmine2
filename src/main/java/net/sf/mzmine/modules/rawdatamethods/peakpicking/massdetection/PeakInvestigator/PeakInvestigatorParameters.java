@@ -37,7 +37,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	public static final IntegerParameter maxMass = new IntegerParameter(
 		    "Max Mass",
 		    "The maximum mass in the set of masses to send to the Peak Investigator SaaS.",
-		    100);
+		    Integer.MAX_VALUE);
 
 	public PeakInvestigatorParameters()
 	{

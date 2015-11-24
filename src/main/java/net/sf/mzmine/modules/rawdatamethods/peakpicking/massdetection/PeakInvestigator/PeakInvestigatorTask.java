@@ -63,6 +63,8 @@ public class PeakInvestigatorTask
 	private String          jobID;			// name of the job and the scans tar file
 	private String          desc;
 	private int             scanCnt;		// number of scans
+	private int				minMass;		// Minimum mass to process from
+	private int				maxMass;		// Maximum mass to process to
 	private String          targetName;
 	private String          intputFilename;
 	private String          outputFilename;
@@ -82,6 +84,9 @@ public class PeakInvestigatorTask
 		jobID   = null;
 		tarfile = null;
 		desc    = "initializing";
+		
+		minMass = parameters.getParameter(PeakInvestigatorParameters.minMass).getValue();
+		maxMass = parameters.getParameter(PeakInvestigatorParameters.maxMass).getValue();
 
 		// pickup all the parameters
 		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
@@ -110,7 +115,7 @@ public class PeakInvestigatorTask
 		vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
 		while (true)
 		{
-			int status = vtmx.init(username, password, pid, pickup_job, scanCount);
+			int status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
 			if (status > 0)
 				break;
 
