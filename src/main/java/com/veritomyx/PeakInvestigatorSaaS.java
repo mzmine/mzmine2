@@ -140,7 +140,7 @@ public class PeakInvestigatorSaaS
 		log.info(this.getClass().getName());
 		jobID      = null;
 		dir        = null;
-		host       = live ? "gamma.veritomyx.com/api" : "test.veritomyx.com";
+		host       = live ? "gamma.veritomyx.com/api/" : "test.veritomyx.com";
 		sftp_user  = null;
 		sftp_pw    = null;
 		sftp_port  = 22;
@@ -283,7 +283,7 @@ public class PeakInvestigatorSaaS
 			String params = "Version=" + reqVeritomyxCLIVersion + // online CLI version that matches this interface
 					"&User="	+ URLEncoder.encode(username, "UTF-8") + 
 					"&Code="    + URLEncoder.encode(password, "UTF-8") + 
-					"&Action="  + action + "\"";
+					"&Action="  + action;
 			
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
