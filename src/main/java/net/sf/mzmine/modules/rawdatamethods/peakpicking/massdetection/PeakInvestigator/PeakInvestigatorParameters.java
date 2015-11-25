@@ -22,7 +22,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import java.awt.Window;
 
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
-import net.sf.mzmine.parameters.UserParameter;
+import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.util.ExitCode;
@@ -41,7 +41,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 	public PeakInvestigatorParameters()
 	{
-		super(new UserParameter[] { minMass, maxMass });
+		super(new Parameter[] { minMass, maxMass });
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)

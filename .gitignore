@@ -4,3 +4,4 @@ conf/
 .DS_Store
 .project
 .classpath
+src/main/lib/org/json/simple/1.1.1/json-simple-1.1.1.jar
