@@ -140,7 +140,7 @@ public class PeakInvestigatorSaaS
 		log.info(this.getClass().getName());
 		jobID      = null;
 		dir        = null;
-		host       = live ? "gamma.veritomyx.com/api" : "test.veritomyx.com";
+		host       = live ? "gamma.veritomyx.com/api/" : "test.veritomyx.com";
 		sftp_user  = null;
 		sftp_pw    = null;
 		sftp_port  = 22;
@@ -283,7 +283,7 @@ public class PeakInvestigatorSaaS
 			String params = "Version=" + reqVeritomyxCLIVersion + // online CLI version that matches this interface
 					"&User="	+ URLEncoder.encode(username, "UTF-8") + 
 					"&Code="    + URLEncoder.encode(password, "UTF-8") + 
-					"&Action="  + action + "\"";
+					"&Action="  + action;
 			
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
@@ -346,84 +346,91 @@ public class PeakInvestigatorSaaS
 
 			// Read the response from the HTTP server
 			in = new BufferedReader(new InputStreamReader(uc.getInputStream()));
-			String decodedString;
-			while ((decodedString = in.readLine()) != null)
+			String line;
+			StringBuilder builder = new StringBuilder();
+			while ((line = in.readLine()) != null)
 			{
-				log.debug(decodedString);
-				if (web_result == W_UNDEFINED)
-				{
-					web_str = decodedString;
-					JSONParser parser = new JSONParser();
-					try{
-						JSONObject obj = (JSONObject)parser.parse(web_str);
+				builder.append(line);
+			}
 
-						if(obj.get("Action") == "INIT")    
-						{
-							web_result = W_INFO;
-							aid   = (Integer)obj.get("Job");
-							//jobID = obj.get("Job"));
-							funds = (String)obj.get("Funds");
-							JSONArray rtos  = (JSONArray)obj.get("RTOs");
-							SLAs  = new String[rtos.size()];
-							int r = 0;
-							for(r = 0; r < rtos.size(); r++) {
-								SLAs[r] = rtos.get(r).toString();
-							}
-							PIversions = ((String)obj.get("PI_versions")).split(",");
-							JSONArray pis  = (JSONArray)obj.get("PI_versions");
-							PIversions  = new String[pis.size()];
-							int p = 0;
-							for(p = 0; p < pis.size(); p++) {
-								PIversions[p] = pis.get(p).toString();
-							}
-						}
-						else if (obj.get("Action") == "SFTP") 	
-						{
-							web_result = W_SFTP;
-							sftp_host = (String)obj.get("Host");
-							sftp_port = (Integer)obj.get("Port");
-							dir       = (String)obj.get("Directory");
-							sftp_user = (String)obj.get("Login");
-							sftp_pw   = (String)obj.get("Password");
-						}
-						else if (obj.get("Action") == "PREP") 	
-						{
-							web_result = W_PREP;
+			String decodedString = builder.toString();
 
-							if(obj.get("Status") == "Ready")
-							{
-								prep_status     = prep_status_type.PREP_READY;
-							} 
-							else if (obj.get("Analysis") == "Ready")
-							{
-								prep_status 	= prep_status_type.PREP_ANALYZING;
-							}
-							else // error
-							{
-								JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
-										"Peak Investigator Saas returned an error in the PREP phase.", 
-										MZmineCore.MZmineName , JOptionPane.ERROR_MESSAGE);
-							}
-							prep_scan_count = (Integer)obj.get("ScanCount");
-							prep_ms_type    = (String)obj.get("MSType");
+			log.debug(decodedString);
+			if (web_result == W_UNDEFINED) {
+				web_str = decodedString;
+				JSONParser parser = new JSONParser();
+				JSONObject obj = new JSONObject();
+				try {
+					obj = (JSONObject) parser.parse(web_str);
+				} catch (ParseException pe) {
 
-							if (prep_scan_count != count) 
-							{  
-								JOptionPane.showMessageDialog(MZmineCore.getDesktop().getMainWindow(), 
-										"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?", 
-										MZmineCore.MZmineName , JOptionPane.QUESTION_MESSAGE);
-							}
-						}
-						else if (obj.get("Action") == "Running") web_result = W_RUNNING;
-						else if (obj.get("Action") == "Deleted") web_result = W_DONE;
-						else if (web_str.startsWith("Error-"))  web_result = - Integer.parseInt(web_str.substring(6, web_str.indexOf(":"))); // "ERROR-#"
-						else                                    web_result = W_EXCEPTION;
-					} catch(ParseException pe){
-						
-						log.error("JSON Parse Error at position: " + pe.getPosition());
-						log.error(pe);
-				    }
-				} 
+					log.error("JSON Parse Error at position: "
+							+ pe.getPosition());
+					log.error(pe);
+				}
+
+				if (obj.get("Action") == "INIT") {
+					web_result = W_INFO;
+					aid = (Integer) obj.get("Job");
+					// jobID = obj.get("Job"));
+					funds = (String) obj.get("Funds");
+					JSONArray rtos = (JSONArray) obj.get("RTOs");
+					SLAs = new String[rtos.size()];
+					int r = 0;
+					for (r = 0; r < rtos.size(); r++) {
+						SLAs[r] = rtos.get(r).toString();
+					}
+					PIversions = ((String) obj.get("PI_versions")).split(",");
+					JSONArray pis = (JSONArray) obj.get("PI_versions");
+					PIversions = new String[pis.size()];
+					int p = 0;
+					for (p = 0; p < pis.size(); p++) {
+						PIversions[p] = pis.get(p).toString();
+					}
+				} else if (obj.get("Action") == "SFTP") {
+					web_result = W_SFTP;
+					sftp_host = (String) obj.get("Host");
+					sftp_port = (Integer) obj.get("Port");
+					dir = (String) obj.get("Directory");
+					sftp_user = (String) obj.get("Login");
+					sftp_pw = (String) obj.get("Password");
+				} else if (obj.get("Action") == "PREP") {
+					web_result = W_PREP;
+
+					if (obj.get("Status") == "Ready") {
+						prep_status = prep_status_type.PREP_READY;
+					} else if (obj.get("Analysis") == "Ready") {
+						prep_status = prep_status_type.PREP_ANALYZING;
+					} else // error
+					{
+						JOptionPane
+								.showMessageDialog(
+										MZmineCore.getDesktop().getMainWindow(),
+										"Peak Investigator Saas returned an error in the PREP phase.",
+										MZmineCore.MZmineName,
+										JOptionPane.ERROR_MESSAGE);
+					}
+					prep_scan_count = (Integer) obj.get("ScanCount");
+					prep_ms_type = (String) obj.get("MSType");
+
+					if (prep_scan_count != count) {
+						JOptionPane
+								.showMessageDialog(
+										MZmineCore.getDesktop().getMainWindow(),
+										"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?",
+										MZmineCore.MZmineName,
+										JOptionPane.QUESTION_MESSAGE);
+					}
+				} else if (obj.get("Action") == "Running")
+					web_result = W_RUNNING;
+				else if (obj.get("Action") == "Deleted")
+					web_result = W_DONE;
+				else if (web_str.startsWith("Error-"))
+					web_result = -Integer.parseInt(web_str.substring(6,
+							web_str.indexOf(":"))); // "ERROR-#"
+				else
+					web_result = W_EXCEPTION;
+
 			}
 		}
 		catch (Exception e)
