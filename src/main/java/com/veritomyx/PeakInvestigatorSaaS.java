@@ -366,8 +366,11 @@ public class PeakInvestigatorSaaS
 							+ pe.getPosition());
 					log.error(pe);
 				}
+				
+				if(!obj.containsKey("Error")) {
 
-				if (obj.get("Action") == "INIT") {
+				String cmd = (String)obj.get("Action");
+				if (cmd.equals("INIT")) {
 					web_result = W_INFO;
 					aid = (Integer) obj.get("Job");
 					// jobID = obj.get("Job"));
@@ -392,14 +395,14 @@ public class PeakInvestigatorSaaS
 					SLAs = rtos.split(",");
 					String pis = (String)obj.get("PI_versions");
 					PIversions = pis.split(",");
-				} else if (obj.get("Action") == "SFTP") {
+				} else if (cmd.equals("SFTP")) {
 					web_result = W_SFTP;
 					sftp_host = (String) obj.get("Host");
 					sftp_port = (Integer) obj.get("Port");
 					dir = (String) obj.get("Directory");
 					sftp_user = (String) obj.get("Login");
 					sftp_pw = (String) obj.get("Password");
-				} else if (obj.get("Action") == "PREP") {
+				} else if (cmd.equals("PREP")) {
 					web_result = W_PREP;
 
 					if (obj.get("Status") == "Ready") {
@@ -426,15 +429,14 @@ public class PeakInvestigatorSaaS
 										MZmineCore.MZmineName,
 										JOptionPane.QUESTION_MESSAGE);
 					}
-				} else if (obj.get("Action") == "Running")
+				} else if (cmd.equals("Running"))
 					web_result = W_RUNNING;
-				else if (obj.get("Action") == "Deleted")
+				else if (cmd.equals("Deleted"))
 					web_result = W_DONE;
-				else if (web_str.startsWith("Error-"))
-					web_result = -Integer.parseInt(web_str.substring(6,
-							web_str.indexOf(":"))); // "ERROR-#"
-				else
-					web_result = W_EXCEPTION;
+				} else {
+					long err = (long)obj.get("Error"); // "Error":#
+					web_result = -(int)err;
+				}
 			}
 		}
 		catch (Exception e)
