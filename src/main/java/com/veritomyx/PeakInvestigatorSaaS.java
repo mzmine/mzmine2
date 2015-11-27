@@ -405,9 +405,10 @@ public class PeakInvestigatorSaaS
 				} else if (cmd.equals("PREP")) {
 					web_result = W_PREP;
 
-					if (obj.get("Status") == "Ready") {
+					String prep_status_string = (String)obj.get("Status");
+					if (prep_status_string.equals("Ready")) {
 						prep_status = prep_status_type.PREP_READY;
-					} else if (obj.get("Analysis") == "Ready") {
+					} else if (prep_status_string.equals("Analyzing")) {
 						prep_status = prep_status_type.PREP_ANALYZING;
 					} else // error
 					{
