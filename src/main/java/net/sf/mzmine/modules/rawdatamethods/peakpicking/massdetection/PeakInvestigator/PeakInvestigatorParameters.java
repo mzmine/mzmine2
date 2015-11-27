@@ -26,6 +26,9 @@ import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.Scan;
 
 public class PeakInvestigatorParameters extends SimpleParameterSet
 {
@@ -46,6 +49,19 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
+		Integer maxMasses = 0;
+		
+		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
+		for(RawDataFile file : files) {
+			int scanCount = file.getNumOfScans();
+			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
+				Scan scan = file.getScan(scanNum);
+				int dpCount = scan.getNumberOfDataPoints();
+				maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+			}
+		}
+		minMass.setMinMax(0, maxMasses-1);
+		maxMass.setMinMax(1, maxMasses);
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();

@@ -41,7 +41,7 @@ public class IntegerParameter implements UserParameter<Integer, IntegerComponent
     private static final int WIDTH = 100;
 
     private final String name, description;
-    private final Integer minimum, maximum;
+    private Integer minimum, maximum;
     private Integer value;
     private final boolean valueRequired;
 
@@ -176,4 +176,10 @@ public class IntegerParameter implements UserParameter<Integer, IntegerComponent
         return (minimum == null || number >= minimum)
                 && (maximum == null || number <= maximum);
     }
+    
+    public void setMinMax(final Integer min, final Integer max) {
+    	minimum = min;
+        maximum = max;
+    }
+    
 }

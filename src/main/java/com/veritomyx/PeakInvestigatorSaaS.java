@@ -189,11 +189,9 @@ public class PeakInvestigatorSaaS
 	                SLAs, PIversions);
 			if(dialog.getExitCode() == ExitCode.OK) 
 			{
-				String[] Scomp = dialog.getSLA().split(":");
-				SLA = Scomp[0];
+				SLA = dialog.getSLA();
 				PIversion = dialog.getPIversion();
-			}
-			
+			}	
 			
 	        dialog.setVisible(true);
 			if (getPage(JOB_SFTP, 0) != W_INFO)
@@ -363,19 +361,26 @@ public class PeakInvestigatorSaaS
 							aid   = (Integer)obj.get("Job");
 							//jobID = obj.get("Job"));
 							funds = (String)obj.get("Funds");
-							JSONArray rtos  = (JSONArray)obj.get("RTOs");
-							SLAs  = new String[rtos.size()];
-							int r = 0;
-							for(r = 0; r < rtos.size(); r++) {
-								SLAs[r] = rtos.get(r).toString();
-							}
-							PIversions = ((String)obj.get("PI_versions")).split(",");
-							JSONArray pis  = (JSONArray)obj.get("PI_versions");
-							PIversions  = new String[pis.size()];
-							int p = 0;
-							for(p = 0; p < pis.size(); p++) {
-								PIversions[p] = pis.get(p).toString();
-							}
+							// JSON Version 
+							/* JSONArray rtos  = (JSONArray)obj.get("RTOs");
+							 * SLAs  = new String[rtos.size()];
+							 * int r = 0;
+							 * for(r = 0; r < rtos.size(); r++) {
+							 *	SLAs[r] = rtos.get(r).toString();
+							 * }
+							 * PIversions = ((String)obj.get("PI_versions")).split(",");
+							 * JSONArray pis  = (JSONArray)obj.get("PI_versions");
+							 * PIversions  = new String[pis.size()];
+							 * int p = 0;
+							 * for(p = 0; p < pis.size(); p++) {
+							 *	PIversions[p] = pis.get(p).toString();
+							 * }
+							 */
+							// CSV Version
+							String rtos = (String)obj.get("RTOs");
+							SLAs = rtos.split(",");
+							String pis = (String)obj.get("PI_versions");
+							PIversions = pis.split(",");
 						}
 						else if (obj.get("Action") == "SFTP") 	
 						{
