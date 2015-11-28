@@ -110,7 +110,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	mainPanel = new GridBagPanel();
 	
 	// Create the 2 labels
-    JLabel SLA_label = new JLabel("Use Service Level Agreement (SLA) with estimated cost:");
+    JLabel SLA_label = new JLabel("Use Response Time Objectives with estimated cost:");
     mainPanel.add(SLA_label, 0, 0);
     JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
     mainPanel.add(PIV_label, 0, 1);
