@@ -27,6 +27,8 @@ import java.io.BufferedWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Date;
+import java.text.DateFormat;
 
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
@@ -58,7 +60,7 @@ import com.veritomyx.PeakInvestigatorInitDialog;
 public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String reqVeritomyxCLIVersion = "2.10";
+	public static final String reqVeritomyxCLIVersion = "2.11";
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -124,6 +126,14 @@ public class PeakInvestigatorSaaS
 	private int  	prep_scan_count;
 	private String 	prep_ms_type;
  
+	private int 	s_scansInput;
+	private int 	s_scansComplete;
+	private Double 	s_actualCost;
+	private String 	s_jobLogFile;
+	private String  s_resultsFile;
+	
+	private Date    event_date;
+	
 	private int    web_result;
 	private String web_str;
 
@@ -293,7 +303,7 @@ public class PeakInvestigatorSaaS
 			}
 			else if (action == JOB_PREP)
 			{
-				params += "&ID=" + jobID +
+				params += "&ID=" + aid +
 						"&File=" + sftp_file;
 			}
 			else if (action == JOB_RUN)
@@ -376,25 +386,24 @@ public class PeakInvestigatorSaaS
 					// jobID = obj.get("Job"));
 					funds = (String) obj.get("Funds");
 					// JSON Version 
-					/* JSONArray rtos  = (JSONArray)obj.get("RTOs");
-					 * SLAs  = new String[rtos.size()];
-					 * int r = 0;
-					 * for(r = 0; r < rtos.size(); r++) {
-					 *	SLAs[r] = rtos.get(r).toString();
-					 * }
-					 * PIversions = ((String)obj.get("PI_versions")).split(",");
-					 * JSONArray pis  = (JSONArray)obj.get("PI_versions");
-					 * PIversions  = new String[pis.size()];
-					 * int p = 0;
-					 * for(p = 0; p < pis.size(); p++) {
-					 *	PIversions[p] = pis.get(p).toString();
-					 * }
-					 */
+					JSONArray rtos  = (JSONArray)obj.get("RTOs");
+					SLAs  = new String[rtos.size()];
+					int r = 0;
+					for(r = 0; r < rtos.size(); r++) {
+					SLAs[r] = rtos.get(r).toString();
+					}
+					PIversions = ((String)obj.get("PI_versions")).split(",");
+					JSONArray pis  = (JSONArray)obj.get("PI_versions");
+					PIversions  = new String[pis.size()];
+					int p = 0;
+					for(p = 0; p < pis.size(); p++) {
+					PIversions[p] = pis.get(p).toString();
+					}
 					// CSV Version
-					String rtos = (String)obj.get("RTOs");
-					SLAs = rtos.split(",");
-					String pis = (String)obj.get("PI_versions");
-					PIversions = pis.split(",");
+					//String rtos = (String)obj.get("RTOs");
+					//SLAs = rtos.split(",");
+					//String pis = (String)obj.get("PI_versions");
+					//PIversions = pis.split(",");
 				} else if (cmd.equals("SFTP")) {
 					web_result = W_SFTP;
 					sftp_host = (String) obj.get("Host");
@@ -430,13 +439,34 @@ public class PeakInvestigatorSaaS
 										MZmineCore.MZmineName,
 										JOptionPane.QUESTION_MESSAGE);
 					}
-				} else if (cmd.equals("Running"))
+				} else if (cmd.equals("STATUS")) {
+					web_result = W_INFO;
+					String d = (String)obj.get("Datetime");
+					DateFormat df = DateFormat.getDateInstance();
+					event_date = df.parse(d);
+					String s_status = (String)obj.get("Status");
+					
+					web_str = "Status was " + s_status + " at " + d;
+					if(s_status.equals("Done")) {
+						s_scansInput = (int)obj.get("ScansInput");
+						s_scansComplete = (int)obj.get("ScansComplete");
+						s_actualCost = (Double)obj.get("ActualCost");
+						s_jobLogFile = (String)obj.get("JobLogFile");
+						s_resultsFile = (String)obj.get("ResultsFile");
+						web_str += "\nScans Input: " + s_scansInput + "\nScans Completed: " + s_scansComplete + 
+								"\nActual Cost:  $" + s_actualCost + "\nJob Log File: " + s_jobLogFile + "\nResults File: " + s_resultsFile;
+					}
+				} else if (cmd.equals("RUN"))
 					web_result = W_RUNNING;
-				else if (cmd.equals("Deleted"))
+				else if (cmd.equals("DELETE"))
 					web_result = W_DONE;
+					String d = (String)obj.get("Datetime");
+					DateFormat df = DateFormat.getDateInstance();
+					event_date = df.parse(d);
 				} else {
 					long err = (long)obj.get("Error"); // "Error":#
 					web_result = -(int)err;
+					web_str = (String)obj.get("Message");
 				}
 			}
 		}
