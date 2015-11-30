@@ -49,9 +49,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
 
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
 import com.veritomyx.PeakInvestigatorInitDialog;
+import com.veritomyx.RTO;
+
 /**
  * This class is used to access the Veritomyx SaaS servers
  * 
@@ -107,10 +110,10 @@ public class PeakInvestigatorSaaS
 	private int    aid;
 	private String jobID;				// name of the job and the scans tar file
 	private String dir;
-	private String funds;
-	private String[] SLAs;
+	private Double funds;
+	private Map<String, Double> SLAs;
 	private String[] PIversions;
-	private String   SLA;
+	private String   SLA_key;
 	private String   PIversion;
 
 	private String    host;
@@ -161,7 +164,7 @@ public class PeakInvestigatorSaaS
 		funds 	   = null;
 		SLAs	   = null;
 		PIversions = null;
-		SLA	   	   = null;
+		SLA_key	   = null;
 		PIversion  = null;
 		
 		prep_status     = prep_status_type.PREP_ANALYZING;
@@ -199,7 +202,7 @@ public class PeakInvestigatorSaaS
 	                SLAs, PIversions);
 			if(dialog.getExitCode() == ExitCode.OK) 
 			{
-				SLA = dialog.getSLA();
+				SLA_key = dialog.getSLA();
 				PIversion = dialog.getPIversion();
 			}	
 			
@@ -260,9 +263,9 @@ public class PeakInvestigatorSaaS
 	public String getPageStr()          { return web_str; }
 	public int	  getPage(String action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
 	
-	public String	getFunds()			{ return funds; }
-	public String[] getSLAs()			{ return SLAs; }
-	public String[] getPIversions()		{ return PIversions; }
+	public Double	getFunds()				{ return funds; }
+	public Map<String, Double> getSLAs()	{ return SLAs; }
+	public String[] getPIversions()			{ return PIversions; }
 
 	/**
 	 * Get the first line of a web page from the Veritomyx server
@@ -310,7 +313,7 @@ public class PeakInvestigatorSaaS
 			{
 				params += "&ID=" + jobID +
 						"&InputFile=" + sftp_file +
-						"&SLA=" + SLA +
+						"&SLA=" + SLA_key +
 						"&PIVersion=" + PIversion;
 				// TODO:  Add CalibrationFile when available
 			}
@@ -382,22 +385,23 @@ public class PeakInvestigatorSaaS
 				String cmd = (String)obj.get("Action");
 				if (cmd.equals("INIT")) {
 					web_result = W_INFO;
-					aid = (Integer) obj.get("Job");
+					jobID = (String) obj.get("Job");
 					// jobID = obj.get("Job"));
-					funds = (String) obj.get("Funds");
+					funds = Double.parseDouble((String)obj.get("Funds"));
 					// JSON Version 
-					JSONArray rtos  = (JSONArray)obj.get("RTOs");
-					SLAs  = new String[rtos.size()];
-					int r = 0;
-					for(r = 0; r < rtos.size(); r++) {
-					SLAs[r] = rtos.get(r).toString();
-					}
-					PIversions = ((String)obj.get("PI_versions")).split(",");
-					JSONArray pis  = (JSONArray)obj.get("PI_versions");
+					
+					JSONArray pis  = (JSONArray)obj.get("PI_Versions");
 					PIversions  = new String[pis.size()];
 					int p = 0;
 					for(p = 0; p < pis.size(); p++) {
-					PIversions[p] = pis.get(p).toString();
+						PIversions[p] = (String)pis.get(p);
+					}
+					JSONArray rtos  = (JSONArray)obj.get("RTOs");
+					int r = 0;
+					for(r = 0; r < rtos.size(); r++) {
+						JSONObject tmp = (JSONObject)rtos.get(r);
+						String key = tmp.keySet().toArray()[r].toString();
+						SLAs.put(key, Double.parseDouble(tmp.get(key).toString()));
 					}
 					// CSV Version
 					//String rtos = (String)obj.get("RTOs");

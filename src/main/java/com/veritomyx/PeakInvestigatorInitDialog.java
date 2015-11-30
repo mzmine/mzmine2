@@ -39,6 +39,8 @@ import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 import net.sf.mzmine.util.components.HelpButton;
 
+import java.util.Map;
+
 /**
  * This class represents the user selected SLA and PI Version dialog. 
  * This dialog presents 2 lists, one for SLA and one for PI.
@@ -67,13 +69,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     protected JComboBox<String>	   	SLA_list;
     protected JComboBox<String> 	PIV_list;
     
-    protected String		SLA;
-    protected String		PIV;
+    protected String	SLA_key;
+    protected String	PIV;
 
     /**
      * Constructor
      */
-    public PeakInvestigatorInitDialog(Window parent, String[] SLAs, String[] PIversions) {
+    public PeakInvestigatorInitDialog(Window parent, Map<String, Double> SLAs, String[] PIversions) {
 
 	// Make dialog modal
 	super(parent, "Please set the parameters",
@@ -104,7 +106,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     /**
      * Constructs all components of the dialog
      */
-    protected void addDialogComponents(String[] SLAs, String[] PIversions) {
+    protected void addDialogComponents(Map<String, Double> SLAs, String[] PIversions) {
 
 	// Main panel which holds all the components in a grid
 	mainPanel = new GridBagPanel();
@@ -116,10 +118,17 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     mainPanel.add(PIV_label, 0, 1);
     
     // Create the 2 combo boxes, filled with the available selections.
-	SLA_list = new JComboBox<String>(SLAs);
+    String[] r = new String[SLAs.size()];
+    int s = 0;
+    for(String key : SLAs.keySet()) {
+    	r[s] = key + " $" + SLAs.get(key).toString();
+    	if(s == 0) 
+    		SLA_key = key;
+    	s++;
+    }   
+ 	SLA_list = new JComboBox<String>(r);
 	SLA_list.setEditable(false);
 	SLA_list.setSelectedIndex(0);
-	SLA = SLAs[0];
 	mainPanel.add(SLA_label, 1, 0);
 
 	PIV_list = new JComboBox<String>(PIversions);
@@ -187,7 +196,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	}
 
 	if (src instanceof JComboBox) {
-		SLA = SLA_list.getSelectedItem().toString();
+		SLA_key = SLA_list.getSelectedItem().toString();
 		PIV = PIV_list.getSelectedItem().toString();
 	}
 
@@ -216,7 +225,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
  
     @Override
     public void changedUpdate(DocumentEvent event) {
-    	SLA = SLA_list.getSelectedItem().toString();
+    	SLA_key = SLA_list.getSelectedItem().toString();
 		PIV = PIV_list.getSelectedItem().toString();
     }
 
@@ -232,7 +241,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     
     public String getSLA() 
     {
-    	return SLA;
+    	return SLA_key;
     }
     
     public String getPIversion() 
