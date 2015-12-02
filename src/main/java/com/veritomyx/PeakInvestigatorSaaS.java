@@ -30,6 +30,8 @@ import java.net.URLEncoder;
 import java.util.Date;
 import java.text.DateFormat;
 
+import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.util.ExitCode;
@@ -50,10 +52,10 @@ import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
 
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 import com.veritomyx.PeakInvestigatorInitDialog;
-import com.veritomyx.RTO;
 
 /**
  * This class is used to access the Veritomyx SaaS servers
@@ -63,7 +65,7 @@ import com.veritomyx.RTO;
 public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String reqVeritomyxCLIVersion = "2.11";
+	public static final String reqVeritomyxCLIVersion = "2.12";
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -157,7 +159,7 @@ public class PeakInvestigatorSaaS
 		sftp_user  = null;
 		sftp_pw    = null;
 		sftp_port  = 22;
-		sftp       = null;
+		sftp       = SftpUtilFactory.getSftpUtil();
 		sftp_file  = null;
 		web_result = W_UNDEFINED;
 		web_str    = null;
@@ -198,15 +200,17 @@ public class PeakInvestigatorSaaS
 				return web_result;
 			// Ask user which SLA and PIversion
 			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
-                    .getDesktop().getMainWindow(),
+                    .getDesktop().getMainWindow(), funds,
 	                SLAs, PIversions);
+	        dialog.setVisible(true);
 			if(dialog.getExitCode() == ExitCode.OK) 
 			{
 				SLA_key = dialog.getSLA();
 				PIversion = dialog.getPIversion();
-			}	
-			
-	        dialog.setVisible(true);
+			} else {
+				return web_result;
+			}
+
 			if (getPage(JOB_SFTP, 0) != W_INFO)
 				return web_result;
 			if (getPage(JOB_PREP, 0) != W_INFO)
@@ -298,6 +302,21 @@ public class PeakInvestigatorSaaS
 			
 			if ((action == JOB_INIT) && (jobID == null))	// new job request
 			{
+				// Check the MaxMass to ensure it is not bigger than the size of the maximum datapoints in the job.
+				Integer maxMasses = 0;
+				
+				RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
+				for(RawDataFile file : files) {
+					int scanCount = file.getNumOfScans();
+					for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
+						Scan scan = file.getScan(scanNum);
+						int dpCount = scan.getNumberOfDataPoints();
+						maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+					}
+				}
+				if(maxMass > maxMasses) {
+					maxMass = maxMasses;
+				}
 				params += "&ID=" + aid +
 						"&ScanCount=" + count +
 				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
@@ -319,7 +338,7 @@ public class PeakInvestigatorSaaS
 			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
-				params += "&ID=" + jobID;
+				params += "&ID=" + aid;
 			}
 			else
 			{
@@ -387,21 +406,20 @@ public class PeakInvestigatorSaaS
 					web_result = W_INFO;
 					jobID = (String) obj.get("Job");
 					// jobID = obj.get("Job"));
-					funds = Double.parseDouble((String)obj.get("Funds"));
+					funds = Double.parseDouble(obj.get("Funds").toString().substring(1));
 					// JSON Version 
 					
 					JSONArray pis  = (JSONArray)obj.get("PI_Versions");
 					PIversions  = new String[pis.size()];
-					int p = 0;
-					for(p = 0; p < pis.size(); p++) {
+					for(int p = 0; p < pis.size(); p++) {
 						PIversions[p] = (String)pis.get(p);
 					}
+					SLAs = new HashMap<String, Double>();
 					JSONArray rtos  = (JSONArray)obj.get("RTOs");
-					int r = 0;
-					for(r = 0; r < rtos.size(); r++) {
+					for(int r = 0; r < rtos.size(); r++) {
 						JSONObject tmp = (JSONObject)rtos.get(r);
-						String key = tmp.keySet().toArray()[r].toString();
-						SLAs.put(key, Double.parseDouble(tmp.get(key).toString()));
+						String key = tmp.get("RTO").toString();
+						SLAs.put(key, Double.parseDouble(tmp.get("EstCost").toString().substring(1)));
 					}
 					// CSV Version
 					//String rtos = (String)obj.get("RTOs");
@@ -411,7 +429,7 @@ public class PeakInvestigatorSaaS
 				} else if (cmd.equals("SFTP")) {
 					web_result = W_SFTP;
 					sftp_host = (String) obj.get("Host");
-					sftp_port = (Integer) obj.get("Port");
+					sftp_port = Integer.parseInt(obj.get("Port").toString());
 					dir = (String) obj.get("Directory");
 					sftp_user = (String) obj.get("Login");
 					sftp_pw = (String) obj.get("Password");
@@ -460,9 +478,9 @@ public class PeakInvestigatorSaaS
 						web_str += "\nScans Input: " + s_scansInput + "\nScans Completed: " + s_scansComplete + 
 								"\nActual Cost:  $" + s_actualCost + "\nJob Log File: " + s_jobLogFile + "\nResults File: " + s_resultsFile;
 					}
-				} else if (cmd.equals("RUN"))
+				} else if (cmd.equals("RUN")) { 
 					web_result = W_RUNNING;
-				else if (cmd.equals("DELETE"))
+				}  else if (cmd.equals("DELETE")) {
 					web_result = W_DONE;
 					String d = (String)obj.get("Datetime");
 					DateFormat df = DateFormat.getDateInstance();
@@ -473,6 +491,7 @@ public class PeakInvestigatorSaaS
 					web_str = (String)obj.get("Message");
 				}
 			}
+		  }
 		}
 		catch (Exception e)
 		{
@@ -495,14 +514,14 @@ public class PeakInvestigatorSaaS
 	{
 		SftpSession session;
 		try {
-			session = sftp.connectByPasswdAuth(host, sftp_port, sftp_user, sftp_pw, SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 3000);
+			session = sftp.connectByPasswdAuth(sftp_host, sftp_port, sftp_user, sftp_pw, SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
 		} catch (SftpException e) {
 			session = null;
 			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot connect to SFTP server " + sftp_user + "@" + host;
+			web_str    = "Cannot connect to SFTP server " + sftp_user + "@" + sftp_host;
 			return null;
 		}
-		dir = "accounts/" + aid;
+		// dir = "accounts/" + aid;
 		SftpResult result = sftp.cd(session, dir);	// cd into the account directory
 		if (!result.getSuccessFlag())
 		{
@@ -553,7 +572,7 @@ public class PeakInvestigatorSaaS
 	public boolean putFile(String fname)
 	{
 		SftpResult result;
-		log.info("Transmit " + sftp_user + "@" + host + ":" + dir + "/" + fname);
+		log.info("Transmit " + sftp_user + "@" + sftp_host + ":" + dir + "/" + fname);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;
@@ -595,7 +614,7 @@ public class PeakInvestigatorSaaS
 	public boolean getFile(String fname)
 	{
 		SftpResult result;
-		log.info("Retrieve " + sftp_user + "@" + host + ":" + dir + "/" + fname);
+		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + dir + "/" + fname);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;

@@ -75,13 +75,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     /**
      * Constructor
      */
-    public PeakInvestigatorInitDialog(Window parent, Map<String, Double> SLAs, String[] PIversions) {
+    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> SLAs, String[] PIversions) {
 
 	// Make dialog modal
 	super(parent, "Please set the parameters",
 		Dialog.ModalityType.DOCUMENT_MODAL);
 
-	addDialogComponents(SLAs, PIversions);
+	addDialogComponents(funds, SLAs, PIversions);
 
 	updateMinimumSize();
 	pack();
@@ -106,22 +106,27 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     /**
      * Constructs all components of the dialog
      */
-    protected void addDialogComponents(Map<String, Double> SLAs, String[] PIversions) {
+    protected void addDialogComponents(Double funds, Map<String, Double> SLAs, String[] PIversions) {
 
 	// Main panel which holds all the components in a grid
 	mainPanel = new GridBagPanel();
 	
+	JLabel funds_label = new JLabel("The available funds are (in USD): $");
+    mainPanel.add(funds_label, 0, 0);
+    JLabel funds_disp = new JLabel(String.format( "%.2f", funds ));
+    mainPanel.add(funds_disp, 1, 0);
+    
 	// Create the 2 labels
-    JLabel SLA_label = new JLabel("Use Response Time Objectives with estimated cost:");
-    mainPanel.add(SLA_label, 0, 0);
+    JLabel SLA_label = new JLabel("Use Response Time Objectives:");
+    mainPanel.add(SLA_label, 0, 1);
     JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
-    mainPanel.add(PIV_label, 0, 1);
+    mainPanel.add(PIV_label, 0, 2);
     
     // Create the 2 combo boxes, filled with the available selections.
     String[] r = new String[SLAs.size()];
     int s = 0;
     for(String key : SLAs.keySet()) {
-    	r[s] = key + " $" + SLAs.get(key).toString();
+    	r[s] = "RTO: " + key + " Estimate Cost: $" + String.format( "%.2f", SLAs.get(key));
     	if(s == 0) 
     		SLA_key = key;
     	s++;
@@ -129,22 +134,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
  	SLA_list = new JComboBox<String>(r);
 	SLA_list.setEditable(false);
 	SLA_list.setSelectedIndex(0);
-	mainPanel.add(SLA_label, 1, 0);
+	mainPanel.add(SLA_list, 1, 1);
 
+	PIV = PIversions[0];
 	PIV_list = new JComboBox<String>(PIversions);
 	PIV_list.setEditable(false);
-	// TODO:  Select the highest version
-	int i = 0, idx = 0;
-	double curr_ver = 0.0;
-	for(i =0 ; i < PIversions.length; i++)
-	{
-		if( curr_ver < Double.parseDouble(PIversions[i])) {
-			curr_ver = Double.parseDouble(PIversions[i]);
-			idx = i;
-		}
-	}
-	PIV_list.setSelectedIndex(idx);
-	mainPanel.add(PIV_label, 1, 1);
+	PIV_list.setSelectedIndex(0);
+	mainPanel.add(PIV_list, 1, 2);
 
 	// Add a single empty cell to the 4th row. This cell is expandable
 	// (weightY is 1), therefore the other components will be
