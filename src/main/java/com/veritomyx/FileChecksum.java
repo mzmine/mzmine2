@@ -29,7 +29,7 @@ import java.util.zip.GZIPOutputStream;
  * To compute and append a hash to a new output file, create an instance and then
  * either call hash_line() for each line of the file you are writing or
  * call hash_file() to hash the entire file you have written.
- * Finally, to add the hash to the file, call the append_txt() or append_xml() method.
+ * Finally, to add the hash to the file, call the append_txt() or append_xml() method.Hash seed!
  * 
  * @author Dan Schmidt
  */
@@ -37,7 +37,7 @@ public class FileChecksum
 {
 	public static final String version = "1.0.1";
 	public  final String       prefix  = "# checksum:";
-	private final String       seed    = "Veritomyx hash seed!";
+	private final String       seed    = "Hash seed!";
 	private MessageDigest md;
 	private String        filename;
 	private File          file;

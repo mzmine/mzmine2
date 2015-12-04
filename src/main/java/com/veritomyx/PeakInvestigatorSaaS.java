@@ -126,7 +126,7 @@ public class PeakInvestigatorSaaS
 	private SftpUtil  sftp;
 	private String 	  sftp_file;
 	
-	public  enum 	prep_status_type {PREP_ANALYZING, PREP_READY };
+	public  enum 	prep_status_type {PREP_ANALYZING, PREP_READY, PREP_ERROR };
 	private prep_status_type prep_status;
 	private int  	prep_scan_count;
 	private String 	prep_ms_type;
@@ -263,9 +263,12 @@ public class PeakInvestigatorSaaS
 	public String getJobID()            { return jobID; }
 	public int    getPageStatus()       { return getPage(JOB_STATUS,     0); }
 	public int    getPageRun(int count) { return getPage(JOB_RUN,    count); }
+	public int	  getPagePrep(int count){ return getPage(JOB_PREP, 	 count); }
 	public int    getPageDone()         { return getPage(JOB_DONE,       0); }
 	public String getPageStr()          { return web_str; }
 	public int	  getPage(String action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
+	
+	public prep_status_type getPrepStatus() { return prep_status; }
 	
 	public Double	getFunds()				{ return funds; }
 	public Map<String, Double> getSLAs()	{ return SLAs; }
@@ -330,9 +333,9 @@ public class PeakInvestigatorSaaS
 			}
 			else if (action == JOB_RUN)
 			{
-				params += "&ID=" + jobID +
+				params += "&Job=" + jobID +
 						"&InputFile=" + sftp_file +
-						"&SLA=" + SLA_key +
+						"&RTO=" + SLA_key +
 						"&PIVersion=" + PIversion;
 				// TODO:  Add CalibrationFile when available
 			}
@@ -439,6 +442,16 @@ public class PeakInvestigatorSaaS
 					String prep_status_string = (String)obj.get("Status");
 					if (prep_status_string.equals("Ready")) {
 						prep_status = prep_status_type.PREP_READY;
+						prep_scan_count = Integer.parseInt(obj.get("ScanCount").toString());
+						if (prep_scan_count != count) {
+							JOptionPane
+									.showMessageDialog(
+											MZmineCore.getDesktop().getMainWindow(),
+											"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?",
+											MZmineCore.MZmineName,
+											JOptionPane.QUESTION_MESSAGE);
+						}
+						prep_ms_type = (String) obj.get("MSType");
 					} else if (prep_status_string.equals("Analyzing")) {
 						prep_status = prep_status_type.PREP_ANALYZING;
 					} else // error
@@ -450,17 +463,6 @@ public class PeakInvestigatorSaaS
 										MZmineCore.MZmineName,
 										JOptionPane.ERROR_MESSAGE);
 					}
-					prep_scan_count = (Integer) obj.get("ScanCount");
-					prep_ms_type = (String) obj.get("MSType");
-
-					if (prep_scan_count != count) {
-						JOptionPane
-								.showMessageDialog(
-										MZmineCore.getDesktop().getMainWindow(),
-										"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?",
-										MZmineCore.MZmineName,
-										JOptionPane.QUESTION_MESSAGE);
-					}
 				} else if (cmd.equals("STATUS")) {
 					web_result = W_INFO;
 					String d = (String)obj.get("Datetime");
@@ -470,9 +472,9 @@ public class PeakInvestigatorSaaS
 					
 					web_str = "Status was " + s_status + " at " + d;
 					if(s_status.equals("Done")) {
-						s_scansInput = (int)obj.get("ScansInput");
-						s_scansComplete = (int)obj.get("ScansComplete");
-						s_actualCost = (Double)obj.get("ActualCost");
+						s_scansInput = Integer.parseInt(obj.get("ScansInput").toString());
+						s_scansComplete = Integer.parseInt(obj.get("ScansComplete").toString());
+						s_actualCost = Double.parseDouble(obj.get("ActualCost").toString());
 						s_jobLogFile = (String)obj.get("JobLogFile");
 						s_resultsFile = (String)obj.get("ResultsFile");
 						web_str += "\nScans Input: " + s_scansInput + "\nScans Completed: " + s_scansComplete + 
@@ -521,7 +523,6 @@ public class PeakInvestigatorSaaS
 			web_str    = "Cannot connect to SFTP server " + sftp_user + "@" + sftp_host;
 			return null;
 		}
-		// dir = "accounts/" + aid;
 		SftpResult result = sftp.cd(session, dir);	// cd into the account directory
 		if (!result.getSuccessFlag())
 		{
@@ -534,22 +535,15 @@ public class PeakInvestigatorSaaS
 			}
 			sftp.chmod(session, 0770, dir);
 			result = sftp.cd(session, dir);
-			result = sftp.mkdir(session, "batches");
+/*			result = sftp.mkdir(session, jobID);
 			if (!result.getSuccessFlag())
 			{
 				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot create remote directory, " + dir + "/batches";
+				web_str    = "Cannot create remote directory, " + dir + "//" + jobID;
 				return null;
 			}
-			result = sftp.mkdir(session, "results");
-			if (!result.getSuccessFlag())
-			{
-				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot create remote directory, " + dir + "/results";
-				return null;
-			}
-			sftp.chmod(session, 0770, "batches");
-			sftp.chmod(session, 0770, "results");
+			sftp.chmod(session, 0770, jobID);
+*/			
 		}
 		return session;
 	}
@@ -572,16 +566,17 @@ public class PeakInvestigatorSaaS
 	public boolean putFile(String fname)
 	{
 		SftpResult result;
+		sftp_file = fname;
 		log.info("Transmit " + sftp_user + "@" + sftp_host + ":" + dir + "/" + fname);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;
 
-		sftp.cd(session, "batches");
-		try { sftp.rm(session, fname); } catch (Exception e) {}
-		try { sftp.rm(session, fname + ".filepart"); } catch (Exception e) {}
+		sftp.cd(session, dir);
+		sftp.rm(session, fname);
+		sftp.rm(session, fname + ".filepart");
 		result = sftp.put(session, fname, fname + ".filepart");
-		sftp.cd(session, "..");
+//		sftp.cd(session, "..");
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
@@ -591,7 +586,7 @@ public class PeakInvestigatorSaaS
 		}
 		else
 		{
-			sftp.cd(session, "batches");
+//			sftp.cd(session, "batches");
 			result = sftp.rename(session, fname + ".filepart", fname); //rename a remote file
 			sftp.cd(session, "..");
 			if (!result.getSuccessFlag())
@@ -619,11 +614,11 @@ public class PeakInvestigatorSaaS
 		if (session == null)
 			return false;
 
-		sftp.cd(session, "results");
+		sftp.cd(session, jobID);
 		result = sftp.get(session, fname);
 		if (!result.getSuccessFlag())
 		{
-			sftp.cd(session, "..");
+//			sftp.cd(session, "..");
 			closeSession(session);
 			web_result = W_ERROR_SFTP;
 			web_str    = "Cannot read file: " + fname;

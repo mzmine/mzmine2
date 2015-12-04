@@ -49,6 +49,7 @@ import org.xeustechnologies.jtar.TarOutputStream;
 
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.PeakInvestigatorSaaS.prep_status_type;
 
 /**
  * This class is used to run a set of scans through the Veritomyx SaaS servers
@@ -186,7 +187,7 @@ public class PeakInvestigatorTask
 	public void finish()
 	{
 		logger.finest("PeakInvestigatorTask - finish");
-		if (launch) finishLaunch();
+		if (launch) try { finishLaunch(); } catch(InterruptedException ie) {;}
 		else        finishRetrieve();
 	}
 
@@ -245,7 +246,7 @@ public class PeakInvestigatorTask
 	/**
 	 * Finish the job launch process and send job to VTMX SaaS server
 	 */
-	private void finishLaunch()
+	private void finishLaunch() throws InterruptedException
 	{
 		desc = "finishing launch";
 		try {
@@ -258,18 +259,34 @@ public class PeakInvestigatorTask
 		vtmx.putFile(intputFilename);
 
 		//####################################################################
+		// Prepare for remote job in a loop as it might take some time to analyze
+		logger.info("Awaiting PREP analysis, " + intputFilename + ", on SaaS server...");
+		int prep_ret = vtmx.getPagePrep(scanCnt);
+		prep_status_type prep_status = vtmx.getPrepStatus();
+		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING) {
+			logger.info("Waiting while waiting for PREP analysis, " + intputFilename + ", on SaaS server...Please be patient.");
+			Thread.sleep(120000);
+			prep_ret = vtmx.getPagePrep(scanCnt);
+			prep_status = vtmx.getPrepStatus();
+		}
+		if(prep_ret != PeakInvestigatorSaaS.W_PREP || prep_status != prep_status_type.PREP_READY) {
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch or complete(PREP Phase) " + jobID, logger);
+			return;
+		}
+			
+		//####################################################################
 		// start for remote job
-		logger.info("Launch job, " + jobID + ", on cloud server...");
+		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
 		if (vtmx.getPageRun(scanCnt) < PeakInvestigatorSaaS.W_RUNNING)
 		{
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch " + jobID, logger);
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch (RUN Phase) " + jobID, logger);
 			return;
 		}
 
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
 		rawDataFile.addJob(jobID, rawDataFile, targetName, vtmx);	// record this job start
-		logger.finest(vtmx.getPageStr().split(" ",2)[1]);
+		logger.finest(vtmx.getPageStr());
 		File f = new File(intputFilename);
 		f.delete();			// remove the local copy of the tar file
 		desc = "launch finished";
