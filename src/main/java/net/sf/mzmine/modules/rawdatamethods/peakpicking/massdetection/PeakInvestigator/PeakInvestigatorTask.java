@@ -76,6 +76,9 @@ public class PeakInvestigatorTask
 	private TarOutputStream tarfile;
 	private RawDataFile     rawDataFile;
 	private int             errors;
+	
+	private static final long minutesCheckPrep = 2;
+	private static final long minutesTimeoutPrep = 20;
 
 	public PeakInvestigatorTask(RawDataFile raw, String pickup_job, String target, ParameterSet parameters, int scanCount)
 	{
@@ -263,11 +266,14 @@ public class PeakInvestigatorTask
 		logger.info("Awaiting PREP analysis, " + intputFilename + ", on SaaS server...");
 		int prep_ret = vtmx.getPagePrep(scanCnt);
 		prep_status_type prep_status = vtmx.getPrepStatus();
-		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING) {
+		// timeWait is based on the loop count to keep this as short as possible.
+		long timeWait = minutesTimeoutPrep;
+		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING && timeWait > 0) {
 			logger.info("Waiting for PREP analysis to complete, " + intputFilename + ", on SaaS server...Please be patient.");
-			Thread.sleep(120000);
+			Thread.sleep(minutesCheckPrep * 60000);
 			prep_ret = vtmx.getPagePrep(scanCnt);
 			prep_status = vtmx.getPrepStatus();
+			timeWait -= minutesCheckPrep;
 		}
 		if(prep_ret != PeakInvestigatorSaaS.W_PREP || prep_status != prep_status_type.PREP_READY) {
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch or complete(PREP Phase) " + jobID, logger);
