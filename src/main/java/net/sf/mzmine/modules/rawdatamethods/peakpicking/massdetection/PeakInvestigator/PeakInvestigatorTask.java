@@ -264,7 +264,7 @@ public class PeakInvestigatorTask
 		int prep_ret = vtmx.getPagePrep(scanCnt);
 		prep_status_type prep_status = vtmx.getPrepStatus();
 		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING) {
-			logger.info("Waiting while waiting for PREP analysis, " + intputFilename + ", on SaaS server...Please be patient.");
+			logger.info("Waiting for PREP analysis to complete, " + intputFilename + ", on SaaS server...Please be patient.");
 			Thread.sleep(120000);
 			prep_ret = vtmx.getPagePrep(scanCnt);
 			prep_status = vtmx.getPrepStatus();
