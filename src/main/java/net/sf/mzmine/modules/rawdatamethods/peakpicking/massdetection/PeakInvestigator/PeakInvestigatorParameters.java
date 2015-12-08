@@ -22,20 +22,46 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import java.awt.Window;
 
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
-import net.sf.mzmine.parameters.UserParameter;
+import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
+import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.Scan;
 
 public class PeakInvestigatorParameters extends SimpleParameterSet
 {
+	
+	public static final IntegerParameter minMass = new IntegerParameter(
+		    "Min Mass",
+		    "The minimum mass in the set of masses to send to the Peak Investigator SaaS.",
+		    0);
+	public static final IntegerParameter maxMass = new IntegerParameter(
+		    "Max Mass",
+		    "The maximum mass in the set of masses to send to the Peak Investigator SaaS.",
+		    Integer.MAX_VALUE);
 
 	public PeakInvestigatorParameters()
 	{
-		super(new UserParameter[] {});
+		super(new Parameter[] { minMass, maxMass });
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
+		Integer maxMasses = 0;
+		
+		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
+		for(RawDataFile file : files) {
+			int scanCount = file.getNumOfScans();
+			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
+				Scan scan = file.getScan(scanNum);
+				int dpCount = scan.getNumberOfDataPoints();
+				maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+			}
+		}
+		minMass.setMinMax(0, maxMasses-1);
+		maxMass.setMinMax(1, maxMasses);
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();
