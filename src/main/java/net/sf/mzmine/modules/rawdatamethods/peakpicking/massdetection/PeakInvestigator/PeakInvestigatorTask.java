@@ -117,9 +117,10 @@ public class PeakInvestigatorTask
 		// make sure we have access to the Veritomyx Server
 		// this also gets the job_id and SFTP credentials
 		vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
+		int status = 0;
 		while (true)
 		{
-			int status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
+			status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
 			if (status > 0)
 				break;
 
@@ -135,7 +136,7 @@ public class PeakInvestigatorTask
 			pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
 		}
 
-		if (!launch && (vtmx.getPageStatus() <= 0))
+		if (!launch && (status <= 0))
 		{
 			desc = vtmx.getPageStr();
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
@@ -291,7 +292,7 @@ public class PeakInvestigatorTask
 
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
-		rawDataFile.addJob(jobID, rawDataFile, targetName, vtmx);	// record this job start
+		rawDataFile.addJob("job-" + jobID, rawDataFile, targetName, vtmx);	// record this job start
 		logger.finest(vtmx.getPageStr());
 		File f = new File(intputFilename);
 		f.delete();			// remove the local copy of the tar file

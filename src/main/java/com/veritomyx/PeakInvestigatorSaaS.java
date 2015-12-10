@@ -28,7 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Date;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -105,6 +105,8 @@ public class PeakInvestigatorSaaS
 	private static final String JOB_RUN    = "RUN";
 	private static final String JOB_STATUS = "STATUS";
 	private static final String JOB_DONE   = "DELETE";
+	
+	private static final String dateFormating = "yyyy-MM-dd kk:mm:ss";
 
 	private Logger log;
 	private String username;
@@ -190,7 +192,7 @@ public class PeakInvestigatorSaaS
 		username = email;
 		password = passwd;
 		aid      = account;
-		boolean pickup = ((existingJobName != null) && (existingJobName.startsWith("job-") == true));
+		boolean pickup = (existingJobName != null);
 
 		// make sure we have access to the Veritomyx Server
 		// this also gets the job_id and SFTP credentials
@@ -215,43 +217,36 @@ public class PeakInvestigatorSaaS
 				return web_result;
 			if (getPage(JOB_PREP, 0) != W_INFO)
 				return web_result;
+			if (jobID != null)	// we have a valid job
+			{
+				sftp = SftpUtilFactory.getSftpUtil();
+				SftpSession session = openSession();	// open to verify we can
+				if (session == null)
+				{
+					jobID      = null;
+					web_str    = "SFTP access not available";
+					web_result = W_ERROR_SFTP;
+					return web_result;
+				}
+				closeSession(session);
+			}
 		}
 		else
 		{
-			// check this job ID
+			// check this job STATUS
 			jobID = existingJobName;
-			if (getPage(JOB_INIT, 0) != W_INFO)
-			{
+			web_result = getPageStatus();
+			if (web_result == W_RUNNING) {
+//				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "Remote job not complete. Please try again later.", log);
+			} else if (web_result == W_DONE) {
+//				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Completed", "Remote job complete." + web_str, log);
+			} else {
 				jobID = null;
 				return web_result;
 			}
-			// Ask user which SLA and PIversion
-			if (getPage(JOB_SFTP, 0) != W_INFO)
-			{
-				jobID = null;
-				return web_result;
-			}
-			if (getPage(JOB_PREP, 0) != W_INFO)
-			{
-				jobID = null;
-				return web_result;
-			}
-			scanCount = 0;	// job pickup has no scan cost
+			
 		}
 
-		if (jobID != null)	// we have a valid job
-		{
-			sftp = SftpUtilFactory.getSftpUtil();
-			SftpSession session = openSession();	// open to verify we can
-			if (session == null)
-			{
-				jobID      = null;
-				web_str    = "SFTP access not available";
-				web_result = W_ERROR_SFTP;
-				return web_result;
-			}
-			closeSession(session);
-		}
 		return web_result;
 	}
 
@@ -338,6 +333,10 @@ public class PeakInvestigatorSaaS
 						"&RTO=" + SLA_key +
 						"&PIVersion=" + PIversion;
 				// TODO:  Add CalibrationFile when available
+			}
+			else if (action == JOB_STATUS)
+			{
+				params += "&Job=" + jobID;
 			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
@@ -444,6 +443,7 @@ public class PeakInvestigatorSaaS
 						prep_status = prep_status_type.PREP_READY;
 						prep_scan_count = Integer.parseInt(obj.get("ScanCount").toString());
 						if (prep_scan_count != count) {
+							// TODO Need to check the return value and process
 							JOptionPane
 									.showMessageDialog(
 											MZmineCore.getDesktop().getMainWindow(),
@@ -464,14 +464,15 @@ public class PeakInvestigatorSaaS
 										JOptionPane.ERROR_MESSAGE);
 					}
 				} else if (cmd.equals("STATUS")) {
-					web_result = W_INFO;
+					web_result = W_RUNNING;
 					String d = (String)obj.get("Datetime");
-					DateFormat df = DateFormat.getDateInstance();
+					SimpleDateFormat df = new SimpleDateFormat(dateFormating);
 					event_date = df.parse(d);
 					String s_status = (String)obj.get("Status");
 					
 					web_str = "Status was " + s_status + " at " + d;
 					if(s_status.equals("Done")) {
+						web_result = W_DONE;
 						s_scansInput = Integer.parseInt(obj.get("ScansInput").toString());
 						s_scansComplete = Integer.parseInt(obj.get("ScansComplete").toString());
 						s_actualCost = Double.parseDouble(obj.get("ActualCost").toString());
@@ -482,10 +483,11 @@ public class PeakInvestigatorSaaS
 					}
 				} else if (cmd.equals("RUN")) { 
 					web_result = W_RUNNING;
+					jobID = obj.get("Datetime").toString();
 				}  else if (cmd.equals("DELETE")) {
 					web_result = W_DONE;
 					String d = (String)obj.get("Datetime");
-					DateFormat df = DateFormat.getDateInstance();
+					SimpleDateFormat df = new SimpleDateFormat(dateFormating);
 					event_date = df.parse(d);
 				} else {
 					long err = (long)obj.get("Error"); // "Error":#
