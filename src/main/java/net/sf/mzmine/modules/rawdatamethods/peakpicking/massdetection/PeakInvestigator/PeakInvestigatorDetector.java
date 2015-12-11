@@ -92,7 +92,7 @@ public class PeakInvestigatorDetector implements MassDetector
 	private String filterJobName(String compoundName)
 	{
 		if (compoundName.startsWith("|job-"))
-			return compoundName.substring(1, compoundName.indexOf('['));
+			return compoundName.substring(5, compoundName.indexOf('['));
 		return null;
 	}
 

@@ -76,6 +76,9 @@ public class PeakInvestigatorTask
 	private TarOutputStream tarfile;
 	private RawDataFile     rawDataFile;
 	private int             errors;
+	
+	private static final long minutesCheckPrep = 2;
+	private static final long minutesTimeoutPrep = 20;
 
 	public PeakInvestigatorTask(RawDataFile raw, String pickup_job, String target, ParameterSet parameters, int scanCount)
 	{
@@ -114,9 +117,14 @@ public class PeakInvestigatorTask
 		// make sure we have access to the Veritomyx Server
 		// this also gets the job_id and SFTP credentials
 		vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
+		int status = 0;
 		while (true)
 		{
+<<<<<<< HEAD
 			int status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
+=======
+			status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
+>>>>>>> refs/remotes/origin/master
 			if (status > 0)
 				break;
 
@@ -132,7 +140,7 @@ public class PeakInvestigatorTask
 			pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
 		}
 
-		if (!launch && (vtmx.getPageStatus() <= 0))
+		if (!launch && (status <= 0))
 		{
 			desc = vtmx.getPageStr();
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
@@ -263,11 +271,22 @@ public class PeakInvestigatorTask
 		logger.info("Awaiting PREP analysis, " + intputFilename + ", on SaaS server...");
 		int prep_ret = vtmx.getPagePrep(scanCnt);
 		prep_status_type prep_status = vtmx.getPrepStatus();
+<<<<<<< HEAD
 		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING) {
 			logger.info("Waiting while waiting for PREP analysis, " + intputFilename + ", on SaaS server...Please be patient.");
 			Thread.sleep(120000);
 			prep_ret = vtmx.getPagePrep(scanCnt);
 			prep_status = vtmx.getPrepStatus();
+=======
+		// timeWait is based on the loop count to keep this as short as possible.
+		long timeWait = minutesTimeoutPrep;
+		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING && timeWait > 0) {
+			logger.info("Waiting for PREP analysis to complete, " + intputFilename + ", on SaaS server...Please be patient.");
+			Thread.sleep(minutesCheckPrep * 60000);
+			prep_ret = vtmx.getPagePrep(scanCnt);
+			prep_status = vtmx.getPrepStatus();
+			timeWait -= minutesCheckPrep;
+>>>>>>> refs/remotes/origin/master
 		}
 		if(prep_ret != PeakInvestigatorSaaS.W_PREP || prep_status != prep_status_type.PREP_READY) {
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch or complete(PREP Phase) " + jobID, logger);
@@ -285,7 +304,11 @@ public class PeakInvestigatorTask
 
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
+<<<<<<< HEAD
 		rawDataFile.addJob(jobID, rawDataFile, targetName, vtmx);	// record this job start
+=======
+		rawDataFile.addJob("job-" + jobID, rawDataFile, targetName, vtmx);	// record this job start
+>>>>>>> refs/remotes/origin/master
 		logger.finest(vtmx.getPageStr());
 		File f = new File(intputFilename);
 		f.delete();			// remove the local copy of the tar file
