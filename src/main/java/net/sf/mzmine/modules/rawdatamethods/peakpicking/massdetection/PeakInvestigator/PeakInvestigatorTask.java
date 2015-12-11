@@ -334,11 +334,9 @@ public class PeakInvestigatorTask
 		
 		// check to see if the results were complete.
 		// this will be shown in the string returned from the status call to the web.
-		String results = vtmx.getPageStr();
-		logger.finest(results.split(" ",2)[1]);		// log the entire response
-		results = results.substring(results.indexOf("(") + 1, results.indexOf(")"));	// extract the scan counts
-		int valid = Integer.parseInt(results.substring(0, results.indexOf(" ")));
-		int scans = Integer.parseInt(results.substring(results.lastIndexOf(" ") + 1));
+		
+		int valid = vtmx.getScansComplete();
+		int scans = vtmx.getScansInput();
 		if (valid < scans)
 		{
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Only " + valid + " of " + scans + " scans were successful.\n" +
@@ -346,6 +344,9 @@ public class PeakInvestigatorTask
 																"You have been credited for the incomplete scans.", logger);
 		}
 
+		// Get the SFTP data for the completed job 
+		vtmx.getPageSftp();
+		outputFilename = vtmx.getResultsFilename();
 		// read the results tar file and extract all the peak list files
 		logger.info("Reading centroided data, " + outputFilename + ", from SFTP drop...");
 		vtmx.getFile(outputFilename);

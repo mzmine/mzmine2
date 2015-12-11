@@ -258,6 +258,7 @@ public class PeakInvestigatorSaaS
 	public int    getPageRun(int count) { return getPage(JOB_RUN,    count); }
 	public int	  getPagePrep(int count){ return getPage(JOB_PREP, 	 count); }
 	public int    getPageDone()         { return getPage(JOB_DONE,       0); }
+	public int	  getPageSftp()			{ return getPage(JOB_SFTP, 		 0); }
 	public String getPageStr()          { return web_str; }
 	public int	  getPage(String action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
 	
@@ -266,6 +267,10 @@ public class PeakInvestigatorSaaS
 	public Double	getFunds()				{ return funds; }
 	public Map<String, Double> getSLAs()	{ return SLAs; }
 	public String[] getPIversions()			{ return PIversions; }
+	public String   getResultsFilename()	{ return s_resultsFile; }
+	
+	public  int 	getScansInput() { return s_scansInput; }
+	public  int 	getScansComplete() { return s_scansComplete; }
 
 	/**
 	 * Get the first line of a web page from the Veritomyx server
@@ -608,12 +613,12 @@ public class PeakInvestigatorSaaS
 	public boolean getFile(String fname)
 	{
 		SftpResult result;
-		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + dir + "/" + fname);
+		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + fname);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;
 
-		sftp.cd(session, jobID);
+		//sftp.cd(session, dir);
 		result = sftp.get(session, fname);
 		if (!result.getSuccessFlag())
 		{
