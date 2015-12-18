@@ -156,7 +156,7 @@ public class PeakInvestigatorSaaS
 		log.info(this.getClass().getName());
 		jobID      = null;
 		dir        = null;
-		host       = live ? "gamma.veritomyx.com/api/" : "test.veritomyx.com";
+		host       = live ? "peakinvestigator.veritomyx.com/api/" : "test.veritomyx.com";
 		sftp_user  = null;
 		sftp_pw    = null;
 		sftp_port  = 22;
