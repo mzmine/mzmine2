@@ -391,6 +391,19 @@ public class PeakInvestigatorSaaS
 			String decodedString = builder.toString();
 
 			log.debug(decodedString);
+			
+			if(decodedString.startsWith("<html>")) {
+				log.error("The URL appears to have an error.");
+				JOptionPane
+				.showMessageDialog(
+						MZmineCore.getDesktop().getMainWindow(),
+						"Peak Investigator Saas returned an error indicating a problem with the URL.",
+						MZmineCore.MZmineName,
+						JOptionPane.ERROR_MESSAGE);
+				web_str = decodedString;
+				return (web_result = W_ERROR);
+			}		
+			
 			if (web_result == W_UNDEFINED) {
 				web_str = decodedString;
 				JSONParser parser = new JSONParser();
