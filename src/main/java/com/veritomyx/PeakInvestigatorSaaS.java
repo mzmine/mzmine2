@@ -134,7 +134,7 @@ public class PeakInvestigatorSaaS
  
 	private int 	s_scansInput;
 	private int 	s_scansComplete;
-	private Double 	s_actualCost;
+	private String 	s_actualCost;
 	private String 	s_jobLogFile;
 	private String  s_resultsFile;
 	
@@ -491,11 +491,11 @@ public class PeakInvestigatorSaaS
 						web_result = W_DONE;
 						s_scansInput = Integer.parseInt(obj.get("ScansInput").toString());
 						s_scansComplete = Integer.parseInt(obj.get("ScansComplete").toString());
-						s_actualCost = Double.parseDouble(obj.get("ActualCost").toString());
+						s_actualCost = obj.get("ActualCost").toString();
 						s_jobLogFile = (String)obj.get("JobLogFile");
 						s_resultsFile = (String)obj.get("ResultsFile");
 						web_str += "\nScans Input: " + s_scansInput + "\nScans Completed: " + s_scansComplete + 
-								"\nActual Cost:  $" + s_actualCost + "\nJob Log File: " + s_jobLogFile + "\nResults File: " + s_resultsFile;
+								"\nActual Cost:  " + s_actualCost + "\nJob Log File: " + s_jobLogFile + "\nResults File: " + s_resultsFile;
 					}
 				} else if (cmd.equals("RUN")) { 
 					web_result = W_RUNNING;
