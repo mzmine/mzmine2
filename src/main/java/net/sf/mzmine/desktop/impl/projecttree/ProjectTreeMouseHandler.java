@@ -253,7 +253,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             for (RemoteJob job : getObjList(RemoteJob.class)) {
                 int selectedValue = JOptionPane.showInternalConfirmDialog(
                         MZmineCore.getDesktop().getMainWindow(),
-                        "Unretrieved results, will be lost.\n"
+                        "Unretrieved results will be lost.\n"
                                 + "Are you sure you want to delete "
                                 + job.getName() + "?", "Remove Job",
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);

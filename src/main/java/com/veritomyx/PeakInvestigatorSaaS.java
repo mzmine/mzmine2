@@ -65,7 +65,7 @@ import com.veritomyx.PeakInvestigatorInitDialog;
 public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String reqVeritomyxCLIVersion = "2.12";
+	public static final String reqVeritomyxCLIVersion = "2.13";
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -430,7 +430,7 @@ public class PeakInvestigatorSaaS
 					JSONArray pis  = (JSONArray)obj.get("PI_Versions");
 					PIversions  = new String[pis.size()];
 					for(int p = 0; p < pis.size(); p++) {
-						PIversions[p] = (String)pis.get(p);
+						PIversions[p] = (String)pis.get((pis.size() - 1) - p);
 					}
 					SLAs = new HashMap<String, Double>();
 					JSONArray rtos  = (JSONArray)obj.get("RTOs");
