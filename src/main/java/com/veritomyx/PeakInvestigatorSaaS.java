@@ -642,7 +642,7 @@ public class PeakInvestigatorSaaS
 			return false;
 		}
 		sftp.rm(session, fname);
-		sftp.cd(session, "..");
+//		sftp.cd(session, "..");
 		closeSession(session);
 		return true;
 	}
