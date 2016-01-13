@@ -354,7 +354,8 @@ public class PeakInvestigatorTask
 			TarInputStream tis = null;
 			FileOutputStream outputStream = null;
 			try {
-				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(outputFilename)));
+				File f = new File(outputFilename);
+				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(f.getName())));
 				TarEntry tf;
 				int bytesRead;
 				byte buf[] = new byte[1024];
@@ -368,7 +369,6 @@ public class PeakInvestigatorTask
 					outputStream.close();
 				}
 				tis.close();
-				File f = new File(outputFilename);
 				f.delete();			// remove the local copy of the results tar file
 			} catch (Exception e1) {
 				logger.finest(e1.getMessage());

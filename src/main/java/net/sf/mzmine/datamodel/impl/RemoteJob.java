@@ -21,6 +21,8 @@ package net.sf.mzmine.datamodel.impl;
 
 import com.veritomyx.PeakInvestigatorSaaS;
 import net.sf.mzmine.datamodel.RemoteJobInfo;
+import net.sf.mzmine.desktop.preferences.MZminePreferences;
+import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
 
 /**
@@ -49,4 +51,15 @@ public class RemoteJob implements RemoteJobInfo
     public RawDataFile getRawDataFile() { return rawDataFile; }
     public String      getTargetName()  { return targetName; }
     public int         getStatus()      { return (vtmx != null) ? vtmx.getPageStatus() : PeakInvestigatorSaaS.W_UNDEFINED; }
+    
+    public int 			deleteJob() {
+    	if(vtmx == null)
+    		vtmx = new PeakInvestigatorSaaS(true);
+    	MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
+		String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
+		String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
+		Integer account  = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
+		
+    	return vtmx.deleteJob(username, password, account, jobID.substring(4));
+    }
 }
