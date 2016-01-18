@@ -354,7 +354,8 @@ public class PeakInvestigatorTask
 			TarInputStream tis = null;
 			FileOutputStream outputStream = null;
 			try {
-				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(outputFilename)));
+				File fullPath = new File(outputFilename); // outputfilename looks like /files/C-1022.1391/C-1022.1391.mass_list.tar
+				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(fullPath.getName())));
 				TarEntry tf;
 				int bytesRead;
 				byte buf[] = new byte[1024];
