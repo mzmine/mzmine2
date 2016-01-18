@@ -312,7 +312,7 @@ public class PeakInvestigatorSaaS
 					for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
 						Scan scan = file.getScan(scanNum);
 						int dpCount = scan.getNumberOfDataPoints();
-						maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+						maxMasses = Math.max(maxMasses.intValue(), dpCount);
 					}
 				}
 				if(maxMass > maxMasses) {
