@@ -30,10 +30,6 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-
 
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
@@ -49,8 +45,7 @@ import java.util.Map;
  * The first SLA and the highest version of PI are automatically selected to start. 
  * 
  */
-public class PeakInvestigatorInitDialog extends JDialog implements ActionListener,
-	DocumentListener {
+public class PeakInvestigatorInitDialog extends JDialog implements ActionListener {
 
     private static final long serialVersionUID = 1L;
 
@@ -218,22 +213,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	dispose();
 
     }
- 
-    @Override
-    public void changedUpdate(DocumentEvent event) {
-        System.out.println("changeUpdate called");
-    }
 
-    @Override
-    public void insertUpdate(DocumentEvent event) {
-
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent event) {
-
-    }
-    
     public String getSLA() {
         return responseTimeObjectiveComboBox.getSelectedItem().toString();
     }
