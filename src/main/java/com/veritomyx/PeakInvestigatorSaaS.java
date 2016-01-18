@@ -635,14 +635,12 @@ public class PeakInvestigatorSaaS
 		result = sftp.get(session, fname);
 		if (!result.getSuccessFlag())
 		{
-//			sftp.cd(session, "..");
 			closeSession(session);
 			web_result = W_ERROR_SFTP;
 			web_str    = "Cannot read file: " + fname;
 			return false;
 		}
-		sftp.rm(session, fname);
-//		sftp.cd(session, "..");
+
 		closeSession(session);
 		return true;
 	}
