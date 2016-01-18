@@ -68,25 +68,24 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
      */
     protected GridBagPanel mainPanel;
     
-    protected JComboBox<String>	   	SLA_list;
-    protected JComboBox<String> 	PIV_list;
-    protected JLabel                    estimatedCost;
+    protected JComboBox<String>	   	responseTimeObjectiveComboBox;
+    protected JComboBox<String> 	versionsComboBox;
+    protected JLabel                    estimatedCostLabel;
     
-    protected Map<String, Double> SLAs;
-    protected String	PIV;
+    protected Map<String, Double> responseTimeObjectives;
 
     /**
      * Constructor
      */
-    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> SLAs, String[] PIversions) {
+    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> responseTimeObjectives, String[] PIversions) {
 
 	// Make dialog modal
 	super(parent, "Please set the parameters",
 		Dialog.ModalityType.DOCUMENT_MODAL);
 
-	this.SLAs = SLAs;
+	this.responseTimeObjectives = responseTimeObjectives;
 
-	addDialogComponents(funds, SLAs, PIversions);
+	addDialogComponents(funds, responseTimeObjectives, PIversions);
 
 	updateMinimumSize();
 	pack();
@@ -128,21 +127,21 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     mainPanel.add(PIV_label, 0, 2);
     
         // Create the 2 combo boxes, filled with the available selections.
-        SLA_list = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
-        SLA_list.setEditable(false);
-        SLA_list.setSelectedIndex(0);
-        SLA_list.addActionListener(this);
-        mainPanel.add(SLA_list, 1, 1);
+        responseTimeObjectiveComboBox = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
+        responseTimeObjectiveComboBox.setEditable(false);
+        responseTimeObjectiveComboBox.setSelectedIndex(0);
+        responseTimeObjectiveComboBox.addActionListener(this);
+        mainPanel.add(responseTimeObjectiveComboBox, 1, 1);
 
-        PIV_list = new JComboBox<String>(PIversions);
-        PIV_list.setEditable(false);
-        PIV_list.setSelectedIndex(0);
-        mainPanel.add(PIV_list, 1, 2);
+        versionsComboBox = new JComboBox<String>(PIversions);
+        versionsComboBox.setEditable(false);
+        versionsComboBox.setSelectedIndex(0);
+        mainPanel.add(versionsComboBox, 1, 2);
 
         JLabel costLabel = new JLabel("Estimated cost:");
         mainPanel.add(costLabel, 0, 3);
-        estimatedCost = new JLabel(formatCost());
-        mainPanel.add(estimatedCost, 1, 3);
+        estimatedCostLabel = new JLabel(formatCost());
+        mainPanel.add(estimatedCostLabel, 1, 3);
 
 	// Add a single empty cell to the 4th row. This cell is expandable
 	// (weightY is 1), therefore the other components will be
@@ -194,7 +193,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	}
 
 	if (src instanceof JComboBox) {
-	    estimatedCost.setText(formatCost());
+	    estimatedCostLabel.setText(formatCost());
 	}
 
     }
@@ -236,16 +235,16 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     }
     
     public String getSLA() {
-        return SLA_list.getSelectedItem().toString();
+        return responseTimeObjectiveComboBox.getSelectedItem().toString();
     }
 
     public String getPIversion() {
-        return PIV_list.getSelectedItem().toString();
+        return versionsComboBox.getSelectedItem().toString();
     }
     
     // convenience method to use the selected SLA to return a cost
     private String formatCost() {
-        String currentSelection = SLA_list.getSelectedItem().toString();
-        return String.format("$%.2f", SLAs.get(currentSelection));
+        String currentSelection = responseTimeObjectiveComboBox.getSelectedItem().toString();
+        return String.format("$%.2f", responseTimeObjectives.get(currentSelection));
     }
 }
