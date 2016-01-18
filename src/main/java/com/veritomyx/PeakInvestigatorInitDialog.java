@@ -33,6 +33,8 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+
+
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
@@ -68,8 +70,9 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     
     protected JComboBox<String>	   	SLA_list;
     protected JComboBox<String> 	PIV_list;
+    protected JLabel                    estimatedCost;
     
-    protected String	SLA_key;
+    protected Map<String, Double> SLAs;
     protected String	PIV;
 
     /**
@@ -80,6 +83,8 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	// Make dialog modal
 	super(parent, "Please set the parameters",
 		Dialog.ModalityType.DOCUMENT_MODAL);
+
+	this.SLAs = SLAs;
 
 	addDialogComponents(funds, SLAs, PIversions);
 
@@ -122,25 +127,22 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
     mainPanel.add(PIV_label, 0, 2);
     
-    // Create the 2 combo boxes, filled with the available selections.
-    String[] r = new String[SLAs.size()];
-    int s = 0;
-    for(String key : SLAs.keySet()) {
-    	r[s] = "RTO: " + key + " Estimate Cost: $" + String.format( "%.2f", SLAs.get(key));
-    	if(s == 0) 
-    		SLA_key = key;
-    	s++;
-    }   
- 	SLA_list = new JComboBox<String>(r);
-	SLA_list.setEditable(false);
-	SLA_list.setSelectedIndex(0);
-	mainPanel.add(SLA_list, 1, 1);
+        // Create the 2 combo boxes, filled with the available selections.
+        SLA_list = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
+        SLA_list.setEditable(false);
+        SLA_list.setSelectedIndex(0);
+        SLA_list.addActionListener(this);
+        mainPanel.add(SLA_list, 1, 1);
 
-	PIV = PIversions[0];
-	PIV_list = new JComboBox<String>(PIversions);
-	PIV_list.setEditable(false);
-	PIV_list.setSelectedIndex(0);
-	mainPanel.add(PIV_list, 1, 2);
+        PIV_list = new JComboBox<String>(PIversions);
+        PIV_list.setEditable(false);
+        PIV_list.setSelectedIndex(0);
+        mainPanel.add(PIV_list, 1, 2);
+
+        JLabel costLabel = new JLabel("Estimated cost:");
+        mainPanel.add(costLabel, 0, 3);
+        estimatedCost = new JLabel(formatCost());
+        mainPanel.add(estimatedCost, 1, 3);
 
 	// Add a single empty cell to the 4th row. This cell is expandable
 	// (weightY is 1), therefore the other components will be
@@ -192,8 +194,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	}
 
 	if (src instanceof JComboBox) {
-		SLA_key = SLA_list.getSelectedItem().toString();
-		PIV = PIV_list.getSelectedItem().toString();
+	    estimatedCost.setText(formatCost());
 	}
 
     }
@@ -221,8 +222,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
  
     @Override
     public void changedUpdate(DocumentEvent event) {
-    	SLA_key = SLA_list.getSelectedItem().toString();
-		PIV = PIV_list.getSelectedItem().toString();
+        System.out.println("changeUpdate called");
     }
 
     @Override
@@ -235,13 +235,17 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 
     }
     
-    public String getSLA() 
-    {
-    	return SLA_key;
+    public String getSLA() {
+        return SLA_list.getSelectedItem().toString();
+    }
+
+    public String getPIversion() {
+        return PIV_list.getSelectedItem().toString();
     }
     
-    public String getPIversion() 
-    {
-    	return PIV;
+    // convenience method to use the selected SLA to return a cost
+    private String formatCost() {
+        String currentSelection = SLA_list.getSelectedItem().toString();
+        return String.format("$%.2f", SLAs.get(currentSelection));
     }
 }
