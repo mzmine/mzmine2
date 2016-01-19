@@ -354,22 +354,22 @@ public class PeakInvestigatorTask
 			TarInputStream tis = null;
 			FileOutputStream outputStream = null;
 			try {
-				File f = new File(outputFilename);
-				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(f.getName())));
+				File fullPath = new File(outputFilename); // outputfilename looks like /files/C-1022.1391/C-1022.1391.mass_list.tar
+				tis = new TarInputStream(new GZIPInputStream(new FileInputStream(fullPath.getName())));
 				TarEntry tf;
 				int bytesRead;
 				byte buf[] = new byte[1024];
 				while ((tf = tis.getNextEntry()) != null)
 				{
 					if (tf.isDirectory()) continue;
-					logger.info("Reading peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
+					logger.info("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
 					outputStream = new FileOutputStream(tf.getName());
 					while ((bytesRead = tis.read(buf, 0, 1024)) > -1)
 						outputStream.write(buf, 0, bytesRead);
 					outputStream.close();
 				}
 				tis.close();
-				f.delete();			// remove the local copy of the results tar file
+				fullPath.delete();			// remove the local copy of the results tar file
 			} catch (Exception e1) {
 				logger.finest(e1.getMessage());
 				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse results file", logger);
@@ -399,14 +399,16 @@ public class PeakInvestigatorTask
 
 		// read in the peaks for this scan
 		// convert filename to expected peak file name
-		String pfilename = "scan_" + String.format("%04d", scan_num) + ".vcent.txt";
+		String pfilename = "scan_" + String.format("%04d", scan_num) + ".scan.mass_list.txt";
 		logger.info("Parsing peaks data from " + pfilename);
 		try
 		{
 			File centfile = new File(pfilename);
 			FileChecksum fchksum = new FileChecksum(centfile);
-			if (!fchksum.verify(false))
-				throw new IOException("Invalid checksum");
+			fchksum.verify(false);
+// TODO: handle checksums
+//			if (!fchksum.verify(false))
+//				throw new IOException("Invalid checksum");
 	
 			List<String> lines = fchksum.getFileStrings();
 			mzPeaks = new ArrayList<DataPoint>();
@@ -431,7 +433,7 @@ public class PeakInvestigatorTask
 		}
 
 		desc = "scan " + scan_num + " parsed";
-		return (mzPeaks == null) ? null : mzPeaks.toArray(new DataPoint[0]);
+		return (mzPeaks == null) ? null : mzPeaks.toArray(new DataPoint[mzPeaks.size()]);
 	}
 
 	/**

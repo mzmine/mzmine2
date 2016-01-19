@@ -308,11 +308,11 @@ public class PeakInvestigatorSaaS
 				
 				RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
 				for(RawDataFile file : files) {
-					int scanCount = file.getNumOfScans();
-					for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
+					int[] scanNumbers = file.getScanNumbers();
+					for(int scanNum : scanNumbers) {
 						Scan scan = file.getScan(scanNum);
 						int dpCount = scan.getNumberOfDataPoints();
-						maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+						maxMasses = Math.max(maxMasses.intValue(), dpCount);
 					}
 				}
 				if(maxMass > maxMasses) {
@@ -643,6 +643,7 @@ public class PeakInvestigatorSaaS
 			web_str    = "Cannot read file: " + fname;
 			return false;
 		}
+
 		closeSession(session);
 		return true;
 	}

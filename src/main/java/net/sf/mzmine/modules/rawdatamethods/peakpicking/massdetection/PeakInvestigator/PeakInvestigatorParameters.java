@@ -57,7 +57,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
 				Scan scan = file.getScan(scanNum);
 				int dpCount = scan.getNumberOfDataPoints();
-				maxMasses = Integer.max(maxMasses.intValue(), dpCount);
+				maxMasses = Math.max(maxMasses.intValue(), dpCount);
 			}
 		}
 		minMass.setMinMax(0, maxMasses-1);

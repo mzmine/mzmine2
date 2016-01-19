@@ -30,8 +30,6 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
@@ -47,8 +45,7 @@ import java.util.Map;
  * The first SLA and the highest version of PI are automatically selected to start. 
  * 
  */
-public class PeakInvestigatorInitDialog extends JDialog implements ActionListener,
-	DocumentListener {
+public class PeakInvestigatorInitDialog extends JDialog implements ActionListener {
 
     private static final long serialVersionUID = 1L;
 
@@ -66,22 +63,24 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
      */
     protected GridBagPanel mainPanel;
     
-    protected JComboBox<String>	   	SLA_list;
-    protected JComboBox<String> 	PIV_list;
+    protected JComboBox<String>	   	responseTimeObjectiveComboBox;
+    protected JComboBox<String> 	versionsComboBox;
+    protected JLabel                    estimatedCostLabel;
     
-    protected String	SLA_key;
-    protected String	PIV;
+    protected Map<String, Double> responseTimeObjectives;
 
     /**
      * Constructor
      */
-    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> SLAs, String[] PIversions) {
+    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> responseTimeObjectives, String[] PIversions) {
 
 	// Make dialog modal
 	super(parent, "Please set the parameters",
 		Dialog.ModalityType.DOCUMENT_MODAL);
 
-	addDialogComponents(funds, SLAs, PIversions);
+	this.responseTimeObjectives = responseTimeObjectives;
+
+	addDialogComponents(funds, responseTimeObjectives, PIversions);
 
 	updateMinimumSize();
 	pack();
@@ -122,25 +121,22 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
     mainPanel.add(PIV_label, 0, 2);
     
-    // Create the 2 combo boxes, filled with the available selections.
-    String[] r = new String[SLAs.size()];
-    int s = 0;
-    for(String key : SLAs.keySet()) {
-    	r[s] = "RTO: " + key + " Estimate Cost: $" + String.format( "%.2f", SLAs.get(key));
-    	if(s == 0) 
-    		SLA_key = key;
-    	s++;
-    }   
- 	SLA_list = new JComboBox<String>(r);
-	SLA_list.setEditable(false);
-	SLA_list.setSelectedIndex(0);
-	mainPanel.add(SLA_list, 1, 1);
+        // Create the 2 combo boxes, filled with the available selections.
+        responseTimeObjectiveComboBox = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
+        responseTimeObjectiveComboBox.setEditable(false);
+        responseTimeObjectiveComboBox.setSelectedIndex(0);
+        responseTimeObjectiveComboBox.addActionListener(this);
+        mainPanel.add(responseTimeObjectiveComboBox, 1, 1);
 
-	PIV = PIversions[0];
-	PIV_list = new JComboBox<String>(PIversions);
-	PIV_list.setEditable(false);
-	PIV_list.setSelectedIndex(0);
-	mainPanel.add(PIV_list, 1, 2);
+        versionsComboBox = new JComboBox<String>(PIversions);
+        versionsComboBox.setEditable(false);
+        versionsComboBox.setSelectedIndex(0);
+        mainPanel.add(versionsComboBox, 1, 2);
+
+        JLabel costLabel = new JLabel("Estimated cost:");
+        mainPanel.add(costLabel, 0, 3);
+        estimatedCostLabel = new JLabel(formatCost());
+        mainPanel.add(estimatedCostLabel, 1, 3);
 
 	// Add a single empty cell to the 4th row. This cell is expandable
 	// (weightY is 1), therefore the other components will be
@@ -192,8 +188,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	}
 
 	if (src instanceof JComboBox) {
-		SLA_key = SLA_list.getSelectedItem().toString();
-		PIV = PIV_list.getSelectedItem().toString();
+	    estimatedCostLabel.setText(formatCost());
 	}
 
     }
@@ -218,30 +213,18 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	dispose();
 
     }
- 
-    @Override
-    public void changedUpdate(DocumentEvent event) {
-    	SLA_key = SLA_list.getSelectedItem().toString();
-		PIV = PIV_list.getSelectedItem().toString();
+
+    public String getSLA() {
+        return responseTimeObjectiveComboBox.getSelectedItem().toString();
     }
 
-    @Override
-    public void insertUpdate(DocumentEvent event) {
-
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent event) {
-
+    public String getPIversion() {
+        return versionsComboBox.getSelectedItem().toString();
     }
     
-    public String getSLA() 
-    {
-    	return SLA_key;
-    }
-    
-    public String getPIversion() 
-    {
-    	return PIV;
+    // convenience method to use the selected SLA to return a cost
+    private String formatCost() {
+        String currentSelection = responseTimeObjectiveComboBox.getSelectedItem().toString();
+        return String.format("$%.2f", responseTimeObjectives.get(currentSelection));
     }
 }
