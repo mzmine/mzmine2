@@ -369,8 +369,7 @@ public class PeakInvestigatorTask
 					outputStream.close();
 				}
 				tis.close();
-				File f = new File(outputFilename);
-				f.delete();			// remove the local copy of the results tar file
+				fullPath.delete();			// remove the local copy of the results tar file
 			} catch (Exception e1) {
 				logger.finest(e1.getMessage());
 				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse results file", logger);

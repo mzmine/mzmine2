@@ -258,7 +258,9 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
                                 + job.getName() + "?", "Remove Job",
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (selectedValue == 0) // yes response
+                	job.deleteJob();
                     job.getRawDataFile().removeJob(job.getName());
+                
             }
         }
 

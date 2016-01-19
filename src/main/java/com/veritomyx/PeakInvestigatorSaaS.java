@@ -341,6 +341,10 @@ public class PeakInvestigatorSaaS
 			{
 				params += "&Job=" + jobID;
 			}
+			else if (action == JOB_DONE)
+			{
+				params += "&Job=" + jobID;
+			}
 			else if (jobID != null)	// all the rest require a jobID
 			{
 				params += "&ID=" + aid;
@@ -631,7 +635,6 @@ public class PeakInvestigatorSaaS
 		if (session == null)
 			return false;
 
-		//sftp.cd(session, dir);
 		result = sftp.get(session, fname);
 		if (!result.getSuccessFlag())
 		{
@@ -643,5 +646,14 @@ public class PeakInvestigatorSaaS
 
 		closeSession(session);
 		return true;
+	}
+	
+	public int deleteJob(String email, String passwd, int account, String existingJobName) {
+		if(existingJobName == null) return W_ERROR_JOB_NOT_FOUND;
+		username = email;
+		password = passwd;
+		aid      = account;
+		jobID = existingJobName;
+		return getPageDone();
 	}
 }
