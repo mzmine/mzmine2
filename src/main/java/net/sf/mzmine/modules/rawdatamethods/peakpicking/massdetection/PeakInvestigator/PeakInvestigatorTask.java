@@ -362,7 +362,7 @@ public class PeakInvestigatorTask
 				while ((tf = tis.getNextEntry()) != null)
 				{
 					if (tf.isDirectory()) continue;
-					logger.info("Reading peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
+					logger.info("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
 					outputStream = new FileOutputStream(tf.getName());
 					while ((bytesRead = tis.read(buf, 0, 1024)) > -1)
 						outputStream.write(buf, 0, bytesRead);
@@ -400,14 +400,16 @@ public class PeakInvestigatorTask
 
 		// read in the peaks for this scan
 		// convert filename to expected peak file name
-		String pfilename = "scan_" + String.format("%04d", scan_num) + ".vcent.txt";
+		String pfilename = "scan_" + String.format("%04d", scan_num) + ".scan.mass_list.txt";
 		logger.info("Parsing peaks data from " + pfilename);
 		try
 		{
 			File centfile = new File(pfilename);
 			FileChecksum fchksum = new FileChecksum(centfile);
-			if (!fchksum.verify(false))
-				throw new IOException("Invalid checksum");
+			fchksum.verify(false);
+// TODO: handle checksums
+//			if (!fchksum.verify(false))
+//				throw new IOException("Invalid checksum");
 	
 			List<String> lines = fchksum.getFileStrings();
 			mzPeaks = new ArrayList<DataPoint>();
@@ -432,7 +434,7 @@ public class PeakInvestigatorTask
 		}
 
 		desc = "scan " + scan_num + " parsed";
-		return (mzPeaks == null) ? null : mzPeaks.toArray(new DataPoint[0]);
+		return (mzPeaks == null) ? null : mzPeaks.toArray(new DataPoint[mzPeaks.size()]);
 	}
 
 	/**
