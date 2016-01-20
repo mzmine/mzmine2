@@ -1,7 +1,8 @@
-.settings/
-target/
-conf/
-.DS_Store
+/target/
+
+conf/config.xml
+*.prefs
 .project
-.classpath
-src/main/lib/org/json/simple/1.1.1/json-simple-1.1.1.jar
+*.classpath
+src/main/java/net/sf/mzmine/modules/rawdatamethods/peakpicking/massdetection/PeakInvestigator/PeakInvestigatorTask - Copy.java
+src/main/java/com/veritomyx/PeakInvestigatorSaaS - Copy.java

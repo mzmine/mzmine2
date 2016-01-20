@@ -27,6 +27,7 @@ import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.util.ExitCode;
+import ucar.ma2.Range;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -51,19 +52,22 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
-		Integer maxMasses = 0;
+		Integer maxMasses = 0, minMasses = Integer.MAX_VALUE;
 		
 		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
 		for(RawDataFile file : files) {
 			int scanCount = file.getNumOfScans();
 			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
 				Scan scan = file.getScan(scanNum);
-				int dpCount = scan.getNumberOfDataPoints();
-				maxMasses = Math.max(maxMasses.intValue(), dpCount);
+				Integer n,x;
+				x = scan.getDataPointMZRange().upperEndpoint().intValue();
+				maxMasses = Integer.max(x, maxMasses);
+				n = scan.getDataPointMZRange().lowerEndpoint().intValue();
+				minMasses = Integer.min(n, minMasses);
 			}
 		}
-		minMass.setMinMax(0, maxMasses-1);
-		maxMass.setMinMax(1, maxMasses);
+		minMass.setMinMax(minMasses, maxMasses-1);
+		maxMass.setMinMax(minMasses+1, maxMasses);
 		showLog.setValue(true);
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
