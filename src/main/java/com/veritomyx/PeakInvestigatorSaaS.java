@@ -268,6 +268,7 @@ public class PeakInvestigatorSaaS
 	public Map<String, Double> getSLAs()	{ return SLAs; }
 	public String[] getPIversions()			{ return PIversions; }
 	public String   getResultsFilename()	{ return s_resultsFile; }
+	public String   getJobLogFilename()		{ return s_jobLogFile; }
 	
 	public  int 	getScansInput() { return s_scansInput; }
 	public  int 	getScansComplete() { return s_scansComplete; }

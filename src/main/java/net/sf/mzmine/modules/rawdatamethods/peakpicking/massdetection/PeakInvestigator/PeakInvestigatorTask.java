@@ -69,6 +69,8 @@ public class PeakInvestigatorTask
 	private String          targetName;
 	private String          intputFilename;
 	private String          outputFilename;
+	private String			inputLogFilename;
+	private String			logInfo;
 	private PeakInvestigatorSaaS   vtmx;
 	private String          username;
 	private String          password;
@@ -146,6 +148,7 @@ public class PeakInvestigatorTask
 		jobID          = vtmx.getJobID();
 		intputFilename = jobID + ".scans.tar";
 		outputFilename = jobID + ".vcent.tar";
+		inputLogFilename = jobID + ".log.txt";
 	}
 	
 	public String getDesc() { return desc; }
@@ -378,6 +381,32 @@ public class PeakInvestigatorTask
 			} finally {
 				try { tis.close(); } catch (Exception e) {}
 				try { outputStream.close(); } catch (Exception e) {}
+			}
+			inputLogFilename = vtmx.getJobLogFilename();
+			// read the job log tar file and extract all the peak list files
+			logger.info("Reading log, " + inputLogFilename + ", from SFTP drop...");
+			vtmx.getFile(inputLogFilename);
+			FileInputStream lis = null;
+			FileOutputStream outputStreamLog = null;
+			try {
+				File f = new File(inputLogFilename);
+				lis = new FileInputStream(f.getName());
+				byte buf[] = new byte[1024];
+				while (lis.read(buf) != -1)
+				{
+					logInfo += buf;
+				}
+				lis.close();
+				f.delete();			// remove the local copy of the log tar file
+			} catch (Exception e1) {
+				logger.finest(e1.getMessage());
+				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
+				errors++;
+				e1.printStackTrace();
+			} finally {
+				try { lis.close(); } catch (Exception e) {}
+				try { outputStreamLog.close(); } catch (Exception e) {}
+				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
 			}
 		}
 		desc = "results downloaded";
