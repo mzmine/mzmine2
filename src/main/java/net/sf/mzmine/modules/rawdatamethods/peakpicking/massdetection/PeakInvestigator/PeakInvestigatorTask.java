@@ -33,6 +33,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
@@ -390,27 +392,32 @@ public class PeakInvestigatorTask
 			logger.info("Reading log, " + inputLogFilename + ", from SFTP drop...");
 			vtmx.getFile(inputLogFilename);
 			if(showLog) {
-				FileInputStream lis = null;
-				FileOutputStream outputStreamLog = null;
+				BufferedReader br = null;
 				try {
-					File f = new File(inputLogFilename);
-					lis = new FileInputStream(f.getName());
-					byte buf[] = new byte[1024];
-					while (lis.read(buf) != -1)
-					{
-						logInfo += buf;
+					br = new BufferedReader(new FileReader(inputLogFilename));
+				} catch (FileNotFoundException e2) {
+					MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Log file not found", logger);
+				}
+				if(br != null) {
+					try {
+					    StringBuilder sb = new StringBuilder();
+					    String line = br.readLine();
+	
+					    while (line != null) {
+					        sb.append(line);
+					        sb.append(System.lineSeparator());
+					        line = br.readLine();
+					    }
+					    logInfo = sb.toString();
+					} catch (Exception e1) {
+						logger.finest(e1.getMessage());
+						MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
+						errors++;
+						e1.printStackTrace();
+					} finally {
+						try { br.close(); } catch (Exception e) {}
+						MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
 					}
-					lis.close();
-					f.delete();			// remove the local copy of the log tar file
-				} catch (Exception e1) {
-					logger.finest(e1.getMessage());
-					MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
-					errors++;
-					e1.printStackTrace();
-				} finally {
-					try { lis.close(); } catch (Exception e) {}
-					try { outputStreamLog.close(); } catch (Exception e) {}
-					MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
 				}
 			}
 		}
