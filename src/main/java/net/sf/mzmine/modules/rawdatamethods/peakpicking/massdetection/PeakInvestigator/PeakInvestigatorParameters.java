@@ -20,7 +20,7 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.awt.Window;
-
+import java.lang.Math;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
@@ -59,10 +59,10 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 			int scanCount = file.getNumOfScans();
 			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
 				Scan scan = file.getScan(scanNum);
-				Integer n,x;
-				x = scan.getDataPointMZRange().upperEndpoint().intValue();
+				int n,x;
+				x = (int)Math.ceil(scan.getDataPointMZRange().upperEndpoint());
 				maxMasses = Integer.max(x, maxMasses);
-				n = scan.getDataPointMZRange().lowerEndpoint().intValue();
+				n = (int)Math.floor(scan.getDataPointMZRange().lowerEndpoint());
 				minMasses = Integer.min(n, minMasses);
 			}
 		}
