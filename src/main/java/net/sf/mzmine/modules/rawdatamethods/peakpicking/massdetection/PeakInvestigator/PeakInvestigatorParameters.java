@@ -25,6 +25,7 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetect
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
+import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
@@ -41,10 +42,11 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		    "Max Mass",
 		    "The maximum mass in the set of masses to send to the Peak Investigator SaaS.",
 		    Integer.MAX_VALUE);
-
+	
+	public static final BooleanParameter showLog = new BooleanParameter("Display Job Log", "Check this if you wan to display the Peak Investigator job log when retrieving results");
 	public PeakInvestigatorParameters()
 	{
-		super(new Parameter[] { minMass, maxMass });
+		super(new Parameter[] { minMass, maxMass, showLog });
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
@@ -62,6 +64,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		}
 		minMass.setMinMax(0, maxMasses-1);
 		maxMass.setMinMax(1, maxMasses);
+		showLog.setValue(true);
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();

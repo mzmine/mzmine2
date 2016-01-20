@@ -75,6 +75,7 @@ public class PeakInvestigatorTask
 	private String          username;
 	private String          password;
 	private int             pid;
+	private Boolean			showLog;
 	private TarOutputStream tarfile;
 	private RawDataFile     rawDataFile;
 	private int             errors;
@@ -93,12 +94,14 @@ public class PeakInvestigatorTask
 		
 		minMass = parameters.getParameter(PeakInvestigatorParameters.minMass).getValue();
 		maxMass = parameters.getParameter(PeakInvestigatorParameters.maxMass).getValue();
-
+		showLog = parameters.getParameter(PeakInvestigatorParameters.showLog).getValue();
+		
 		// pickup all the parameters
 		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
 		username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
 		password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
 		pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
+		
 		
 		if ((username == null) || username.isEmpty() || (password == null) || password.isEmpty())
 		{
@@ -386,27 +389,29 @@ public class PeakInvestigatorTask
 			// read the job log tar file and extract all the peak list files
 			logger.info("Reading log, " + inputLogFilename + ", from SFTP drop...");
 			vtmx.getFile(inputLogFilename);
-			FileInputStream lis = null;
-			FileOutputStream outputStreamLog = null;
-			try {
-				File f = new File(inputLogFilename);
-				lis = new FileInputStream(f.getName());
-				byte buf[] = new byte[1024];
-				while (lis.read(buf) != -1)
-				{
-					logInfo += buf;
+			if(showLog) {
+				FileInputStream lis = null;
+				FileOutputStream outputStreamLog = null;
+				try {
+					File f = new File(inputLogFilename);
+					lis = new FileInputStream(f.getName());
+					byte buf[] = new byte[1024];
+					while (lis.read(buf) != -1)
+					{
+						logInfo += buf;
+					}
+					lis.close();
+					f.delete();			// remove the local copy of the log tar file
+				} catch (Exception e1) {
+					logger.finest(e1.getMessage());
+					MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
+					errors++;
+					e1.printStackTrace();
+				} finally {
+					try { lis.close(); } catch (Exception e) {}
+					try { outputStreamLog.close(); } catch (Exception e) {}
+					MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
 				}
-				lis.close();
-				f.delete();			// remove the local copy of the log tar file
-			} catch (Exception e1) {
-				logger.finest(e1.getMessage());
-				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
-				errors++;
-				e1.printStackTrace();
-			} finally {
-				try { lis.close(); } catch (Exception e) {}
-				try { outputStreamLog.close(); } catch (Exception e) {}
-				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
 			}
 		}
 		desc = "results downloaded";
