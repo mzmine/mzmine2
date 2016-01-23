@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
 
+import net.sf.mzmine.main.MZmineCore;
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
@@ -69,6 +70,8 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     protected JComboBox<String> 	versionsComboBox;
     protected JLabel                    estimatedCostLabel;
     
+    protected Double fundsAvailable;
+    
     protected Map<String, Double> responseTimeObjectives;
 
     /**
@@ -82,7 +85,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 
 	this.responseTimeObjectives = responseTimeObjectives;
 
-	addDialogComponents(funds, responseTimeObjectives, PIversions);
+	addDialogComponents(fundsAvailable = funds, responseTimeObjectives, PIversions);
 
 	updateMinimumSize();
 	pack();
@@ -191,7 +194,12 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	Object src = ae.getSource();
 
 	if (src == btnOK) {
-	    closeDialog(ExitCode.OK);
+		String currentSelection = responseTimeObjectiveComboBox.getSelectedItem().toString();
+		if(responseTimeObjectives.get(currentSelection) >= fundsAvailable) {
+			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "The selected RTO requires more funds than are currently available in your account.");
+		} else {
+			closeDialog(ExitCode.OK);
+		}
 	}
 
 	if (src == btnCancel) {
