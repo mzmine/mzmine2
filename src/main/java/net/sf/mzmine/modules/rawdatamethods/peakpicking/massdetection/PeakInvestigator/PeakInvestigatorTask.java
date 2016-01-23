@@ -33,6 +33,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import javax.swing.ProgressMonitor;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 
@@ -84,6 +87,8 @@ public class PeakInvestigatorTask
 	
 	private static final long minutesCheckPrep = 2;
 	private static final long minutesTimeoutPrep = 20;
+	
+	private static final int numSaaSSteps = 16;
 
 	public PeakInvestigatorTask(RawDataFile raw, String pickup_job, String target, ParameterSet parameters, int scanCount)
 	{
@@ -261,35 +266,62 @@ public class PeakInvestigatorTask
 	private void finishLaunch() throws InterruptedException
 	{
 		desc = "finishing launch";
+		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
+                "Peak Investigator SaaS transmission",
+                "", 0, numSaaSSteps);
+		progressMonitor.setMillisToPopup(0);
+		progressMonitor.setMillisToDecideToPopup(0);
+		
 		try {
 			tarfile.close();
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot close scans bundle file.", logger);
 		}
+		progressMonitor.setProgress(1);
+		
 		logger.info("Transmit scans bundle, " + intputFilename + ", to SFTP server...");
 		vtmx.putFile(intputFilename);
+		if (progressMonitor.isCanceled()) {
+		    progressMonitor.close();
+		    logger.info("Job, " + jobID + ", canceled");
+		    return;
+		}
+		
+		progressMonitor.setProgress(2);
 
 		//####################################################################
 		// Prepare for remote job in a loop as it might take some time to analyze
 		logger.info("Awaiting PREP analysis, " + intputFilename + ", on SaaS server...");
 		int prep_ret = vtmx.getPagePrep(scanCnt);
+		progressMonitor.setProgress(3);
+		
 		prep_status_type prep_status = vtmx.getPrepStatus();
+		progressMonitor.setProgress(4);
 
 		// timeWait is based on the loop count to keep this as short as possible.
 		long timeWait = minutesTimeoutPrep;
+		int count = 0;
 		while(prep_ret == PeakInvestigatorSaaS.W_PREP && prep_status == prep_status_type.PREP_ANALYZING && timeWait > 0) {
 			logger.info("Waiting for PREP analysis to complete, " + intputFilename + ", on SaaS server...Please be patient.");
 			Thread.sleep(minutesCheckPrep * 60000);
 			prep_ret = vtmx.getPagePrep(scanCnt);
 			prep_status = vtmx.getPrepStatus();
 			timeWait -= minutesCheckPrep;
+			if (progressMonitor.isCanceled()) {
+			    progressMonitor.close();
+			    logger.info("Job, " + jobID + ", canceled");
+			    return;
+			}
+			progressMonitor.setProgress(4+count);
+			count++;
 		}
 		if(prep_ret != PeakInvestigatorSaaS.W_PREP || prep_status != prep_status_type.PREP_READY) {
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch or complete(PREP Phase) " + jobID, logger);
 			return;
 		}
-			
+		
+		progressMonitor.setProgress(15);
 		//####################################################################
 		// start for remote job
 		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
@@ -299,6 +331,14 @@ public class PeakInvestigatorTask
 			return;
 		}
 
+		progressMonitor.setProgress(16);
+		if (progressMonitor.isCanceled()) {
+		    progressMonitor.close();
+		    logger.info("Job, " + jobID + ", canceled");
+		    return;
+		}
+		progressMonitor.close();
+		
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
 
@@ -306,6 +346,7 @@ public class PeakInvestigatorTask
 		logger.finest(vtmx.getPageStr());
 		File f = new File(intputFilename);
 		f.delete();			// remove the local copy of the tar file
+
 		desc = "launch finished";
 	}
 
