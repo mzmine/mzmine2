@@ -88,7 +88,8 @@ public class PeakInvestigatorTask
 	private static final long minutesCheckPrep = 2;
 	private static final long minutesTimeoutPrep = 20;
 	
-	private static final int numSaaSSteps = 16;
+	private static final int numSaaSStartSteps = 16;
+	private static final int numSaaSRetrieveSteps = 7;
 
 	public PeakInvestigatorTask(RawDataFile raw, String pickup_job, String target, ParameterSet parameters, int scanCount)
 	{
@@ -268,7 +269,7 @@ public class PeakInvestigatorTask
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
                 "Peak Investigator SaaS transmission",
-                "", 0, numSaaSSteps);
+                "", 0, numSaaSStartSteps);
 		progressMonitor.setMillisToPopup(0);
 		progressMonitor.setMillisToDecideToPopup(0);
 		
@@ -360,6 +361,12 @@ public class PeakInvestigatorTask
 		desc = "checking for results";
 		int status;
 		logger.info("Checking previously launched job, " + jobID);
+		
+		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
+                "Peak Investigator SaaS retrieval",
+                "", 0, numSaaSRetrieveSteps);
+		progressMonitor.setMillisToPopup(0);
+		progressMonitor.setMillisToDecideToPopup(0);
 
 		// see if remote job is complete
 		if ((status = vtmx.getPageStatus()) == PeakInvestigatorSaaS.W_RUNNING)
@@ -370,6 +377,8 @@ public class PeakInvestigatorTask
 			errors++;
 			return;
 		}
+		progressMonitor.setProgress(1);
+		
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
 		if (status != PeakInvestigatorSaaS.W_DONE)
@@ -395,11 +404,21 @@ public class PeakInvestigatorTask
 
 		// Get the SFTP data for the completed job 
 		vtmx.getPageSftp();
+		
+		if (progressMonitor.isCanceled()) {
+		    progressMonitor.close();
+		    logger.info("Job, " + jobID + ", canceled");
+		    return;
+		}
+		progressMonitor.setProgress(2);
+		
 		outputFilename = vtmx.getResultsFilename();
 		// read the results tar file and extract all the peak list files
 		logger.info("Reading centroided data, " + outputFilename + ", from SFTP drop...");
 		vtmx.getFile(outputFilename);
 		{
+			progressMonitor.setProgress(3);
+			
 			TarInputStream tis = null;
 			FileOutputStream outputStream = null;
 			try {
@@ -419,6 +438,7 @@ public class PeakInvestigatorTask
 				}
 				tis.close();
 				fullPath.delete();			// remove the local copy of the results tar file
+				progressMonitor.setProgress(4);
 			} catch (Exception e1) {
 				logger.finest(e1.getMessage());
 				MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse results file", logger);
@@ -431,7 +451,15 @@ public class PeakInvestigatorTask
 			inputLogFilename = vtmx.getJobLogFilename();
 			// read the job log tar file and extract all the peak list files
 			logger.info("Reading log, " + inputLogFilename + ", from SFTP drop...");
+			
+			progressMonitor.setProgress(5);
+			if (progressMonitor.isCanceled()) {
+			    progressMonitor.close();
+			    logger.info("Job, " + jobID + ", canceled");
+			    return;
+			}
 			vtmx.getFile(inputLogFilename);
+			progressMonitor.setProgress(6);
 			if(showLog) {
 				BufferedReader br = null;
 				try {
@@ -461,7 +489,10 @@ public class PeakInvestigatorTask
 					}
 				}
 			}
+			progressMonitor.setProgress(7);
 		}
+		progressMonitor.close();
+		
 		desc = "results downloaded";
 	}
 
