@@ -30,6 +30,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
 
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
@@ -61,7 +62,8 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
      * (see GridBagPanel). First three columns of the grid are title (JLabel),
      * INIT component (JFormattedTextField or other) and value (JLabel). 
      */
-    protected GridBagPanel mainPanel;
+    protected GridBagPanel mainPanel, fundsPanel;
+    protected JPanel fundsGroupbox;
     
     protected JComboBox<String>	   	responseTimeObjectiveComboBox;
     protected JComboBox<String> 	versionsComboBox;
@@ -110,33 +112,41 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	// Main panel which holds all the components in a grid
 	mainPanel = new GridBagPanel();
 	
-	JLabel funds_label = new JLabel("The available funds are (in USD): $");
-    mainPanel.add(funds_label, 0, 0);
-    JLabel funds_disp = new JLabel(String.format( "%.2f", funds ));
-    mainPanel.add(funds_disp, 1, 0);
+	JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
+    mainPanel.add(PIV_label, 0, 0);
     
-	// Create the 2 labels
+    versionsComboBox = new JComboBox<String>(PIversions);
+    versionsComboBox.setEditable(false);
+    versionsComboBox.setSelectedIndex(0);
+    mainPanel.add(versionsComboBox, 1, 0);
+
+    // Create a new panel for the funds items.
+    fundsGroupbox = new JPanel();
+    fundsGroupbox.setBorder(BorderFactory.createTitledBorder("Funds"));
+    fundsPanel = new GridBagPanel();
+	JLabel funds_label = new JLabel("The available funds are (in USD): $");
+	fundsPanel.add(funds_label, 0, 1);
+    JLabel funds_disp = new JLabel(String.format( "%.2f", funds ));
+    fundsPanel.add(funds_disp, 1, 1);
+    
     JLabel SLA_label = new JLabel("Use Response Time Objectives:");
-    mainPanel.add(SLA_label, 0, 1);
-    JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
-    mainPanel.add(PIV_label, 0, 2);
+    fundsPanel.add(SLA_label, 0, 2);
+    
     
         // Create the 2 combo boxes, filled with the available selections.
-        responseTimeObjectiveComboBox = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
+  
+    	responseTimeObjectiveComboBox = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
         responseTimeObjectiveComboBox.setEditable(false);
         responseTimeObjectiveComboBox.setSelectedIndex(0);
         responseTimeObjectiveComboBox.addActionListener(this);
-        mainPanel.add(responseTimeObjectiveComboBox, 1, 1);
-
-        versionsComboBox = new JComboBox<String>(PIversions);
-        versionsComboBox.setEditable(false);
-        versionsComboBox.setSelectedIndex(0);
-        mainPanel.add(versionsComboBox, 1, 2);
+        fundsPanel.add(responseTimeObjectiveComboBox, 1, 2);
 
         JLabel costLabel = new JLabel("Estimated cost:");
-        mainPanel.add(costLabel, 0, 3);
+        fundsPanel.add(costLabel, 0, 3);
         estimatedCostLabel = new JLabel(formatCost());
-        mainPanel.add(estimatedCostLabel, 1, 3);
+        fundsPanel.add(estimatedCostLabel, 1, 3);
+        
+        fundsGroupbox.add(fundsPanel);
 
 	// Add a single empty cell to the 4th row. This cell is expandable
 	// (weightY is 1), therefore the other components will be
@@ -160,6 +170,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	 * number to 100 and width to 3, spanning the 3 component columns
 	 * defined above.
 	 */
+	mainPanel.addCenter(fundsGroupbox, 0, 2, 3, 5);
 	mainPanel.addCenter(pnlButtons, 0, 100, 3, 1);
 
 	// Add some space around the widgets
