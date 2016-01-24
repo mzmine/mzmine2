@@ -56,14 +56,14 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		
 		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
 		for(RawDataFile file : files) {
-			int scanCount = file.getNumOfScans();
-			for(int scanNum = 1; scanNum <= scanCount; scanNum++) {
+		        int[] scanNumbers = file.getScanNumbers();
+			for(int scanNum : scanNumbers) {
 				Scan scan = file.getScan(scanNum);
 				int n,x;
 				x = (int)Math.ceil(scan.getDataPointMZRange().upperEndpoint());
-				maxMasses = Integer.max(x, maxMasses);
+				maxMasses = Math.max(x, maxMasses);
 				n = (int)Math.floor(scan.getDataPointMZRange().lowerEndpoint());
-				minMasses = Integer.min(n, minMasses);
+				minMasses = Math.min(n, minMasses);
 			}
 		}
 		minMass.setMinMax(minMasses, maxMasses-1);
