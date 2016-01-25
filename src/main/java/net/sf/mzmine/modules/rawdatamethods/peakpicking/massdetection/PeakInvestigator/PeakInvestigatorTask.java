@@ -272,6 +272,7 @@ public class PeakInvestigatorTask
                 "", 0, numSaaSStartSteps);
 		progressMonitor.setMillisToPopup(0);
 		progressMonitor.setMillisToDecideToPopup(0);
+		progressMonitor.setNote("Sending scans to PeakInvestigator service.");
 		
 		try {
 			tarfile.close();
@@ -294,6 +295,7 @@ public class PeakInvestigatorTask
 		//####################################################################
 		// Prepare for remote job in a loop as it might take some time to analyze
 		logger.info("Awaiting PREP analysis, " + intputFilename + ", on SaaS server...");
+		progressMonitor.setNote("Performing a pre-check analysis.");
 		int prep_ret = vtmx.getPagePrep(scanCnt);
 		progressMonitor.setProgress(3);
 		
@@ -325,6 +327,7 @@ public class PeakInvestigatorTask
 		progressMonitor.setProgress(15);
 		//####################################################################
 		// start for remote job
+		progressMonitor.setNote("Requesting job to be run...");
 		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
 		if (vtmx.getPageRun(scanCnt) < PeakInvestigatorSaaS.W_RUNNING)
 		{
@@ -338,6 +341,7 @@ public class PeakInvestigatorTask
 		    logger.info("Job, " + jobID + ", canceled");
 		    return;
 		}
+		progressMonitor.setNote("Finished");
 		progressMonitor.close();
 		
 		// job was started - record it
@@ -363,10 +367,11 @@ public class PeakInvestigatorTask
 		logger.info("Checking previously launched job, " + jobID);
 		
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
-                "Peak Investigator SaaS retrieval",
+                "Preparing to start job...",
                 "", 0, numSaaSRetrieveSteps);
 		progressMonitor.setMillisToPopup(0);
 		progressMonitor.setMillisToDecideToPopup(0);
+		progressMonitor.setNote("Retrieving results from PeakInvestigator service.");
 
 		// see if remote job is complete
 		if ((status = vtmx.getPageStatus()) == PeakInvestigatorSaaS.W_RUNNING)
@@ -378,6 +383,7 @@ public class PeakInvestigatorTask
 			return;
 		}
 		progressMonitor.setProgress(1);
+		progressMonitor.setNote("Downloading job, " + jobID + " results...");
 		
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
@@ -411,6 +417,7 @@ public class PeakInvestigatorTask
 		    return;
 		}
 		progressMonitor.setProgress(2);
+		progressMonitor.setNote("Reading centroided data, " + outputFilename + ", from SFTP drop...");
 		
 		outputFilename = vtmx.getResultsFilename();
 		// read the results tar file and extract all the peak list files
@@ -430,6 +437,7 @@ public class PeakInvestigatorTask
 				while ((tf = tis.getNextEntry()) != null)
 				{
 					if (tf.isDirectory()) continue;
+					progressMonitor.setNote("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
 					logger.info("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
 					outputStream = new FileOutputStream(tf.getName());
 					while ((bytesRead = tis.read(buf, 0, 1024)) > -1)
@@ -450,6 +458,7 @@ public class PeakInvestigatorTask
 			}
 			inputLogFilename = vtmx.getJobLogFilename();
 			// read the job log tar file and extract all the peak list files
+			progressMonitor.setNote("Reading log, " + inputLogFilename + ", from SFTP drop...");
 			logger.info("Reading log, " + inputLogFilename + ", from SFTP drop...");
 			
 			progressMonitor.setProgress(5);
@@ -489,6 +498,7 @@ public class PeakInvestigatorTask
 					}
 				}
 			}
+			progressMonitor.setNote("Finished");
 			progressMonitor.setProgress(7);
 		}
 		progressMonitor.close();
