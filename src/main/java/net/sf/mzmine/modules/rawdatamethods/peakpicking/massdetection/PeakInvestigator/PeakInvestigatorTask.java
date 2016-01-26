@@ -569,6 +569,13 @@ public class PeakInvestigatorTask
 
 		desc = "finishing retrieve";
 		logger.info("Finishing retrieval of job " + jobID);
+
+		if (System.getProperty("PeakInvestigatorTask.deleteJob")
+				.equals("false")) {
+			logger.info("Job " + jobID + " not being deleted as requested.");
+			return;
+		}
+
 		vtmx.getPageDone();
 		rawDataFile.removeJob(jobID);
 		desc = "retrieve finished";
