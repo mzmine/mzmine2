@@ -472,7 +472,8 @@ public class PeakInvestigatorTask
 			if(showLog) {
 				BufferedReader br = null;
 				try {
-					br = new BufferedReader(new FileReader(inputLogFilename));
+					File fileWithFullPath = new File(inputLogFilename);
+					br = new BufferedReader(new FileReader(fileWithFullPath.getName()));
 				} catch (FileNotFoundException e2) {
 					MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Log file not found", logger);
 				}
