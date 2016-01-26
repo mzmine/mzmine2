@@ -469,36 +469,38 @@ public class PeakInvestigatorTask
 			}
 			vtmx.getFile(inputLogFilename);
 			progressMonitor.setProgress(6);
-			if(showLog) {
-				BufferedReader br = null;
-				try {
-					File fileWithFullPath = new File(inputLogFilename);
-					br = new BufferedReader(new FileReader(fileWithFullPath.getName()));
-				} catch (FileNotFoundException e2) {
-					MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Log file not found", logger);
-				}
-				if(br != null) {
-					try {
-					    StringBuilder sb = new StringBuilder();
-					    String line = br.readLine();
-	
-					    while (line != null) {
-					        sb.append(line);
-					        sb.append(System.lineSeparator());
-					        line = br.readLine();
-					    }
-					    logInfo = sb.toString();
-					} catch (Exception e1) {
-						logger.finest(e1.getMessage());
-						MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse log file", logger);
-						errors++;
-						e1.printStackTrace();
-					} finally {
-						try { br.close(); } catch (Exception e) {}
-						MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Peak Investigator Job Log", logInfo);
+			if (showLog) {
+				File fileWithFullPath = new File(inputLogFilename);
+				try (BufferedReader br = new BufferedReader(new FileReader(
+						fileWithFullPath.getName()))) {
+					StringBuilder sb = new StringBuilder();
+					String line = br.readLine();
+
+					while (line != null) {
+						sb.append(line);
+						sb.append(System.lineSeparator());
+						line = br.readLine();
 					}
+
+					logInfo = sb.toString();
+					MZmineCore.getDesktop().displayMessage(
+							MZmineCore.getDesktop().getMainWindow(),
+							"Peak Investigator Job Log", logInfo);
+
+				} catch (FileNotFoundException e2) {
+					MZmineCore.getDesktop().displayErrorMessage(
+							MZmineCore.getDesktop().getMainWindow(), "Error",
+							"Log file not found", logger);
+				} catch (Exception e1) {
+					logger.finest(e1.getMessage());
+					MZmineCore.getDesktop().displayErrorMessage(
+							MZmineCore.getDesktop().getMainWindow(), "Error",
+							"Cannot parse log file", logger);
+					errors++;
+					e1.printStackTrace();
 				}
 			}
+
 			progressMonitor.setNote("Finished");
 			progressMonitor.setProgress(7);
 		}
