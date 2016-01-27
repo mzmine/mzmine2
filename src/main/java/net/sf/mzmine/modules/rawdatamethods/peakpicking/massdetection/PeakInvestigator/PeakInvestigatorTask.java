@@ -19,6 +19,12 @@
 
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -34,6 +40,11 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.ProgressMonitor;
 
 import java.io.BufferedReader;
@@ -47,6 +58,7 @@ import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.util.GUIUtils;
 
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
@@ -483,9 +495,12 @@ public class PeakInvestigatorTask
 					}
 
 					logInfo = sb.toString();
-					MZmineCore.getDesktop().displayMessage(
-							MZmineCore.getDesktop().getMainWindow(),
-							"Peak Investigator Job Log", logInfo);
+					PeakInvestigatorLogDialog logDialog = new PeakInvestigatorLogDialog(logInfo);
+					logDialog.setVisible(true);
+
+//					MZmineCore.getDesktop().displayMessage(
+//							MZmineCore.getDesktop().getMainWindow(),
+//							"Peak Investigator Job Log", logInfo);
 
 				} catch (FileNotFoundException e2) {
 					MZmineCore.getDesktop().displayErrorMessage(
@@ -585,6 +600,49 @@ public class PeakInvestigatorTask
 		MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "PeakInvestigator results successfully downloaded.\n" + 
 											"All your job files will now be deleted from the Veritomyx servers.\n" +
 											"Remember to save your project before closing MZminePI.", logger);
+	}
+
+	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
+
+		private static final long serialVersionUID = 1L;
+
+		PeakInvestigatorLogDialog(String contents) {
+			super(MZmineCore.getDesktop().getMainWindow(),
+					"PeakInvestigator Job Log",
+					Dialog.ModalityType.DOCUMENT_MODAL);
+
+			Container verticalBox = Box.createVerticalBox();
+
+			JTextArea textArea = new JTextArea(contents);
+			textArea.setEditable(false);
+
+			JScrollPane scrollPane = new JScrollPane(textArea);
+			verticalBox.add(scrollPane);
+
+			Container buttonBox = Box.createHorizontalBox();
+
+			@SuppressWarnings("unused")
+			JButton closeButton = GUIUtils.addButton(buttonBox, "Close", null,
+					this);
+
+			verticalBox.add(buttonBox);
+
+			add(verticalBox);
+
+			setLocationRelativeTo(getParent());
+			setMinimumSize(new Dimension(400, 300));
+
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Object object = e.getSource();
+
+			if (object instanceof JButton
+					&& ((JButton) object).getText() == "Close") {
+				dispose();
+			}
+		}
 	}
 
 }
