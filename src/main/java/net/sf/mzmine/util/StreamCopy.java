@@ -29,7 +29,7 @@ import java.nio.channels.WritableByteChannel;
 
 public class StreamCopy {
 
-    private long copiedLength, totalLenght;
+    private long copiedLength, totalLength;
     private boolean canceled = false, finished = false;
 
     /**
@@ -40,8 +40,9 @@ public class StreamCopy {
      * @param output
      *            OutputStream
      */
-    public void copy(InputStream input, OutputStream output) throws IOException {
-	this.copy(input, output, 0);
+    public void copy(InputStream input, OutputStream output)
+            throws IOException {
+        this.copy(input, output, 0);
     }
 
     /**
@@ -52,31 +53,31 @@ public class StreamCopy {
      * @param output
      *            OutputStream
      */
-    public void copy(InputStream input, OutputStream output, long totalLenght)
-	    throws IOException {
+    public void copy(InputStream input, OutputStream output, long totalLength)
+            throws IOException {
 
-	this.totalLenght = totalLenght;
+        this.totalLength = totalLength;
 
-	ReadableByteChannel in = Channels.newChannel(input);
-	WritableByteChannel out = Channels.newChannel(output);
+        ReadableByteChannel in = Channels.newChannel(input);
+        WritableByteChannel out = Channels.newChannel(output);
 
-	// Allocate 1MB buffer
-	ByteBuffer bbuffer = ByteBuffer.allocate(1 << 20);
+        // Allocate 1MB buffer
+        ByteBuffer bbuffer = ByteBuffer.allocate(1 << 20);
 
-	int len = 0;
+        int len = 0;
 
-	while ((len = in.read(bbuffer)) != -1) {
+        while ((len = in.read(bbuffer)) != -1) {
 
-	    if (canceled)
-		return;
+            if (canceled)
+                return;
 
-	    bbuffer.flip();
-	    out.write(bbuffer);
-	    bbuffer.clear();
-	    copiedLength += len;
-	}
+            bbuffer.flip();
+            out.write(bbuffer);
+            bbuffer.clear();
+            copiedLength += len;
+        }
 
-	finished = true;
+        finished = true;
 
     }
 
@@ -86,22 +87,26 @@ public class StreamCopy {
      *         stream to another
      */
     public double getProgress() {
-	if (totalLenght == 0)
-	    return 0;
-	return (double) copiedLength / totalLenght;
+        if (finished)
+            return 1.0;
+        if (totalLength == 0)
+            return 0;
+        if (copiedLength >= totalLength)
+            return 1.0;
+        return (double) (double)copiedLength / (double)totalLength;
     }
 
     /**
      * Cancel the copying
      */
     public void cancel() {
-	canceled = true;
+        canceled = true;
     }
 
     /**
      * Checks if copying is finished
      */
     public boolean finished() {
-	return finished;
+        return finished;
     }
 }
