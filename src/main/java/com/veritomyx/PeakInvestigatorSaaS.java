@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.util.ExitCode;
@@ -118,8 +119,6 @@ public class PeakInvestigatorSaaS
 	private String[] PIversions;
 	private String   SLA_key;
 	private String   PIversion;
-
-	private String    host;
 	private String    sftp_host;
 	private String    sftp_user;
 	private String    sftp_pw;
@@ -156,7 +155,7 @@ public class PeakInvestigatorSaaS
 		log.info(this.getClass().getName());
 		jobID      = null;
 		dir        = null;
-		host       = live ? "peakinvestigator.veritomyx.com/api/" : "test.veritomyx.com";
+
 		sftp_user  = null;
 		sftp_pw    = null;
 		sftp_port  = 22;
@@ -294,9 +293,15 @@ public class PeakInvestigatorSaaS
 
 		BufferedReader    in = null;
 		HttpURLConnection uc = null;
+		String page = null;
 		try {
 			// build the URL with parameters
-			String page = "https://" + host; // +
+			String host = MZmineCore.getConfiguration().getPreferences()
+					.getParameter(MZminePreferences.vtmxServer).getValue();
+			if (host.startsWith("https://")) {
+				host = host.substring(8);
+			}
+			page = "https://" + host + "/api/";
 			String params = "Version=" + reqVeritomyxCLIVersion + // online CLI version that matches this interface
 					"&User="	+ URLEncoder.encode(username, "UTF-8") + 
 					"&Code="    + URLEncoder.encode(password, "UTF-8") + 
@@ -521,7 +526,7 @@ public class PeakInvestigatorSaaS
 		{
 			log.error(e.getMessage());
 			web_result = W_EXCEPTION;
-			web_str    = "Web exception - Unabled to connect to server";
+			web_str    = "Web exception - Unabled to connect to server:\n" + page;
 		}
 		try { in.close();      } catch (Exception e) { }
 		try { uc.disconnect(); } catch (Exception e) { }

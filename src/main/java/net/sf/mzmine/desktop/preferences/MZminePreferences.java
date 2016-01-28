@@ -68,9 +68,14 @@ public class MZminePreferences extends SimpleParameterSet {
 
     public static final WindowSettingsParameter windowSetttings = new WindowSettingsParameter();
 
-    public static final StringParameter vtmxUsername = new StringParameter(
-    			"Veritomyx Username",
-    			"Login name (email address) for Veritomyx SaaS.");
+	public static final StringParameter vtmxServer = new StringParameter(
+			"Veritomxy Server", "Server address for Veritomyx SaaS.",
+			"peakinvestigator.veritomyx.com");
+
+	public static final StringParameter vtmxUsername = new StringParameter(
+			"Veritomyx Username",
+			"Login name (email address) for Veritomyx SaaS.");
+
     public static final PasswordParameter vtmxPassword = new PasswordParameter(
     			"Veritomyx Password",
     			"Password for Veritomyx SaaS.");
@@ -82,7 +87,7 @@ public class MZminePreferences extends SimpleParameterSet {
     public MZminePreferences() {
         super(new Parameter[] { mzFormat, rtFormat, intensityFormat,
                 numOfThreads, proxySettings, rExecPath, sendStatistics,
-                windowSetttings, vtmxUsername, vtmxPassword, vtmxProject  });
+                windowSetttings, vtmxServer, vtmxUsername, vtmxPassword, vtmxProject  });
     }
 
     @Override
