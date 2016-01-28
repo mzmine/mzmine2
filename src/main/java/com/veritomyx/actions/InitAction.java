@@ -49,9 +49,9 @@ public class InitAction extends BaseAction {
 		return getStringAttribute("Job");
 	}
 
-	public int getProjectId() {
+	public long getProjectId() {
 		preCheck();
-		return getIntAttribute("ProjectID");
+		return getLongAttribute("ProjectID");
 	}
 
 	public double getFunds() {
@@ -79,12 +79,18 @@ public class InitAction extends BaseAction {
 
 	public String[] getPiVersions() {
 		preCheck();
-		return getStringArrayAttribute("PI_versions");
+		return getStringArrayAttribute("PI_Versions");
 	}
 
 	@Override
 	public String getErrorMessage() {
 		preCheck();
 		return super.getErrorMessage();
+	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
 	}
 }

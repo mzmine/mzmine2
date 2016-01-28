@@ -42,7 +42,7 @@ public class PrepAction extends BaseAction {
 
 	public int getScanCount() {
 		preCheck();
-		return getIntAttribute("ScanCount");
+		return (int) getLongAttribute("ScanCount");
 	}
 
 	public String getMStype() {
@@ -54,6 +54,12 @@ public class PrepAction extends BaseAction {
 	public String getErrorMessage() {
 		preCheck();
 		return super.getErrorMessage();
+	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
 	}
 
 	public enum Status { Analyzing, Ready, Error };

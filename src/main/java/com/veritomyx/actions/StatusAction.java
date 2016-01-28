@@ -6,7 +6,6 @@ import java.util.Date;
 
 public class StatusAction extends BaseAction {
 	private static final String action = "STATUS";
-	private static final String DATE_FORMAT = "yyyy-MM-dd kk:mm:ss";
 
 	private String jobID;
 
@@ -43,8 +42,7 @@ public class StatusAction extends BaseAction {
 
 	public Date getDate() throws ParseException {
 		preCheck();
-		SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-		return dateFormat.parse(getStringAttribute("Datetime"));
+		return getDateAttribute("Datetime");
 	}
 
 	public int getNumberOfInputScans() {
@@ -57,9 +55,9 @@ public class StatusAction extends BaseAction {
 		return getIntAttribute("ScansComplete");
 	}
 
-	public double getFunds() {
+	public String getActualCost() {
 		preCheck();
-		return Double.parseDouble(getStringAttribute("Funds").substring(1));
+		return getStringAttribute("ActualCost");
 	}
 
 	public String getLogFilename() {
@@ -76,6 +74,12 @@ public class StatusAction extends BaseAction {
 	public String getErrorMessage() {
 		preCheck();
 		return super.getErrorMessage();
+	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
 	}
 
 	public enum Status { Running, Done, Deleted };

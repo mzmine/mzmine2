@@ -51,8 +51,22 @@ public class ActionsTest {
 		BaseAction action = new SftpAction("2.14", "user", "password", 100);
 		assertEquals(action.buildQuery(),
 				"Version=2.14&User=user&Code=password&Action=SFTP&ID=100");
-	}
 
+		try {
+			action.processResponse("{\"Action\":\"SFTP\",\"Host\":\"peakinvestigator.veritomyx.com\",\"Port\":22022,\"Directory\":\"/files\",\"Login\":\"joe\",\"Password\":\"*****\"}");
+		} catch (UnsupportedOperationException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+
+		SftpAction temp = (SftpAction) action;
+		assertEquals(temp.getHost(), "peakinvestigator.veritomyx.com");
+		assertEquals(temp.getSftpUsername(), "joe");
+		assertEquals(temp.getSftpPassword(), "*****");
+		assertEquals(temp.getPort(), 22022);
+	}
+// {"Action":"SFTP","Host":"peakinvestigator.veritomyx.com","Port":22022,"Directory":"\/files","Login":"V1022","Password":"2HgNWqnevbP1mi7O"}
 	@Test
 	public void test_SftpAction_Error() {
 		BaseAction action = new SftpAction("2.14", "user", "password", 100);

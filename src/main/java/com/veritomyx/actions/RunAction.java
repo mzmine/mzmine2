@@ -63,4 +63,10 @@ public class RunAction extends BaseAction {
 		preCheck();
 		return super.getErrorMessage();
 	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
+	}
 }

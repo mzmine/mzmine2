@@ -33,7 +33,7 @@ public class SftpAction extends BaseAction {
 
 	public int getPort() {
 		preCheck();
-		return getIntAttribute("Port");
+		return (int) getLongAttribute("Port");
 	}
 
 	public String getDirectory() {
@@ -55,5 +55,11 @@ public class SftpAction extends BaseAction {
 	public String getErrorMessage() {
 		preCheck();
 		return super.getErrorMessage();
+	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
 	}
 }

@@ -15,11 +15,29 @@ public class PiVersionsAction extends BaseAction {
 		return builder.toString();
 	}
 
+	private void preCheck() throws IllegalStateException {
+		if (!isReady(action)) {
+			throw new IllegalStateException("Response has not been set.");
+		}
+	}
+
 	public String[] getVersions() throws IllegalStateException {
 		if (!isReady(action)) {
 			throw new IllegalStateException();
 		}
 
 		return getStringArrayAttribute("PeakInvestigator");
+	}
+
+	@Override
+	public String getErrorMessage() {
+		preCheck();
+		return super.getErrorMessage();
+	}
+
+	@Override
+	public int getErrorCode() {
+		preCheck();
+		return super.getErrorCode();
 	}
 }
