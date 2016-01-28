@@ -23,4 +23,38 @@ public class PrepAction extends BaseAction {
 		return builder.toString();
 
 	}
+
+	private void preCheck() throws IllegalStateException {
+		if (!isReady(action)) {
+			throw new IllegalStateException("Response has not been set.");
+		}
+	}
+
+	public String getFilename() {
+		preCheck();
+		return getStringAttribute("File");
+	}
+
+	public Status getStatus() {
+		preCheck();
+		return Status.valueOf(getStringAttribute("Status"));
+	}
+
+	public int getScanCount() {
+		preCheck();
+		return getIntAttribute("ScanCount");
+	}
+
+	public String getMStype() {
+		preCheck();
+		return getStringAttribute("MSType");
+	}
+
+	@Override
+	public String getErrorMessage() {
+		preCheck();
+		return super.getErrorMessage();
+	}
+
+	public enum Status { Analyzing, Ready, Error };
 }

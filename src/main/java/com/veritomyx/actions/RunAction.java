@@ -29,7 +29,6 @@ public class RunAction extends BaseAction {
 		this.calibrationFilename = calibrationFilename;
 		this.RTO = RTO;
 		this.PiVersion = PiVersion;
-
 	}
 
 	public String buildQuery() {
@@ -46,6 +45,22 @@ public class RunAction extends BaseAction {
 		builder.append("PIVersion=" + PiVersion);
 
 		return builder.toString();
+	}
 
+	private void preCheck() throws IllegalStateException {
+		if (!isReady(action)) {
+			throw new IllegalStateException("Response has not been set.");
+		}
+	}
+
+	public String getJob() {
+		preCheck();
+		return getStringAttribute("Job");
+	}
+
+	@Override
+	public String getErrorMessage() {
+		preCheck();
+		return super.getErrorMessage();
 	}
 }

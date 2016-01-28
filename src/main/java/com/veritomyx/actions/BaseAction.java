@@ -41,9 +41,17 @@ public abstract class BaseAction {
 		responseObject = (JSONObject) parser.parse(response);
 	}
 
-	protected boolean isReady(String action) {
-		return responseObject != null
-				&& getStringAttribute("Action").equals(action);
+	protected boolean isReady(String action) throws IllegalStateException {
+		if (responseObject == null) {
+			return false;
+		}
+
+		if (!getStringAttribute("Action").equals(action)) {
+			throw new IllegalStateException("Response is from another action: "
+					+ getStringAttribute("Action"));
+		}
+
+		return true;
 	}
 
 	public boolean hasError() {
@@ -52,6 +60,10 @@ public abstract class BaseAction {
 		}
 
 		return responseObject.containsKey("Error");
+	}
+
+	public String getErrorMessage() {
+		return getStringAttribute("Message");
 	}
 
 	public String getStringAttribute(String attribute) {

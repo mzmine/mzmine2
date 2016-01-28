@@ -56,7 +56,8 @@ public class InitAction extends BaseAction {
 
 	public double getFunds() {
 		preCheck();
-		return Double.parseDouble(getStringAttribute("Funds").substring(1));
+		return Double
+				.parseDouble(getStringAttribute("Funds").substring(1));
 	}
 
 	public HashMap<String, Double> getRTOs() {
@@ -79,5 +80,11 @@ public class InitAction extends BaseAction {
 	public String[] getPiVersions() {
 		preCheck();
 		return getStringArrayAttribute("PI_versions");
+	}
+
+	@Override
+	public String getErrorMessage() {
+		preCheck();
+		return super.getErrorMessage();
 	}
 }
