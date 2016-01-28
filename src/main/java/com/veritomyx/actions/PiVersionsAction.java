@@ -14,4 +14,12 @@ public class PiVersionsAction extends BaseAction {
 
 		return builder.toString();
 	}
+
+	public String[] getVersions() throws IllegalStateException {
+		if (!isReady(action)) {
+			throw new IllegalStateException();
+		}
+
+		return getStringArrayAttribute("PeakInvestigator");
+	}
 }

@@ -1,5 +1,10 @@
 package com.veritomyx.actions;
 
+import java.util.HashMap;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 public class InitAction extends BaseAction {
 	private static final String action = "INIT";
 
@@ -32,5 +37,47 @@ public class InitAction extends BaseAction {
 
 		return builder.toString();
 	}
-	
+
+	private void preCheck() throws IllegalStateException {
+		if (!isReady(action)) {
+			throw new IllegalStateException();
+		}
+	}
+
+	public String getJob() {
+		preCheck();
+		return getStringAttribute("Job");
+	}
+
+	public int getProjectId() {
+		preCheck();
+		return getIntAttribute("ProjectID");
+	}
+
+	public double getFunds() {
+		preCheck();
+		return Double.parseDouble(getStringAttribute("Funds").substring(1));
+	}
+
+	public HashMap<String, Double> getRTOs() {
+		preCheck();
+
+		HashMap<String, Double> RTOs = new HashMap<>();
+		JSONArray rtos = (JSONArray) responseObject.get("RTOs");
+		for (int r = 0; r < rtos.size(); r++) {
+			JSONObject tmp = (JSONObject) rtos.get(r);
+			String key = tmp.get("RTO").toString();
+			RTOs.put(
+					key,
+					Double.parseDouble(tmp.get("EstCost").toString()
+							.substring(1)));
+		}
+
+		return RTOs;
+	}
+
+	public String[] getPiVersions() {
+		preCheck();
+		return getStringArrayAttribute("PI_versions");
+	}
 }
