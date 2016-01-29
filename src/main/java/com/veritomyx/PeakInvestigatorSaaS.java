@@ -26,9 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Date;
-import java.text.SimpleDateFormat;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -47,16 +45,12 @@ import org.apache.log4j.Logger;
 
 import javax.swing.JOptionPane;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
-import org.json.simple.parser.JSONParser;
 
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 
 import com.veritomyx.PeakInvestigatorInitDialog;
+import com.veritomyx.actions.*;
 
 /**
  * This class is used to access the Veritomyx SaaS servers
@@ -67,6 +61,8 @@ public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
 	public static final String reqVeritomyxCLIVersion = "2.13";
+
+	enum Action { PI_VERSIONS, INIT, SFTP, PREP, RUN, STATUS, DELETE }; 
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -100,12 +96,6 @@ public class PeakInvestigatorSaaS
 	public  static final int W_ERROR_CANNOT_BE_BLACK = -22;
 
 	// page actions
-	private static final String JOB_INIT   = "INIT";
-	private static final String JOB_SFTP   = "SFTP";
-	private static final String JOB_PREP   = "PREP";
-	private static final String JOB_RUN    = "RUN";
-	private static final String JOB_STATUS = "STATUS";
-	private static final String JOB_DONE   = "DELETE";
 	private static final String dateFormating = "yyyy-MM-dd kk:mm:ss";
 
 	private Logger log;
@@ -169,7 +159,7 @@ public class PeakInvestigatorSaaS
 		SLA_key	   = null;
 		PIversion  = null;
 		
-		prep_status     = prep_status_type.PREP_ANALYZING;
+		prep_status     = prep_status_type.PREP_ANALYZING; // TODO : unncessary?
 		prep_scan_count = 0;
 		prep_ms_type    = null;
 	}
@@ -196,7 +186,7 @@ public class PeakInvestigatorSaaS
 		// this also gets the job_id and SFTP credentials
 		if (!pickup)
 		{
-			if (getPage(JOB_INIT, scanCount, minMass, maxMass) != W_INFO)
+			if (getPage(Action.INIT, scanCount, minMass, maxMass) != W_INFO)
 				return web_result;
 			// Ask user which SLA and PIversion
 			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
@@ -211,9 +201,9 @@ public class PeakInvestigatorSaaS
 				return web_result;
 			}
 
-			if (getPage(JOB_SFTP, 0) != W_INFO)
+			if (getPage(Action.SFTP, 0) != W_INFO)
 				return web_result;
-			if (getPage(JOB_PREP, 0) != W_INFO)
+			if (getPage(Action.PREP, 0) != W_INFO)
 				return web_result;
 			if (jobID != null)	// we have a valid job
 			{
@@ -253,13 +243,13 @@ public class PeakInvestigatorSaaS
 	 * @return
 	 */
 	public String getJobID()            { return jobID; }
-	public int    getPageStatus()       { return getPage(JOB_STATUS,     0); }
-	public int    getPageRun(int count) { return getPage(JOB_RUN,    count); }
-	public int	  getPagePrep(int count){ return getPage(JOB_PREP, 	 count); }
-	public int    getPageDone()         { return getPage(JOB_DONE,       0); }
-	public int	  getPageSftp()			{ return getPage(JOB_SFTP, 		 0); }
+	public int    getPageStatus()       { return getPage(Action.STATUS,     0); }
+	public int    getPageRun(int count) { return getPage(Action.RUN,    count); }
+	public int	  getPagePrep(int count){ return getPage(Action.PREP, 	 count); }
+	public int    getPageDone()         { return getPage(Action.DELETE,       0); }
+	public int	  getPageSftp()			{ return getPage(Action.SFTP, 		 0); }
 	public String getPageStr()          { return web_str; }
-	public int	  getPage(String action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
+	public int	  getPage(Action action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
 	
 	public prep_status_type getPrepStatus() { return prep_status; }
 	
@@ -280,89 +270,92 @@ public class PeakInvestigatorSaaS
 	 * @param count
 	 * @return int
 	 */
-	private int getPage(String action, int count, int minMass, int maxMass)
+	private int getPage(Action action, int count, int minMass, int maxMass)
 	{
-		web_result = W_UNDEFINED;
-		web_str    = "";
-		if ((action != JOB_INIT) && (action != JOB_SFTP) && (action != JOB_PREP) && (action != JOB_RUN) && (action != JOB_STATUS) && (action != JOB_DONE))
-		{
-			web_result = W_ERROR_ACTION;
-			web_str    = "Invalid action";
-			return web_result;
-		}
 
 		BufferedReader    in = null;
 		HttpURLConnection uc = null;
 		String page = null;
 		try {
 			// build the URL with parameters
+
 			String host = MZmineCore.getConfiguration().getPreferences()
 					.getParameter(MZminePreferences.vtmxServer).getValue();
 			if (host.startsWith("https://")) {
 				host = host.substring(8);
 			}
 			page = "https://" + host + "/api/";
-			String params = "Version=" + reqVeritomyxCLIVersion + // online CLI version that matches this interface
-					"&User="	+ URLEncoder.encode(username, "UTF-8") + 
-					"&Code="    + URLEncoder.encode(password, "UTF-8") + 
-					"&Action="  + action;
 			
-			if ((action == JOB_INIT) && (jobID == null))	// new job request
-			{
-				// Check the MaxMass to ensure it is not bigger than the size of the maximum datapoints in the job.
-				Integer maxMasses = 0;
-				
-				RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
-				for(RawDataFile file : files) {
-					int[] scanNumbers = file.getScanNumbers();
-					for(int scanNum : scanNumbers) {
-						Scan scan = file.getScan(scanNum);
-						int dpCount = scan.getNumberOfDataPoints();
-						maxMasses = Math.max(maxMasses.intValue(), dpCount);
-					}
+			MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
+			String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
+			String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
+
+			BaseAction actionObject = null;
+			switch (action) {
+			case PI_VERSIONS:
+				actionObject = new PiVersionsAction(reqVeritomyxCLIVersion,
+						username, password);
+				break;
+			case INIT:
+				if (jobID == null) {
+					actionObject = new InitAction(reqVeritomyxCLIVersion,
+							username, password, aid, count, 0, minMass, maxMass);
 				}
-				if(maxMass > maxMasses) {
-					maxMass = maxMasses;
-				}
-				params += "&ID=" + aid +
-						"&ScanCount=" + count +
-				//		",\"CalibrationCount\": " + calibrationCount + "\"" +
-						"&MinMass=" + minMass +
-						"&MaxMass=" + maxMass;
-			}
-			else if (action == JOB_PREP)
-			{
-				params += "&ID=" + aid +
-						"&File=" + sftp_file;
-			}
-			else if (action == JOB_RUN)
-			{
-				params += "&Job=" + jobID +
-						"&InputFile=" + sftp_file +
-						"&RTO=" + SLA_key +
-						"&PIVersion=" + PIversion;
-				// TODO:  Add CalibrationFile when available
-			}
-			else if (action == JOB_STATUS)
-			{
-				params += "&Job=" + jobID;
-			}
-			else if (action == JOB_DONE)
-			{
-				params += "&Job=" + jobID;
-			}
-			else if (jobID != null)	// all the rest require a jobID
-			{
-				params += "&ID=" + aid;
-			}
-			else
-			{
-				web_result = W_ERROR_JOB_CMD;
-				web_str    = "Job ID, " + jobID + ", not defined";
+				break;
+			case SFTP:
+				actionObject = new SftpAction(reqVeritomyxCLIVersion, username, password, aid);
+				break;
+			case PREP:
+				actionObject = new PrepAction(reqVeritomyxCLIVersion, username,
+						password, aid, sftp_file);
+				break;
+			case RUN:
+				// TODO: calibration when available
+				actionObject = new RunAction(reqVeritomyxCLIVersion, username,
+						password, jobID, sftp_file, null, SLA_key, PIversion);
+				break;
+			case STATUS:
+				actionObject = new StatusAction(reqVeritomyxCLIVersion,
+						username, password, jobID);
+				break;
+			case DELETE:
+				actionObject = new DeleteAction(reqVeritomyxCLIVersion,
+						username, password, jobID);
+				break;
+			default:
+				web_result = W_ERROR_ACTION;
+				web_str = "Invalid action";
 				return web_result;
 			}
+
+			web_result = W_UNDEFINED;
+			web_str = "";
+
+// TODO: remove when refactor code works
+//			if ((action == JOB_INIT) && (jobID == null))	// new job request
+//			{
+//				// Check the MaxMass to ensure it is not bigger than the size of the maximum datapoints in the job.
+//				Integer maxMasses = 0;
+//				
+//				RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
+//				for(RawDataFile file : files) {
+//					int[] scanNumbers = file.getScanNumbers();
+//					for(int scanNum : scanNumbers) {
+//						Scan scan = file.getScan(scanNum);
+//						int dpCount = scan.getNumberOfDataPoints();
+//						maxMasses = Math.max(maxMasses.intValue(), dpCount);
+//					}
+//				}
+//				if(maxMass > maxMasses) {
+//					maxMass = maxMasses;
+//				}
+//
+//			}
+
 			log.debug(page);
-			log.debug(params);
+
+			String query = actionObject.buildQuery();
+			log.debug(query);
 
 			URL url = new URL(page);
 			uc = (HttpURLConnection)url.openConnection();
@@ -371,7 +364,7 @@ public class PeakInvestigatorSaaS
 			uc.setRequestProperty("Content-Type", 
 			           "application/x-www-form-urlencoded");
 			uc.setRequestProperty("Content-Length", "" + 
-			               Integer.toString(params.getBytes().length));
+			               Integer.toString(query.getBytes().length));
 			uc.setRequestProperty("Content-Language", "en-US");  
 			uc.setReadTimeout(240 * 1000);	// give it 4 minutes to respond
 			System.setProperty("java.net.preferIPv4Stack", "true");	// without this we get exception in getInputStream
@@ -382,7 +375,7 @@ public class PeakInvestigatorSaaS
 			OutputStream os = uc.getOutputStream();
 			BufferedWriter writer = new BufferedWriter(
 			        new OutputStreamWriter(os, "UTF-8"));
-			writer.write(params);
+			writer.write(query);
 			writer.flush();
 			writer.close();
 			os.close();
@@ -401,132 +394,119 @@ public class PeakInvestigatorSaaS
 			String decodedString = builder.toString();
 
 			log.debug(decodedString);
-			
-			if(decodedString.startsWith("<html>")) {
-				log.error("The URL appears to have an error.");
+			try {
+				actionObject.processResponse(decodedString);
+			} catch (Exception e) {
+				log.error(e);
+				if (e instanceof ParseException) {
+					log.error("JSON Parse Error at position: "
+							+ ((ParseException) e).getPosition());
+				}
+
 				JOptionPane
-				.showMessageDialog(
-						MZmineCore.getDesktop().getMainWindow(),
-						"Peak Investigator Saas returned an error indicating a problem with the URL.",
-						MZmineCore.MZmineName,
-						JOptionPane.ERROR_MESSAGE);
+						.showMessageDialog(
+								MZmineCore.getDesktop().getMainWindow(),
+								"The response from Peak Investigator Saas was not understood.",
+								MZmineCore.MZmineName,
+								JOptionPane.ERROR_MESSAGE);
 				web_str = decodedString;
 				return (web_result = W_ERROR);
 			}		
 			
 			if (web_result == W_UNDEFINED) {
-				web_str = decodedString;
-				JSONParser parser = new JSONParser();
-				JSONObject obj = new JSONObject();
-				try {
-					obj = (JSONObject) parser.parse(web_str);
-				} catch (ParseException pe) {
 
-					log.error("JSON Parse Error at position: "
-							+ pe.getPosition());
-					log.error(pe);
-				}
-				
-				if(!obj.containsKey("Error")) {
+				if (!actionObject.hasError()) {
 
-				String cmd = (String)obj.get("Action");
-				if (cmd.equals("INIT")) {
-					web_result = W_INFO;
-					jobID = (String) obj.get("Job");
-					// jobID = obj.get("Job"));
-					funds = Double.parseDouble(obj.get("Funds").toString().substring(1));
-					// JSON Version 
-					
-					JSONArray pis  = (JSONArray)obj.get("PI_Versions");
-					PIversions  = new String[pis.size()];
-					for(int p = 0; p < pis.size(); p++) {
-						PIversions[p] = (String)pis.get((pis.size() - 1) - p);
-					}
-					SLAs = new HashMap<String, Double>();
-					JSONArray rtos  = (JSONArray)obj.get("RTOs");
-					for(int r = 0; r < rtos.size(); r++) {
-						JSONObject tmp = (JSONObject)rtos.get(r);
-						String key = tmp.get("RTO").toString();
-						SLAs.put(key, Double.parseDouble(tmp.get("EstCost").toString().substring(1)));
-					}
-					// CSV Version
-					//String rtos = (String)obj.get("RTOs");
-					//SLAs = rtos.split(",");
-					//String pis = (String)obj.get("PI_versions");
-					//PIversions = pis.split(",");
-				} else if (cmd.equals("SFTP")) {
-					web_result = W_SFTP;
-					sftp_host = (String) obj.get("Host");
-					sftp_port = Integer.parseInt(obj.get("Port").toString());
-					dir = (String) obj.get("Directory");
-					sftp_user = (String) obj.get("Login");
-					sftp_pw = (String) obj.get("Password");
-				} else if (cmd.equals("PREP")) {
-					web_result = W_PREP;
+					if (actionObject instanceof InitAction) {
+						web_result = W_INFO;
 
-					String prep_status_string = (String)obj.get("Status");
-					if (prep_status_string.equals("Ready")) {
-						prep_status = prep_status_type.PREP_READY;
-						prep_scan_count = Integer.parseInt(obj.get("ScanCount").toString());
-						if (prep_scan_count != count) {
-							// TODO Need to check the return value and process
-							JOptionPane
-									.showMessageDialog(
-											MZmineCore.getDesktop().getMainWindow(),
-											"Peak Investigator Saas returned a Scan Count that does not match the Scan Count determined by MZMine.  Do you want to continue submitting the job?",
-											MZmineCore.MZmineName,
-											JOptionPane.QUESTION_MESSAGE);
-						}
-						prep_ms_type = (String) obj.get("MSType");
-					} else if (prep_status_string.equals("Analyzing")) {
-						prep_status = prep_status_type.PREP_ANALYZING;
-					} else // error
-					{
-						JOptionPane
-								.showMessageDialog(
-										MZmineCore.getDesktop().getMainWindow(),
-										"Peak Investigator Saas returned an error in the PREP phase.",
+						InitAction temp = (InitAction) actionObject;
+						jobID = temp.getJob();
+						funds = temp.getFunds();
+						PIversions = temp.getPiVersions();
+						SLAs = temp.getRTOs();
+					} else if (actionObject instanceof SftpAction) {
+						web_result = W_SFTP;
+
+						SftpAction temp = (SftpAction) actionObject;
+						sftp_host = temp.getHost();
+						sftp_port = temp.getPort();
+						dir = temp.getDirectory();
+						sftp_user = temp.getSftpUsername();
+						sftp_pw = temp.getSftpPassword();
+					} else if (actionObject instanceof PrepAction) {
+						web_result = W_PREP;
+
+						PrepAction temp = (PrepAction) actionObject;
+						switch (temp.getStatus()) {
+						case Ready:
+							prep_status = prep_status_type.PREP_READY;
+							prep_ms_type = temp.getMStype();
+							prep_scan_count = temp.getScanCount();
+							if (prep_scan_count != count) {
+								// TODO Need to check the return value and
+								// process
+								String mesg = "Peak Investigator Saas returned a Scan Count that does not match "
+										+ "the Scan Count determined by MZMine.  Do you want to continue "
+										+ "submitting the job?";
+								JOptionPane.showMessageDialog(MZmineCore
+										.getDesktop().getMainWindow(), mesg,
 										MZmineCore.MZmineName,
-										JOptionPane.ERROR_MESSAGE);
-					}
-				} else if (cmd.equals("STATUS")) {
-					web_result = W_RUNNING;
-					String d = (String)obj.get("Datetime");
-					SimpleDateFormat df = new SimpleDateFormat(dateFormating);
-					event_date = df.parse(d);
-					String s_status = (String)obj.get("Status");
-					
-					web_str = "Status was " + s_status + " at " + d;
-					if(s_status.equals("Done")) {
+										JOptionPane.QUESTION_MESSAGE);
+							}
+							break;
+						case Analyzing:
+							prep_status = prep_status_type.PREP_ANALYZING;
+							break;
+						default:
+							String mesg = "Peak Investigator Saas returned an error in the PREP phase.";
+							JOptionPane.showMessageDialog(MZmineCore
+									.getDesktop().getMainWindow(), mesg,
+									MZmineCore.MZmineName,
+									JOptionPane.ERROR_MESSAGE);
+						}
+					} else if (actionObject instanceof StatusAction) {
+						web_result = W_RUNNING;
+
+						StatusAction temp = (StatusAction) actionObject;
+						event_date = temp.getDate();
+						switch (temp.getStatus()) {
+						case Done:
+							web_result = W_DONE;
+							s_scansInput = temp.getNumberOfInputScans();
+							s_scansComplete = temp.getNumberOfCompleteScans();
+							s_actualCost = temp.getActualCost();
+							s_jobLogFile = temp.getLogFilename();
+							s_resultsFile = temp.getResultsFilename();
+							web_str += "\nScans Input: " + s_scansInput
+									+ "\nScans Completed: " + s_scansComplete
+									+ "\nActual Cost:  " + s_actualCost
+									+ "\nJob Log File: " + s_jobLogFile
+									+ "\nResults File: " + s_resultsFile;
+							break;
+						case Running:
+							break;
+						default:
+							break;
+						}
+					} else if (actionObject instanceof RunAction) {
+						web_result = W_RUNNING;
+					} else if (actionObject instanceof DeleteAction) {
 						web_result = W_DONE;
-						s_scansInput = Integer.parseInt(obj.get("ScansInput").toString());
-						s_scansComplete = Integer.parseInt(obj.get("ScansComplete").toString());
-						s_actualCost = obj.get("ActualCost").toString();
-						s_jobLogFile = (String)obj.get("JobLogFile");
-						s_resultsFile = (String)obj.get("ResultsFile");
-						web_str += "\nScans Input: " + s_scansInput + "\nScans Completed: " + s_scansComplete + 
-								"\nActual Cost:  " + s_actualCost + "\nJob Log File: " + s_jobLogFile + "\nResults File: " + s_resultsFile;
+						event_date = ((DeleteAction) actionObject).getDate();
+					} else {
+						long err = actionObject.getErrorCode(); // "Error":#
+						web_result = -(int) err;
+						web_str = actionObject.getErrorMessage();
 					}
-				} else if (cmd.equals("RUN")) { 
-					web_result = W_RUNNING;
-				}  else if (cmd.equals("DELETE")) {
-					web_result = W_DONE;
-					String d = (String)obj.get("Datetime");
-					SimpleDateFormat df = new SimpleDateFormat(dateFormating);
-					event_date = df.parse(d);
-				} else {
-					long err = (long)obj.get("Error"); // "Error":#
-					web_result = -(int)err;
-					web_str = (String)obj.get("Message");
 				}
 			}
-		  }
 		}
 		catch (Exception e)
 		{
 			log.error(e.getMessage());
 			web_result = W_EXCEPTION;
-			web_str    = "Web exception - Unabled to connect to server:\n" + page;
+			web_str    = "Web exception - Unable to connect to server:\n" + page;
 		}
 		try { in.close();      } catch (Exception e) { }
 		try { uc.disconnect(); } catch (Exception e) { }
