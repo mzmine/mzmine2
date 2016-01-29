@@ -506,7 +506,7 @@ public class PeakInvestigatorSaaS
 		{
 			log.error(e.getMessage());
 			web_result = W_EXCEPTION;
-			web_str    = "Web exception - Unabled to connect to server:\n" + page;
+			web_str    = "Web exception - Unable to connect to server:\n" + page;
 		}
 		try { in.close();      } catch (Exception e) { }
 		try { uc.disconnect(); } catch (Exception e) { }
