@@ -414,8 +414,8 @@ public class PeakInvestigatorSaaS
 			}		
 			
 			if (web_result == W_UNDEFINED) {
-				
-				if(!actionObject.hasError()) {
+
+				if (!actionObject.hasError()) {
 
 					if (actionObject instanceof InitAction) {
 						web_result = W_INFO;
@@ -426,15 +426,15 @@ public class PeakInvestigatorSaaS
 						PIversions = temp.getPiVersions();
 						SLAs = temp.getRTOs();
 					} else if (actionObject instanceof SftpAction) {
-					web_result = W_SFTP;
-					
-					SftpAction temp = (SftpAction) actionObject;
-					sftp_host = temp.getHost();
-					sftp_port = temp.getPort();
-					dir = temp.getDirectory();
-					sftp_user = temp.getSftpUsername();
-					sftp_pw = temp.getSftpPassword();
-				} else if (actionObject instanceof PrepAction) {
+						web_result = W_SFTP;
+
+						SftpAction temp = (SftpAction) actionObject;
+						sftp_host = temp.getHost();
+						sftp_port = temp.getPort();
+						dir = temp.getDirectory();
+						sftp_user = temp.getSftpUsername();
+						sftp_pw = temp.getSftpPassword();
+					} else if (actionObject instanceof PrepAction) {
 						web_result = W_PREP;
 
 						PrepAction temp = (PrepAction) actionObject;
@@ -489,18 +489,18 @@ public class PeakInvestigatorSaaS
 						default:
 							break;
 						}
-				} else if (actionObject instanceof RunAction) { 
-					web_result = W_RUNNING;
-				} else if (actionObject instanceof DeleteAction) {
-					web_result = W_DONE;
-					event_date = ((DeleteAction) actionObject).getDate();
-				} else {
-					long err = actionObject.getErrorCode(); // "Error":#
-					web_result = -(int)err;
-					web_str = actionObject.getErrorMessage();
+					} else if (actionObject instanceof RunAction) {
+						web_result = W_RUNNING;
+					} else if (actionObject instanceof DeleteAction) {
+						web_result = W_DONE;
+						event_date = ((DeleteAction) actionObject).getDate();
+					} else {
+						long err = actionObject.getErrorCode(); // "Error":#
+						web_result = -(int) err;
+						web_str = actionObject.getErrorMessage();
+					}
 				}
 			}
-		  }
 		}
 		catch (Exception e)
 		{
