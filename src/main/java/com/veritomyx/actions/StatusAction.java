@@ -54,9 +54,9 @@ public class StatusAction extends BaseAction {
 		return (int) getLongAttribute("ScansComplete");
 	}
 
-	public String getActualCost() {
+	public double getActualCost() {
 		preCheck();
-		return getStringAttribute("ActualCost");
+		return getDoubleAttribute("ActualCost");
 	}
 
 	public String getLogFilename() {

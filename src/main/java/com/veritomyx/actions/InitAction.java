@@ -1,6 +1,7 @@
 package com.veritomyx.actions;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -9,20 +10,24 @@ public class InitAction extends BaseAction {
 	private static final String action = "INIT";
 
 	private int ID;
+	private String versionOfPi;
 	private int scanCount;
-	private int calibrationCount;
+	private int maxPoints;
 	private int minMass;
 	private int maxMass;
+	private int calibrationCount;
 
-	public InitAction(String versionOfApi, String user, String code, int ID, int scanCount,
-			int calibrationCount, int minMass, int maxMass) {
+	public InitAction(String versionOfApi, String user, String code, int ID, String versionOfPi, int scanCount,
+			int maxPoints, int minMass, int maxMass, int calibrationCount) {
 		super(versionOfApi, user, code);
 
 		this.ID = ID;
+		this.versionOfPi = versionOfPi;
 		this.scanCount = scanCount;
-		this.calibrationCount = calibrationCount;
+		this.maxPoints = maxPoints;
 		this.minMass = minMass;
 		this.maxMass = maxMass;
+		this.calibrationCount = calibrationCount;
 	}
 
 	public String buildQuery() {
@@ -30,10 +35,12 @@ public class InitAction extends BaseAction {
 
 		builder.append("Action=" + action + "&");
 		builder.append("ID=" + ID + "&");
+		builder.append("PI_Version=" + versionOfPi + "&");
 		builder.append("ScanCount=" + scanCount + "&");
-		builder.append("CalibrationCount=" + calibrationCount + "&");
+		builder.append("MaxPoints=" + maxPoints + "&");
 		builder.append("MinMass=" + minMass + "&");
-		builder.append("MaxMass=" + maxMass);
+		builder.append("MaxMass=" + maxMass + "&");
+		builder.append("CalibrationCount=" + calibrationCount);
 
 		return builder.toString();
 	}
@@ -56,30 +63,25 @@ public class InitAction extends BaseAction {
 
 	public double getFunds() {
 		preCheck();
-		return Double
-				.parseDouble(getStringAttribute("Funds").substring(1));
+		return getDoubleAttribute("Funds");
 	}
 
-	public HashMap<String, Double> getRTOs() {
+	public HashMap<String, ResponseTimeCosts> getEstimatedCosts() {
 		preCheck();
 
-		HashMap<String, Double> RTOs = new HashMap<>();
-		JSONArray rtos = (JSONArray) responseObject.get("RTOs");
-		for (int r = 0; r < rtos.size(); r++) {
-			JSONObject tmp = (JSONObject) rtos.get(r);
-			String key = tmp.get("RTO").toString();
-			RTOs.put(
-					key,
-					Double.parseDouble(tmp.get("EstCost").toString()
-							.substring(1)));
+		HashMap<String, ResponseTimeCosts> estimatedCosts = new HashMap<>();
+		JSONObject RTOs = (JSONObject) responseObject.get("EstimatedCost");
+		for (Object instrument : RTOs.keySet()) {
+			ResponseTimeCosts costs = new ResponseTimeCosts();
+			JSONObject costsJSON_Object = (JSONObject) RTOs.get(instrument);
+			for (Object RTO : costsJSON_Object.keySet()) {
+				String stringRTO = (String) RTO;
+				costs.put(stringRTO, (Double) costsJSON_Object.get(stringRTO));
+			}
+			estimatedCosts.put((String) instrument, costs);
 		}
 
-		return RTOs;
-	}
-
-	public String[] getPiVersions() {
-		preCheck();
-		return getStringArrayAttribute("PI_Versions");
+		return estimatedCosts;
 	}
 
 	@Override
@@ -92,5 +94,19 @@ public class InitAction extends BaseAction {
 	public int getErrorCode() {
 		preCheck();
 		return super.getErrorCode();
+	}
+
+	public class ResponseTimeCosts extends HashMap<String, Double> {
+
+		private static final long serialVersionUID = 1L;
+
+		public String[] getRTOs() {
+			Set<String> keys = keySet();
+			return keys.toArray(new String[keys.size()]);
+		}
+
+		public double getCost(String responseTimeObjective) {
+			return get(responseTimeObjective);
+		}
 	}
 }

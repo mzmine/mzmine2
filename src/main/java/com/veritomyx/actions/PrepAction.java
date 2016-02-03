@@ -45,6 +45,11 @@ public class PrepAction extends BaseAction {
 		return (int) getLongAttribute("ScanCount");
 	}
 
+	public String getPercentComplete() {
+		preCheck();
+		return getStringAttribute("PercentComplete");
+	};
+
 	public String getMStype() {
 		preCheck();
 		return getStringAttribute("MSType");
@@ -62,5 +67,6 @@ public class PrepAction extends BaseAction {
 		return super.getErrorCode();
 	}
 
-	public enum Status { Analyzing, Ready, Error };
+	public enum Status { Analyzing, Ready, Error }
+
 }

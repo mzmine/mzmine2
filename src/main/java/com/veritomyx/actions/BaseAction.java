@@ -85,6 +85,10 @@ public abstract class BaseAction {
 		return (Long) responseObject.get(attribute);
 	}
 
+	public double getDoubleAttribute(String attribute) {
+		return (Double) responseObject.get(attribute);
+	}
+
 	public Date getDateAttribute(String attribute) throws java.text.ParseException {
 		SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 		return dateFormat.parse(getStringAttribute("Datetime"));

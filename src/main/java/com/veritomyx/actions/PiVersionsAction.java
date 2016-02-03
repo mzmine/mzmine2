@@ -21,12 +21,19 @@ public class PiVersionsAction extends BaseAction {
 		}
 	}
 
-	public String[] getVersions() throws IllegalStateException {
-		if (!isReady(action)) {
-			throw new IllegalStateException();
-		}
+	public String getCurrentVersion() {
+		preCheck();
+		return getStringAttribute("Current");
+	}
 
-		return getStringArrayAttribute("PeakInvestigator");
+	public String getLastUsedVersion() {
+		preCheck();
+		return getStringAttribute("LastUsed");
+	}
+
+	public String[] getVersions() throws IllegalStateException {
+		preCheck();
+		return getStringArrayAttribute("Versions");
 	}
 
 	@Override

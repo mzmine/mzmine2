@@ -4,10 +4,10 @@ public class RunAction extends BaseAction {
 	private final static String action = "RUN";
 
 	private String job;
+	private String RTO;
 	private String inputFilename;
 	private String calibrationFilename;
-	private String RTO;
-	private String PiVersion;
+
 
 	/** Create object for RUN API call.
 	 * 
@@ -15,34 +15,30 @@ public class RunAction extends BaseAction {
 	 * @param user
 	 * @param code
 	 * @param job
+	 * @param RTO
 	 * @param inputFilename
 	 * @param calibrationFilename
-	 * @param RTO
-	 * @param PiVersion
 	 */
-	public RunAction(String versionOfApi, String user, String code, String job,
-			String inputFilename, String calibrationFilename, String RTO, String PiVersion) {
+	public RunAction(String versionOfApi, String user, String code, String job, String RTO,
+			String inputFilename, String calibrationFilename) {
 		super(versionOfApi, user, code);
 
 		this.job = job;
+		this.RTO = RTO;
 		this.inputFilename = inputFilename;
 		this.calibrationFilename = calibrationFilename;
-		this.RTO = RTO;
-		this.PiVersion = PiVersion;
 	}
 
 	public String buildQuery() {
 		StringBuilder builder = new StringBuilder(super.buildQuery());
 		builder.append("Action=" + action + "&");
 		builder.append("Job=" + job + "&");
-		builder.append("InputFile=" + inputFilename + "&");
+		builder.append("RTO=" + RTO + "&");
+		builder.append("InputFile=" + inputFilename);
 
 		if (calibrationFilename != null) {
-			builder.append("CalibrationFile=" + calibrationFilename + "&");
+			builder.append("&CalibrationFile=" + calibrationFilename + "&");
 		}
-
-		builder.append("RTO=" + RTO + "&");
-		builder.append("PIVersion=" + PiVersion);
 
 		return builder.toString();
 	}
