@@ -476,7 +476,10 @@ public class PeakInvestigatorTask
 					if (tf.isDirectory()) continue;
 					progressMonitor.setNote("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
 					logger.info("Extracting peaks data to " + tf.getName() + " - " + tf.getSize() + " bytes");
-					outputStream = new FileOutputStream(getFilenameWithPath(tf.getName()));
+
+					File scanFile = new File(getFilenameWithPath(tf.getName()));
+					scanFile.deleteOnExit();
+					outputStream = new FileOutputStream(scanFile);
 					while ((bytesRead = tis.read(buf, 0, 1024)) > -1)
 						outputStream.write(buf, 0, bytesRead);
 					outputStream.close();
@@ -509,6 +512,8 @@ public class PeakInvestigatorTask
 			}
 
 			localFile = new File(workingDirectory + File.separator + remoteFile.getName());
+			localFile.deleteOnExit();
+
 			vtmx.getFile(remoteFilename, localFile);
 			progressMonitor.setProgress(6);
 			if (showLog) {
@@ -565,11 +570,14 @@ public class PeakInvestigatorTask
 
 		// read in the peaks for this scan
 		// convert filename to expected peak file name
-		String pfilename = getFilenameWithPath("scan_" + String.format("%04d", scan_num) + ".scan.mass_list.txt");
-		logger.info("Parsing peaks data from " + pfilename);
+		String basename = "scan_" + String.format("%04d", scan_num) + ".scan.mass_list.txt";
+		String pfilename = getFilenameWithPath(basename);
+		logger.info("Parsing peaks data from " + basename);
 		try
 		{
 			File centfile = new File(pfilename);
+			centfile.deleteOnExit();
+
 			FileChecksum fchksum = new FileChecksum(centfile);
 			fchksum.verify(false);
 // TODO: handle checksums
@@ -589,7 +597,7 @@ public class PeakInvestigatorTask
 				mzPeaks.add(new SimpleDataPoint(mz, y));
 				sc.close();
 			}
-			centfile.delete();	// delete the temporary results peaks list file
+
 		}
 		catch (FileNotFoundException e) { /* expect some scans might not be included in original processing */ }
 		catch (Exception e)
