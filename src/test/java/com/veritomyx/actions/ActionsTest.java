@@ -16,6 +16,8 @@ public class ActionsTest {
 
 	public final static String RUN_RESPONSE_1 = "{\"Action\":\"RUN\",\"Job\":\"C-1022.1449\"}";
 
+	public final static String STATUS_RESPONSE_1 = "{\"Action\":\"STATUS\",\"Job\":\"C-1022.1432\",\"Status\":\"Done\",\"Datetime\":\"2016-01-26 18:48:45\",\"ScansInput\":341,\"ScansComplete\":341,\"ActualCost\":\"$4.61\",\"JobLogFile\":\"\\/files\\/C-1022.1432\\/C-1022.1432.log.txt\",\"ResultsFile\":\"\\/files\\/C-1022.1432\\/C-1022.1432.mass_list.tar\"}";
+
 	@Test
 	public void test_PiVersionsAction_Query() {
 		BaseAction action = new PiVersionsAction("2.14", "user", "password");
@@ -173,11 +175,24 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_StatusAction_Query() {
+	public void test_StatusAction_Query() throws UnsupportedOperationException, ParseException {
 		BaseAction action = new StatusAction("2.14", "user", "password",
 				"job-123");
 		assertEquals(action.buildQuery(),
 				"Version=2.14&User=user&Code=password&Action=STATUS&Job=job-123");
+
+		action.processResponse(STATUS_RESPONSE_1);
+
+		StatusAction temp = (StatusAction) action;
+		assertEquals(temp.getJob(), "C-1022.1432");
+		assertEquals(temp.getStatus(), StatusAction.Status.Done);
+		assertEquals(temp.getNumberOfInputScans(), 341);
+		assertEquals(temp.getNumberOfCompleteScans(), 341);
+		assertEquals(temp.getActualCost(), "$4.61");
+		assertEquals(temp.getResultsFilename(),
+				"/files/C-1022.1432/C-1022.1432.mass_list.tar");
+		assertEquals(temp.getLogFilename(),
+				"/files/C-1022.1432/C-1022.1432.log.txt");
 	}
 
 	@Test

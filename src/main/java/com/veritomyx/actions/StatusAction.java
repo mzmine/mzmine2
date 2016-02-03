@@ -1,7 +1,6 @@
 package com.veritomyx.actions;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class StatusAction extends BaseAction {
@@ -47,12 +46,12 @@ public class StatusAction extends BaseAction {
 
 	public int getNumberOfInputScans() {
 		preCheck();
-		return getIntAttribute("ScansInput");
+		return (int) getLongAttribute("ScansInput");
 	}
 
 	public int getNumberOfCompleteScans() {
 		preCheck();
-		return getIntAttribute("ScansComplete");
+		return (int) getLongAttribute("ScansComplete");
 	}
 
 	public String getActualCost() {
