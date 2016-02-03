@@ -20,6 +20,7 @@
 package com.veritomyx;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -570,37 +571,37 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param fname
 	 */
-	public boolean putFile(String fname)
+	public boolean putFile(File file)
 	{
-		SftpResult result;
-		sftp_file = fname;
-		log.info("Transmit " + sftp_user + "@" + sftp_host + ":" + dir + "/" + fname);
+		sftp_file = file.getName();
+		String tempFilename = sftp_file + ".filepart";
+
+		log.info("Transmit " + sftp_user + "@" + sftp_host + ":" + dir + "/" + sftp_file);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;
 
 		sftp.cd(session, dir);
-		sftp.rm(session, fname);
-		sftp.rm(session, fname + ".filepart");
-		result = sftp.put(session, fname, fname + ".filepart");
+		sftp.rm(session, sftp_file);
+		sftp.rm(session, tempFilename);
+		SftpResult result = sftp.put(session, file.toString(), tempFilename);
 //		sftp.cd(session, "..");
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
 			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot write file: " + fname;
+			web_str    = "Cannot write file: " + tempFilename;
 			return false;
 		}
 		else
 		{
-//			sftp.cd(session, "batches");
-			result = sftp.rename(session, fname + ".filepart", fname); //rename a remote file
+			result = sftp.rename(session, tempFilename, sftp_file); //rename a remote file
 			sftp.cd(session, "..");
 			if (!result.getSuccessFlag())
 			{
 				closeSession(session);
 				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot rename file: " + fname;
+				web_str    = "Cannot rename file: " + tempFilename;
 				return false;
 			}
 		}
@@ -613,20 +614,19 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param fname
 	 */
-	public boolean getFile(String fname)
+	public boolean getFile(String remoteFilename, File localFile)
 	{
-		SftpResult result;
-		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + fname);
+		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + remoteFilename);
 		SftpSession session = openSession();
 		if (session == null)
 			return false;
 
-		result = sftp.get(session, fname);
+		SftpResult result = sftp.get(session, remoteFilename, localFile.toString());
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
 			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot read file: " + fname;
+			web_str    = "Cannot read file: " + remoteFilename;
 			return false;
 		}
 
