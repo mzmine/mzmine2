@@ -64,7 +64,7 @@ import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String reqVeritomyxCLIVersion = "3.0";
+	public static final String API_VERSION = "3.0";
 	private static final String PAGE_ENCODING = "UTF-8";
 
 	enum Action { PI_VERSIONS, INIT, SFTP, PREP, RUN, STATUS, DELETE }; 
@@ -394,33 +394,33 @@ public class PeakInvestigatorSaaS
 			BaseAction actionObject = null;
 			switch (action) {
 			case PI_VERSIONS:
-				actionObject = new PiVersionsAction(reqVeritomyxCLIVersion,
+				actionObject = new PiVersionsAction(API_VERSION,
 						username, password);
 				break;
 			case INIT:
 				if (jobID == null) {
-					actionObject = new InitAction(reqVeritomyxCLIVersion,
+					actionObject = new InitAction(API_VERSION,
 							username, password, aid, version, count, line_count, minMass, maxMass, 0);
 				}
 				break;
 			case SFTP:
-				actionObject = new SftpAction(reqVeritomyxCLIVersion, username, password, aid);
+				actionObject = new SftpAction(API_VERSION, username, password, aid);
 				break;
 			case PREP:
-				actionObject = new PrepAction(reqVeritomyxCLIVersion, username,
+				actionObject = new PrepAction(API_VERSION, username,
 						password, aid, sftp_file);
 				break;
 			case RUN:
 				// TODO: calibration when available
-				actionObject = new RunAction(reqVeritomyxCLIVersion, username,
+				actionObject = new RunAction(API_VERSION, username,
 						password, jobID, SLA_key, sftp_file, null);
 				break;
 			case STATUS:
-				actionObject = new StatusAction(reqVeritomyxCLIVersion,
+				actionObject = new StatusAction(API_VERSION,
 						username, password, jobID);
 				break;
 			case DELETE:
-				actionObject = new DeleteAction(reqVeritomyxCLIVersion,
+				actionObject = new DeleteAction(API_VERSION,
 						username, password, jobID);
 				break;
 			default:

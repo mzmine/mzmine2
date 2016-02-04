@@ -32,6 +32,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
 
+import com.veritomyx.actions.InitAction.ResponseTimeCosts;
+
 import net.sf.mzmine.main.MZmineCore;
 //import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
@@ -72,20 +74,20 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     
     protected Double fundsAvailable;
     
-    protected Map<String, Double> responseTimeObjectives;
+    protected Map<String, ResponseTimeCosts> responseTimeObjectives;
 
     /**
      * Constructor
      */
-    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, Double> responseTimeObjectives, String[] PIversions) {
+    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, ResponseTimeCosts> sLAs, String[] PIversions) {
 
 	// Make dialog modal
 	super(parent, "Please set the parameters",
 		Dialog.ModalityType.DOCUMENT_MODAL);
 
-	this.responseTimeObjectives = responseTimeObjectives;
+	this.responseTimeObjectives = sLAs;
 
-	addDialogComponents(fundsAvailable = funds, responseTimeObjectives, PIversions);
+	addDialogComponents(fundsAvailable = funds, sLAs, PIversions);
 
 	updateMinimumSize();
 	pack();
@@ -110,7 +112,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     /**
      * Constructs all components of the dialog
      */
-    protected void addDialogComponents(Double funds, Map<String, Double> SLAs, String[] PIversions) {
+    protected void addDialogComponents(Double funds, Map<String, ResponseTimeCosts> sLAs, String[] PIversions) {
 
 	// Main panel which holds all the components in a grid
 	mainPanel = new GridBagPanel();
@@ -138,7 +140,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     
         // Create the 2 combo boxes, filled with the available selections.
   
-    	responseTimeObjectiveComboBox = new JComboBox<String>(SLAs.keySet().toArray(new String[SLAs.size()]));
+    	responseTimeObjectiveComboBox = new JComboBox<String>(sLAs.keySet().toArray(new String[sLAs.size()]));
         responseTimeObjectiveComboBox.setEditable(false);
         responseTimeObjectiveComboBox.setSelectedIndex(0);
         responseTimeObjectiveComboBox.addActionListener(this);

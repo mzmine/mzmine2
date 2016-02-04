@@ -69,6 +69,7 @@ import org.xeustechnologies.jtar.TarOutputStream;
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.PeakInvestigatorSaaS.prep_status_type;
+import com.veritomyx.actions.PiVersionsAction;
 
 /**
  * This class is used to run a set of scans through the Veritomyx SaaS servers
@@ -78,9 +79,10 @@ import com.veritomyx.PeakInvestigatorSaaS.prep_status_type;
  */
 public class PeakInvestigatorTask
 {
+	private final static String API_VERSION = "3.0";
 	private Logger          logger;
 	private boolean         launch;			// launch or retrieve
-	private String          jobID;			// name of the job and the scans tar file
+	private String          jobID = null;			// name of the job and the scans tar file
 	private String          desc;
 	private int             scanCnt;		// number of scans
 	private int				minMass;		// Minimum mass to process from
@@ -91,14 +93,16 @@ public class PeakInvestigatorTask
 	private File inputFile;
 
 	private String			logInfo;
-	private PeakInvestigatorSaaS   vtmx;
+	private PeakInvestigatorSaaS   vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
 	private String          username;
 	private String          password;
 	private int             pid;
 	private Boolean			showLog;
-	private TarOutputStream tarfile;
+	private TarOutputStream tarfile = null;
 	private RawDataFile     rawDataFile;
 	private int             errors;
+	
+	private PiVersionsAction versionsAction;
 	
 	private static final long minutesCheckPrep = 2;
 	private static final long minutesTimeoutPrep = 20;
@@ -111,65 +115,18 @@ public class PeakInvestigatorTask
 		logger  = Logger.getLogger(this.getClass().getName());
 		logger.setLevel(MZmineCore.VtmxLive ? Level.INFO : Level.FINEST);
 		logger.info("Initializing PeakInvestigator™ Task");
-		jobID   = null;
-		tarfile = null;
 		desc    = "initializing";
 		
 		minMass = parameters.getParameter(PeakInvestigatorParameters.minMass).getValue();
 		maxMass = parameters.getParameter(PeakInvestigatorParameters.maxMass).getValue();
 		showLog = parameters.getParameter(PeakInvestigatorParameters.showLog).getValue();
 		
-		// pickup all the parameters
-		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-		username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-		password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-		pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
-		
-		
-		if ((username == null) || username.isEmpty() || (password == null) || password.isEmpty())
-		{
-			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
-				return;
-			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-			pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
-		}
-
 		// save the raw data file
 		rawDataFile = raw;
 
 		// figure out if this a new job (launch) or not (retrieval)
 		launch     = (pickup_job == null);
 		targetName = target;
-
-		// make sure we have access to the Veritomyx Server
-		// this also gets the job_id and SFTP credentials
-		vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
-		int status = 0;
-		while (true)
-		{
-			status = vtmx.init(username, password, pid, pickup_job, scanCount, minMass, maxMass);
-			if (status > 0)
-				break;
-
-			desc = vtmx.getPageStr();
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
-			if ((status != PeakInvestigatorSaaS.W_ERROR_LOGIN) && (status != PeakInvestigatorSaaS.W_ERROR_PID))
-				return;
-
-			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
-				return;
-			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-			pid      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
-		}
-
-		if (!launch && (status <= 0))
-		{
-			desc = vtmx.getPageStr();
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", desc, logger);
-			return;
-		}
 
 		jobID          = vtmx.getJobID();
 		Path tempPath = null;
@@ -192,6 +149,8 @@ public class PeakInvestigatorTask
 
 	}
 	
+
+
 	public String getDesc() { return desc; }
 
 	/**
