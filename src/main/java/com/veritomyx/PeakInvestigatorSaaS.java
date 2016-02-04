@@ -21,10 +21,12 @@ package com.veritomyx;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Date;
@@ -52,6 +54,7 @@ import java.util.Map;
 
 import com.veritomyx.PeakInvestigatorInitDialog;
 import com.veritomyx.actions.*;
+import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
 /**
  * This class is used to access the Veritomyx SaaS servers
@@ -61,7 +64,8 @@ import com.veritomyx.actions.*;
 public class PeakInvestigatorSaaS
 {
 	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String reqVeritomyxCLIVersion = "2.13";
+	public static final String reqVeritomyxCLIVersion = "3.0";
+	private static final String PAGE_ENCODING = "UTF-8";
 
 	enum Action { PI_VERSIONS, INIT, SFTP, PREP, RUN, STATUS, DELETE }; 
 
@@ -106,7 +110,7 @@ public class PeakInvestigatorSaaS
 	private String jobID;				// name of the job and the scans tar file
 	private String dir;
 	private Double funds;
-	private Map<String, Double> SLAs;
+	private Map<String, ResponseTimeCosts> SLAs = null;
 	private String[] PIversions;
 	private String   SLA_key;
 	private String   PIversion;
@@ -124,7 +128,7 @@ public class PeakInvestigatorSaaS
  
 	private int 	s_scansInput;
 	private int 	s_scansComplete;
-	private String 	s_actualCost;
+	private double 	s_actualCost;
 	private String 	s_jobLogFile;
 	private String  s_resultsFile;
 	
@@ -141,6 +145,9 @@ public class PeakInvestigatorSaaS
 	 */
 	public PeakInvestigatorSaaS(boolean live)
 	{
+		// without this we get exception in getInputStream
+		System.setProperty("java.net.preferIPv4Stack", "true");
+		
 		log        = Logger.getLogger(this.getClass().getName());
 		log.setLevel(live ? Level.INFO : Level.DEBUG);
 		log.info(this.getClass().getName());
@@ -155,7 +162,6 @@ public class PeakInvestigatorSaaS
 		web_result = W_UNDEFINED;
 		web_str    = null;
 		funds 	   = null;
-		SLAs	   = null;
 		PIversions = null;
 		SLA_key	   = null;
 		PIversion  = null;
@@ -255,7 +261,7 @@ public class PeakInvestigatorSaaS
 	public prep_status_type getPrepStatus() { return prep_status; }
 	
 	public Double	getFunds()				{ return funds; }
-	public Map<String, Double> getSLAs()	{ return SLAs; }
+	public Map<String, ResponseTimeCosts> getSLAs()	{ return SLAs; }
 	public String[] getPIversions()			{ return PIversions; }
 	public String   getResultsFilename()	{ return s_resultsFile; }
 	public String   getJobLogFilename()		{ return s_jobLogFile; }
@@ -263,6 +269,100 @@ public class PeakInvestigatorSaaS
 	public  int 	getScansInput() { return s_scansInput; }
 	public  int 	getScansComplete() { return s_scansComplete; }
 
+	private void error(String message) {
+		System.err.println(message);
+	}
+
+	private HttpURLConnection buildConnection(URL url) throws IOException {
+
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setUseCaches(false);
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type",
+				"application/x-www-form-urlencoded");
+		connection.setRequestProperty("Content-Language", "en-US");
+
+		// give it 4 minutes to respond
+		connection.setReadTimeout(240 * 1000);
+		connection.setDoInput(true);
+		connection.setDoOutput(true);
+
+		return connection;
+	}
+	
+	protected String queryConnection(HttpURLConnection connection, String query) {
+		connection.setRequestProperty("Content-Length",
+				"" + Integer.toString(query.getBytes().length));
+
+		// Send request
+		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+				connection.getOutputStream(), PAGE_ENCODING))) {
+			writer.write(query);
+			writer.flush();
+		} catch (UnsupportedEncodingException encodingException) {
+			error("Unsupported encoding: " + PAGE_ENCODING);
+			encodingException.printStackTrace();
+		} catch (IOException exception) {
+			error("Unable to write to connection.");
+			exception.printStackTrace();
+		}
+
+		try {
+			connection.connect();
+		} catch (IOException exception) {
+			error("Problem connecting to server in queryConnection().");
+			exception.printStackTrace();
+			return new String();
+		}
+
+		// Read the response from the HTTP server
+		StringBuilder builder = new StringBuilder();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+				connection.getInputStream()))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				builder.append(line);
+			}
+		} catch (IOException e) {
+			error("Unable to read response from server.");
+			e.printStackTrace();
+		}
+
+		return builder.toString();
+	}
+
+	public void executeAction(BaseAction action) {
+		String host = MZmineCore.getConfiguration().getPreferences()
+				.getParameter(MZminePreferences.vtmxServer).getValue();
+		if (host.startsWith("https://")) {
+			host = host.substring(8);
+		}
+		String page = "https://" + host + "/api/";
+		
+		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
+		String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
+		String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
+		
+		HttpURLConnection connection = null;
+		try {
+			connection = buildConnection(new URL(page));
+		} catch (IOException e) {
+			error("Unable to connect to " + page + ".");
+			e.printStackTrace();
+		}
+		
+		String response = queryConnection(connection, action.buildQuery());
+		try {
+			action.processResponse(response);
+		} catch (UnsupportedOperationException e) {
+			error("Reponse appears not to be JSON: " + response.substring(0, 15));
+			e.printStackTrace();
+		} catch (ParseException e) {
+			error("Unable to parse response: " + response.substring(0, 15));
+			e.printStackTrace();
+		}
+
+	}
 	/**
 	 * Get the first line of a web page from the Veritomyx server
 	 * Puts first line of results into web_results String
@@ -300,7 +400,7 @@ public class PeakInvestigatorSaaS
 			case INIT:
 				if (jobID == null) {
 					actionObject = new InitAction(reqVeritomyxCLIVersion,
-							username, password, aid, count, 0, minMass, maxMass);
+							username, password, aid, version, count, line_count, minMass, maxMass, 0);
 				}
 				break;
 			case SFTP:
@@ -313,7 +413,7 @@ public class PeakInvestigatorSaaS
 			case RUN:
 				// TODO: calibration when available
 				actionObject = new RunAction(reqVeritomyxCLIVersion, username,
-						password, jobID, sftp_file, null, SLA_key, PIversion);
+						password, jobID, SLA_key, sftp_file, null);
 				break;
 			case STATUS:
 				actionObject = new StatusAction(reqVeritomyxCLIVersion,
@@ -424,7 +524,6 @@ public class PeakInvestigatorSaaS
 						InitAction temp = (InitAction) actionObject;
 						jobID = temp.getJob();
 						funds = temp.getFunds();
-						PIversions = temp.getPiVersions();
 						SLAs = temp.getRTOs();
 					} else if (actionObject instanceof SftpAction) {
 						web_result = W_SFTP;
