@@ -44,7 +44,7 @@ public abstract class BaseAction {
 		responseObject = (JSONObject) parser.parse(response);
 	}
 
-	protected boolean isReady(String action) throws IllegalStateException {
+	public boolean isReady(String action) throws IllegalStateException {
 		if (responseObject == null) {
 			return false;
 		}
