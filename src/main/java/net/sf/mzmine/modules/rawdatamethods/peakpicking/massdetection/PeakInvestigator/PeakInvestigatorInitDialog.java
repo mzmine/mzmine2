@@ -17,7 +17,7 @@
  * St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package com.veritomyx;
+package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.awt.Dialog;
 import java.awt.Dimension;
@@ -25,6 +25,7 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -39,15 +40,16 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
-import net.sf.mzmine.util.components.HelpButton;
 
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * This class represents the user selected SLA and PI Version dialog. 
- * This dialog presents 2 lists, one for SLA and one for PI.
- * The first SLA and the highest version of PI are automatically selected to start. 
- * 
+ * This dialog is presented at the start of a PeakInvestigator run. It shows the
+ * user the current selected version of PeakInvestigator, and the associated
+ * estimated costs for various MS types and Response Time Objectives (RTOs). It
+ * also allows the user to select the desired RTO.
  */
 public class PeakInvestigatorInitDialog extends JDialog implements ActionListener {
 
@@ -55,46 +57,35 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 
     private ExitCode exitCode = ExitCode.UNKNOWN;
 
-    private String helpID;
+    // GUI elements needed later
+    protected GridBagPanel mainPanel;
+	protected JComboBox<String> responseTimeObjectiveComboBox;
 
     // Buttons
-    private JButton btnOK, btnCancel, btnHelp;
+    private JButton btnOK;
+    private JButton btnCancel;
+    private JButton btnDetails;
 
-    /**
-     * This single panel contains a grid of all the components of this dialog
-     * (see GridBagPanel). First three columns of the grid are title (JLabel),
-     * INIT component (JFormattedTextField or other) and value (JLabel). 
-     */
-    protected GridBagPanel mainPanel, fundsPanel;
-    protected JPanel fundsGroupbox;
-    
-    protected JComboBox<String>	   	responseTimeObjectiveComboBox;
-    protected JComboBox<String> 	versionsComboBox;
-    protected JLabel                    estimatedCostLabel;
-    
-    protected Double fundsAvailable;
-    
-    protected Map<String, ResponseTimeCosts> responseTimeObjectives;
+    // Passed-in values needed later
+    protected Double availableFunds;
+    Map<String, ResponseTimeCosts> estimatedCosts = null;
 
-    /**
-     * Constructor
-     */
-    public PeakInvestigatorInitDialog(Window parent, Double funds, Map<String, ResponseTimeCosts> sLAs, String[] PIversions) {
+    // Required in more than one place, so lazily constructed
+    protected String[] responseTimeObjectives = null;
 
-	// Make dialog modal
-	super(parent, "Please set the parameters",
-		Dialog.ModalityType.DOCUMENT_MODAL);
+	public PeakInvestigatorInitDialog(Window parent, String version,
+			double funds, Map<String, ResponseTimeCosts> estimatedCosts) {
 
-	this.responseTimeObjectives = sLAs;
+		super(parent, Dialog.ModalityType.DOCUMENT_MODAL);
+		setTitle("PeakInvestigator " + version);
 
-	addDialogComponents(fundsAvailable = funds, sLAs, PIversions);
+		this.estimatedCosts = estimatedCosts;
+		this.availableFunds = funds;
 
-	updateMinimumSize();
-	pack();
+		addDialogComponents(version, availableFunds, estimatedCosts);
+		setLocationRelativeTo(parent);
 
-	setLocationRelativeTo(parent);
-
-    }
+	}
 
     /**
      * This method must be called each time when a component is added to
@@ -102,150 +93,215 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
      * minimum size of the mainPanel plus a little extra, so user cannot resize
      * the dialog window smaller.
      */
-    protected void updateMinimumSize() {
-	Dimension panelSize = mainPanel.getMinimumSize();
-	Dimension minimumSize = new Dimension(panelSize.width + 50,
-		panelSize.height + 50);
-	setMinimumSize(minimumSize);
-    }
-
-    /**
-     * Constructs all components of the dialog
-     */
-    protected void addDialogComponents(Double funds, Map<String, ResponseTimeCosts> sLAs, String[] PIversions) {
-
-	// Main panel which holds all the components in a grid
-	mainPanel = new GridBagPanel();
-	
-	JLabel PIV_label = new JLabel("Use Peak Investigator Version:");
-    mainPanel.add(PIV_label, 0, 0);
-    
-    versionsComboBox = new JComboBox<String>(PIversions);
-    versionsComboBox.setEditable(false);
-    versionsComboBox.setSelectedIndex(0);
-    mainPanel.add(versionsComboBox, 1, 0);
-
-    // Create a new panel for the funds items.
-    fundsGroupbox = new JPanel();
-    fundsGroupbox.setBorder(BorderFactory.createTitledBorder("Funds"));
-    fundsPanel = new GridBagPanel();
-	JLabel funds_label = new JLabel("The available funds are (in USD): $");
-	fundsPanel.add(funds_label, 0, 1);
-    JLabel funds_disp = new JLabel(String.format( "%.2f", funds ));
-    fundsPanel.add(funds_disp, 1, 1);
-    
-    JLabel SLA_label = new JLabel("Use Response Time Objectives:");
-    fundsPanel.add(SLA_label, 0, 2);
-    
-    
-        // Create the 2 combo boxes, filled with the available selections.
-  
-    	responseTimeObjectiveComboBox = new JComboBox<String>(sLAs.keySet().toArray(new String[sLAs.size()]));
-        responseTimeObjectiveComboBox.setEditable(false);
-        responseTimeObjectiveComboBox.setSelectedIndex(0);
-        responseTimeObjectiveComboBox.addActionListener(this);
-        fundsPanel.add(responseTimeObjectiveComboBox, 1, 2);
-
-        JLabel costLabel = new JLabel("Estimated cost:");
-        fundsPanel.add(costLabel, 0, 3);
-        estimatedCostLabel = new JLabel(formatCost());
-        fundsPanel.add(estimatedCostLabel, 1, 3);
-        
-        fundsGroupbox.add(fundsPanel);
-
-	// Add a single empty cell to the 4th row. This cell is expandable
-	// (weightY is 1), therefore the other components will be
-	// aligned to the top, which is what we want
-	// JComponent emptySpace = (JComponent) Box.createVerticalStrut(1);
-	// mainPanel.add(emptySpace, 0, 99, 3, 1, 0, 1);
-
-	// Create a separate panel for the buttons
-	JPanel pnlButtons = new JPanel();
-
-	btnOK = GUIUtils.addButton(pnlButtons, "OK", null, this);
-	btnCancel = GUIUtils.addButton(pnlButtons, "Cancel", null, this);
-
-	if (helpID != null) {
-	    btnHelp = new HelpButton(helpID);
-	    pnlButtons.add(btnHelp);
+	protected void updateMinimumSize() {
+		Dimension panelSize = mainPanel.getMinimumSize();
+		Dimension minimumSize = new Dimension(panelSize.width + 50,
+				panelSize.height + 50);
+		setMinimumSize(minimumSize);
 	}
 
-	/*
-	 * Last row in the table will be occupied by the buttons. We set the row
-	 * number to 100 and width to 3, spanning the 3 component columns
-	 * defined above.
-	 */
-	mainPanel.addCenter(fundsGroupbox, 0, 2, 3, 5);
-	mainPanel.addCenter(pnlButtons, 0, 100, 3, 1);
+	protected void addDialogComponents(String version, double funds,
+			Map<String, ResponseTimeCosts> estimatedCosts) {
 
-	// Add some space around the widgets
-	GUIUtils.addMargin(mainPanel, 10);
+		// Main panel which holds all the components in a grid
+		mainPanel = new GridBagPanel();
 
-	// Add the main panel as the only component of this dialog
-	add(mainPanel);
+		JPanel quotationArea = buildPriceQuotationArea(estimatedCosts);
+		mainPanel.addCenter(quotationArea, 0, 1, 3, estimatedCosts.size() + 2);
 
-	pack();
+		JPanel fundsArea = buildFundsArea(funds);
+		mainPanel.addCenter(fundsArea, 0, 50, 3, 1);
 
+		JPanel comboBoxArea = buildComboBoxArea(getResponseTimeObjectives(estimatedCosts));
+		mainPanel.addCenter(comboBoxArea, 0, 51, 3, 1);
+
+		// Create a separate panel for the buttons
+		JPanel pnlButtons = new JPanel();
+
+		btnOK = GUIUtils.addButton(pnlButtons, "OK", null, this);
+		btnCancel = GUIUtils.addButton(pnlButtons, "Cancel", null, this);
+		btnDetails = GUIUtils.addButton(pnlButtons,
+				"Price quotation details...", null, this);
+
+		/*
+		 * Last row in the table will be occupied by the buttons. We set the row
+		 * number to 100 and width to 3, spanning the 3 component columns
+		 * defined above.
+		 */
+		mainPanel.addCenter(pnlButtons, 0, 100, 3, 1);
+
+		// Add some space around the widgets
+		GUIUtils.addMargin(mainPanel, 10);
+
+		// Add the main panel as the only component of this dialog
+		add(mainPanel);
+
+		pack();
+	}
+
+//	private JPanel buildPiVersionArea(String version) {
+//		JPanel panel = new JPanel();
+//
+//		GridBagPanel grid = new GridBagPanel();
+//		grid.add(new JLabel("PeakInvestigator version:"), 0, 1);
+//		grid.add(new JLabel(version), 1, 1);
+//
+//		panel.add(grid);
+//		return panel;
+//	}
+
+   private JPanel buildPriceQuotationArea(Map<String, ResponseTimeCosts> estimatedCosts) {
+    	JPanel panel = new JPanel();
+    	String[] RTOs = getResponseTimeObjectives(estimatedCosts);
+        String[] machineTypes = getMachineTypes(estimatedCosts);
+        
+        if (RTOs.length == 0 || machineTypes.length == 0) {
+        	return panel;
+        }
+    	
+        panel.setBorder(BorderFactory.createTitledBorder("Price quotation"));
+        
+        final int columnStart = 1;
+        GridBagPanel grid = new GridBagPanel();
+        grid.add(new JLabel("Response Time Objective:"), 0, 0);
+        for (int i = 0; i < RTOs.length; i++) {
+        	grid.add(new JLabel(RTOs[i]), columnStart + i, 0);
+        }
+        
+        grid.add(new JLabel("MS Type"), 0, 1);
+        grid.add(Box.createVerticalStrut(1), 0, 2, 3, 0, 0, 1);
+        final int rowStart = 3;
+        for (int i = 0; i < machineTypes.length; i++) {
+        	grid.add(new JLabel(machineTypes[i]), 0, rowStart + i);
+        	ResponseTimeCosts costs = estimatedCosts.get(machineTypes[i]);
+        	for (int j = 0; j < costs.size(); j++) {
+        		String text = String.format("$%.2f", costs.getCost(RTOs[j]));
+        		grid.add(new JLabel(text), columnStart + j, rowStart + i);
+        	}
+        }
+        
+        panel.add(grid);
+        return panel;
     }
+    
+	private JPanel buildFundsArea(Double funds) {
+		JPanel panel = new JPanel();
+		panel.setBorder(BorderFactory.createTitledBorder("Customer account"));
 
-    /**
-     * Implementation for ActionListener interface
-     */
-    public void actionPerformed(ActionEvent ae) {
+		GridBagPanel grid = new GridBagPanel();
+		grid.add(new JLabel("Current balance:"), 0, 1);
+		grid.add(new JLabel(String.format("$%.2f", funds)), 1, 1);
 
-	Object src = ae.getSource();
+		panel.add(grid);
+		return panel;
+	}
+	
+	private JPanel buildComboBoxArea(String[] RTOs) {
+		JPanel panel = new JPanel();
 
-	if (src == btnOK) {
-		String currentSelection = responseTimeObjectiveComboBox.getSelectedItem().toString();
-		if(responseTimeObjectives.get(currentSelection) >= fundsAvailable) {
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "The selected RTO requires more funds than are currently available in your account.");
-		} else {
-			closeDialog(ExitCode.OK);
+		GridBagPanel grid = new GridBagPanel();
+		grid.add(new JLabel("Desired RTO:"), 0, 0);
+		responseTimeObjectiveComboBox = new JComboBox<String>(RTOs);
+		grid.add(responseTimeObjectiveComboBox, 1, 0);
+
+		panel.add(grid);
+		return panel;
+	}
+
+	public void actionPerformed(ActionEvent ae) {
+		Object src = ae.getSource();
+
+		if (src == btnOK) {
+			handleOkButton();
+		} else if (src == btnCancel) {
+			handleCancelButton();
+		} else if (src == btnDetails) {
+			handleDetailsButton();
 		}
 	}
 
-	if (src == btnCancel) {
-	    closeDialog(ExitCode.CANCEL);
+	private void handleOkButton() {
+		String selectedRTO = responseTimeObjectiveComboBox.getSelectedItem()
+				.toString();
+		if (determineMaxPotentialCost(estimatedCosts, selectedRTO) > availableFunds) {
+			String mesg = "The selected RTO requires more funds than are currently available in your account.";
+			MZmineCore.getDesktop().displayErrorMessage(
+					MZmineCore.getDesktop().getMainWindow(), "Error", mesg);
+		} else {
+			closeDialog(ExitCode.OK);
+		}
+
 	}
 
-	if (src instanceof JComboBox) {
-	    estimatedCostLabel.setText(formatCost());
+	private void handleCancelButton() {
+		closeDialog(ExitCode.CANCEL);
 	}
 
-    }
+	private void handleDetailsButton() {
 
-    /**
-     * Method for reading exit code
-     */
-    public ExitCode getExitCode() {
-	return exitCode;
-    }
-
-    /**
-     * This method may be called by some of the dialog components, for example
-     * as a result of double-click by user
-     */
-    public void closeDialog(ExitCode exitCode) {
-	if (exitCode == ExitCode.OK) {
-	    // commit the changes to the parameter set
-	    
 	}
-	this.exitCode = exitCode;
-	dispose();
 
-    }
+	public void closeDialog(ExitCode exitCode) {
+		if (exitCode == ExitCode.OK) {
+			// commit the changes to the parameter set
 
-    public String getSLA() {
+		}
+		this.exitCode = exitCode;
+		dispose();
+
+	}
+
+	public ExitCode getExitCode() {
+		return exitCode;
+	}
+
+    public String getSelectedRTO() {
         return responseTimeObjectiveComboBox.getSelectedItem().toString();
     }
 
-    public String getPIversion() {
-        return versionsComboBox.getSelectedItem().toString();
+    private String[] getMachineTypes(Map<String, ResponseTimeCosts> estimatedCosts) {
+    	Set<String> keys = estimatedCosts.keySet();
+    	return keys.toArray(new String[keys.size()]);
     }
     
-    // convenience method to use the selected SLA to return a cost
-    private String formatCost() {
-        String currentSelection = responseTimeObjectiveComboBox.getSelectedItem().toString();
-        return String.format("$%.2f", responseTimeObjectives.get(currentSelection));
-    }
+	/**
+	 * Convenience function to get the Response Time Objectives. Assumes that
+	 * each ResponseTimeCosts value have exactly the same number and name of
+	 * RTO. This function lazily instantiates the reponseTimeObjective variable.
+	 * 
+	 * @param estimatedCosts
+	 *            As returned from InitAction.getEstimatedCosts()
+	 * @return List of strings corresponding to RTOs (e.g. "RTO-24", "RTO-0",
+	 *         etc.)
+	 */
+	private String[] getResponseTimeObjectives(Map<String, ResponseTimeCosts> estimatedCosts) {
+		if (responseTimeObjectives != null) {
+			return responseTimeObjectives;
+		}
+
+		ArrayList<ResponseTimeCosts> costs = new ArrayList<>(
+				estimatedCosts.values());
+		if (costs.size() == 0) {
+			responseTimeObjectives = new String[] {};
+			return new String[] {};
+		} else {
+			Set<String> RTOs = costs.get(0).keySet();
+			responseTimeObjectives = RTOs.toArray(new String[RTOs.size()]);
+		}
+
+		return responseTimeObjectives;
+	}
+	
+	protected double determineMaxPotentialCost(Map<String, ResponseTimeCosts> estimatedCosts, String RTO) {
+		double maxCost = 0;
+		for (ResponseTimeCosts costs : estimatedCosts.values()) {
+			double cost = costs.getCost(RTO);
+			if (maxCost > cost) {
+				maxCost = cost;
+			}
+		}
+
+		return maxCost;
+	}
+
 }
