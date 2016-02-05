@@ -11,9 +11,9 @@ import org.json.simple.parser.ParseException;
 public abstract class BaseAction {
 	private static final String DATE_FORMAT = "yyyy-MM-dd kk:mm:ss";
 
-	private String versionOfApi = null;
-	private String user = null;
-	private String code = null;
+	protected String versionOfApi = null;
+	protected String user = null;
+	protected String code = null;
 
 	protected JSONObject responseObject = null;
 
@@ -31,6 +31,10 @@ public abstract class BaseAction {
 		builder.append("Code=" + code + "&");
 
 		return builder.toString();
+	}
+
+	public void reset() {
+		responseObject = null;
 	}
 
 	public void processResponse(String response)

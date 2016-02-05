@@ -51,8 +51,10 @@ public class ActionsTest {
 
 	@Test
 	public void test_InitAction_Query() throws UnsupportedOperationException, ParseException {
-		BaseAction action = new InitAction("3.0", "user", "password", 100, "1.2", 5,
-				12345, 50, 100, 0);
+		BaseAction action = InitAction.create("3.0", "user", "password")
+				.withMassRange(50, 100).usingProjectId(100)
+				.withPiVersion("1.2").withScanCount(5, 0)
+				.withNumberOfPoints(12345);
 		assertEquals(
 				action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=INIT&ID=100&PI_Version=1.2&ScanCount=5&MaxPoints=12345&MinMass=50&MaxMass=100&CalibrationCount=0");
@@ -83,8 +85,11 @@ public class ActionsTest {
 
 	@Test
 	public void test_InitAction_Error() {
-		BaseAction action = new InitAction("3.0", "user", "password", 100, "1.2", 5,
-				12345, 50, 100, 0);
+		BaseAction action = InitAction.create("3.0", "user", "password")
+				.withMassRange(50, 100).usingProjectId(100)
+				.withPiVersion("1.2").withScanCount(5, 0)
+				.withNumberOfPoints(12345);
+
 		try {
 			action.processResponse("{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 		} catch (UnsupportedOperationException e) {

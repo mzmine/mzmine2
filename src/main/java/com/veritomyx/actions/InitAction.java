@@ -17,7 +17,7 @@ public class InitAction extends BaseAction {
 	private int maxMass;
 	private int calibrationCount;
 
-	public InitAction(String versionOfApi, String user, String code, int ID, String versionOfPi, int scanCount,
+	private InitAction(String versionOfApi, String user, String code, int ID, String versionOfPi, int scanCount,
 			int maxPoints, int minMass, int maxMass, int calibrationCount) {
 		super(versionOfApi, user, code);
 
@@ -28,6 +28,38 @@ public class InitAction extends BaseAction {
 		this.minMass = minMass;
 		this.maxMass = maxMass;
 		this.calibrationCount = calibrationCount;
+	}
+
+	public static InitAction create(String versionOfApi, String user, String code) {
+		return new InitAction(versionOfApi, user, code, 0, null, 0, 0, 0, 0, 0);
+	}
+
+	public InitAction withPiVersion(String versionOfPi) {
+		return new InitAction(this.versionOfApi, this.user, this.code, this.ID,
+				versionOfPi, this.scanCount, this.maxPoints, this.minMass, this.maxMass,
+				this.calibrationCount);
+	}
+
+	public InitAction withMassRange(int min, int max) {
+		return new InitAction(this.versionOfApi, this.user, this.code, this.ID, this.versionOfPi,
+				this.scanCount, this.maxPoints, min, max, this.calibrationCount);
+	}
+
+	public InitAction withScanCount(int scanCount, int calibrationCount) {
+		return new InitAction(this.versionOfApi, this.user, this.code, this.ID, this.versionOfPi,
+				scanCount, this.maxPoints, this.minMass, this.maxMass, calibrationCount);
+	}
+
+	public InitAction withNumberOfPoints(int numberOfPoints) {
+		return new InitAction(this.versionOfApi, this.user, this.code, this.ID,
+				this.versionOfPi, this.scanCount, numberOfPoints, this.minMass,
+				this.maxMass, this.calibrationCount);
+	}
+
+	public InitAction usingProjectId(int projectID) {
+		return new InitAction(this.versionOfApi, this.user, this.code, projectID,
+				this.versionOfPi, this.scanCount, this.maxPoints, this.minMass,
+				this.maxMass, this.calibrationCount);
 	}
 
 	public String buildQuery() {
