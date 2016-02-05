@@ -52,7 +52,6 @@ import org.json.simple.parser.ParseException;
 
 import java.util.Map;
 
-import com.veritomyx.PeakInvestigatorInitDialog;
 import com.veritomyx.actions.*;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
@@ -108,18 +107,13 @@ public class PeakInvestigatorSaaS
 	private String password;
 	private int    aid;
 	private String jobID;				// name of the job and the scans tar file
-	private String dir;
 	private Double funds;
 	private Map<String, ResponseTimeCosts> SLAs = null;
 	private String[] PIversions;
 	private String   SLA_key;
 	private String   PIversion;
-	private String    sftp_host;
-	private String    sftp_user;
-	private String    sftp_pw;
-	private int	  	  sftp_port;
+
 	private SftpUtil  sftp;
-	private String 	  sftp_file;
 	
 	public  enum 	prep_status_type {PREP_ANALYZING, PREP_READY, PREP_ERROR };
 	private prep_status_type prep_status;
@@ -152,13 +146,8 @@ public class PeakInvestigatorSaaS
 		log.setLevel(live ? Level.INFO : Level.DEBUG);
 		log.info(this.getClass().getName());
 		jobID      = null;
-		dir        = null;
 
-		sftp_user  = null;
-		sftp_pw    = null;
-		sftp_port  = 22;
 		sftp       = SftpUtilFactory.getSftpUtil();
-		sftp_file  = null;
 		web_result = W_UNDEFINED;
 		web_str    = null;
 		funds 	   = null;
@@ -181,68 +170,68 @@ public class PeakInvestigatorSaaS
 	 * @param scanCount
 	 * @return
 	 */
-	public int init(String email, String passwd, int account, String existingJobName, int scanCount, int minMass, int maxMass)
-	{
-		jobID    = null;	// if jobID is set, this is a valid job
-		username = email;
-		password = passwd;
-		aid      = account;
-		boolean pickup = (existingJobName != null);
-
-		// make sure we have access to the Veritomyx Server
-		// this also gets the job_id and SFTP credentials
-		if (!pickup)
-		{
-			if (getPage(Action.INIT, scanCount, minMass, maxMass) != W_INFO)
-				return web_result;
-			// Ask user which SLA and PIversion
-			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
-                    .getDesktop().getMainWindow(), funds,
-	                SLAs, PIversions);
-	        dialog.setVisible(true);
-			if(dialog.getExitCode() == ExitCode.OK) 
-			{
-				SLA_key = dialog.getSLA();
-				PIversion = dialog.getPIversion();
-			} else {
-				return web_result;
-			}
-
-			if (getPage(Action.SFTP, 0) != W_INFO)
-				return web_result;
-			if (getPage(Action.PREP, 0) != W_INFO)
-				return web_result;
-			if (jobID != null)	// we have a valid job
-			{
-				sftp = SftpUtilFactory.getSftpUtil();
-				SftpSession session = openSession();	// open to verify we can
-				if (session == null)
-				{
-					jobID      = null;
-					web_str    = "SFTP access not available";
-					web_result = W_ERROR_SFTP;
-					return web_result;
-				}
-				closeSession(session);
-			}
-		}
-		else
-		{
-			// check this job STATUS
-			jobID = existingJobName;
-			web_result = getPageStatus();
-			if (web_result == W_RUNNING) {
-//				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "Remote job not complete. Please try again later.", log);
-			} else if (web_result == W_DONE) {
-//				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Completed", "Remote job complete." + web_str, log);
-			} else {
-				jobID = null;
-				return web_result;
-			}
-		}
-
-		return web_result;
-	}
+//	public int init(String email, String passwd, int account, String existingJobName, int scanCount, int minMass, int maxMass)
+//	{
+//		jobID    = null;	// if jobID is set, this is a valid job
+//		username = email;
+//		password = passwd;
+//		aid      = account;
+//		boolean pickup = (existingJobName != null);
+//
+//		// make sure we have access to the Veritomyx Server
+//		// this also gets the job_id and SFTP credentials
+//		if (!pickup)
+//		{
+//			if (getPage(Action.INIT, scanCount, minMass, maxMass) != W_INFO)
+//				return web_result;
+//			// Ask user which SLA and PIversion
+//			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
+//                    .getDesktop().getMainWindow(), funds,
+//	                SLAs, PIversions);
+//	        dialog.setVisible(true);
+//			if(dialog.getExitCode() == ExitCode.OK) 
+//			{
+//				SLA_key = dialog.getSLA();
+//				PIversion = dialog.getPIversion();
+//			} else {
+//				return web_result;
+//			}
+//
+//			if (getPage(Action.SFTP, 0) != W_INFO)
+//				return web_result;
+//			if (getPage(Action.PREP, 0) != W_INFO)
+//				return web_result;
+//			if (jobID != null)	// we have a valid job
+//			{
+//				sftp = SftpUtilFactory.getSftpUtil();
+//				SftpSession session = openSession();	// open to verify we can
+//				if (session == null)
+//				{
+//					jobID      = null;
+//					web_str    = "SFTP access not available";
+//					web_result = W_ERROR_SFTP;
+//					return web_result;
+//				}
+//				closeSession(session);
+//			}
+//		}
+//		else
+//		{
+//			// check this job STATUS
+//			jobID = existingJobName;
+//			web_result = getPageStatus();
+//			if (web_result == W_RUNNING) {
+////				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "Remote job not complete. Please try again later.", log);
+//			} else if (web_result == W_DONE) {
+////				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Completed", "Remote job complete." + web_str, log);
+//			} else {
+//				jobID = null;
+//				return web_result;
+//			}
+//		}
+//
+//		return web_result;
+//	}
 
 	/**
 	 * Provide access to some private data
@@ -332,17 +321,14 @@ public class PeakInvestigatorSaaS
 	}
 
 	public void executeAction(BaseAction action) {
+		action.reset();
 		String host = MZmineCore.getConfiguration().getPreferences()
 				.getParameter(MZminePreferences.vtmxServer).getValue();
 		if (host.startsWith("https://")) {
 			host = host.substring(8);
 		}
 		String page = "https://" + host + "/api/";
-		
-		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-		String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-		String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-		
+			
 		HttpURLConnection connection = null;
 		try {
 			connection = buildConnection(new URL(page));
@@ -398,22 +384,18 @@ public class PeakInvestigatorSaaS
 						username, password);
 				break;
 			case INIT:
-				if (jobID == null) {
-					actionObject = new InitAction(API_VERSION,
-							username, password, aid, version, count, line_count, minMass, maxMass, 0);
-				}
 				break;
 			case SFTP:
 				actionObject = new SftpAction(API_VERSION, username, password, aid);
 				break;
 			case PREP:
 				actionObject = new PrepAction(API_VERSION, username,
-						password, aid, sftp_file);
+						password, aid, null);
 				break;
 			case RUN:
 				// TODO: calibration when available
 				actionObject = new RunAction(API_VERSION, username,
-						password, jobID, SLA_key, sftp_file, null);
+						password, jobID, SLA_key, null, null);
 				break;
 			case STATUS:
 				actionObject = new StatusAction(API_VERSION,
@@ -524,16 +506,11 @@ public class PeakInvestigatorSaaS
 						InitAction temp = (InitAction) actionObject;
 						jobID = temp.getJob();
 						funds = temp.getFunds();
-						SLAs = temp.getRTOs();
 					} else if (actionObject instanceof SftpAction) {
 						web_result = W_SFTP;
 
 						SftpAction temp = (SftpAction) actionObject;
-						sftp_host = temp.getHost();
-						sftp_port = temp.getPort();
-						dir = temp.getDirectory();
-						sftp_user = temp.getSftpUsername();
-						sftp_pw = temp.getSftpPassword();
+
 					} else if (actionObject instanceof PrepAction) {
 						web_result = W_PREP;
 
@@ -619,38 +596,33 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @return boolean
 	 */
-	private SftpSession openSession()
+	private SftpSession openSession(SftpAction action)
 	{
 		SftpSession session;
 		try {
-			session = sftp.connectByPasswdAuth(sftp_host, sftp_port, sftp_user, sftp_pw, SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
+			session = sftp.connectByPasswdAuth(action.getHost(),
+					action.getPort(), action.getSftpUsername(),
+					action.getSftpPassword(),
+					SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
 		} catch (SftpException e) {
 			session = null;
 			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot connect to SFTP server " + sftp_user + "@" + sftp_host;
+			web_str    = "Cannot connect to SFTP server " + action.getSftpUsername() + "@" + action.getHost();
 			return null;
 		}
-		SftpResult result = sftp.cd(session, dir);	// cd into the account directory
+		String directory = action.getDirectory();
+		SftpResult result = sftp.cd(session, directory);	// cd into the account directory
 		if (!result.getSuccessFlag())
 		{
-			result = sftp.mkdir(session, dir);
+			result = sftp.mkdir(session, directory);
 			if (!result.getSuccessFlag())
 			{
 				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot create remote directory, " + dir;
+				web_str    = "Cannot create remote directory, " + directory;
 				return null;
 			}
-			sftp.chmod(session, 0770, dir);
-			result = sftp.cd(session, dir);
-/*			result = sftp.mkdir(session, jobID);
-			if (!result.getSuccessFlag())
-			{
-				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot create remote directory, " + dir + "//" + jobID;
-				return null;
-			}
-			sftp.chmod(session, 0770, jobID);
-*/			
+			sftp.chmod(session, 0770, directory);
+			result = sftp.cd(session, directory);		
 		}
 		return session;
 	}
@@ -670,21 +642,23 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param fname
 	 */
-	public boolean putFile(File file)
+	public boolean putFile(SftpAction action, File file)
 	{
-		sftp_file = file.getName();
-		String tempFilename = sftp_file + ".filepart";
+		String filename = file.getName();
+		String tempFilename = filename + ".filepart";
 
-		log.info("Transmit " + sftp_user + "@" + sftp_host + ":" + dir + "/" + sftp_file);
-		SftpSession session = openSession();
+		log.info("Transmit " + action.getSftpUsername() + "@"
+				+ action.getSftpPassword() + ":" + action.getDirectory() + "/"
+				+ filename);
+		SftpSession session = openSession(action);
 		if (session == null)
 			return false;
 
-		sftp.cd(session, dir);
-		sftp.rm(session, sftp_file);
+		sftp.cd(session, action.getDirectory());
+		sftp.rm(session, filename);
 		sftp.rm(session, tempFilename);
 		SftpResult result = sftp.put(session, file.toString(), tempFilename);
-//		sftp.cd(session, "..");
+
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
@@ -694,7 +668,7 @@ public class PeakInvestigatorSaaS
 		}
 		else
 		{
-			result = sftp.rename(session, tempFilename, sftp_file); //rename a remote file
+			result = sftp.rename(session, tempFilename, filename); //rename a remote file
 			sftp.cd(session, "..");
 			if (!result.getSuccessFlag())
 			{
@@ -713,10 +687,10 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param fname
 	 */
-	public boolean getFile(String remoteFilename, File localFile)
+	public boolean getFile(SftpAction action, String remoteFilename, File localFile)
 	{
-		log.info("Retrieve " + sftp_user + "@" + sftp_host + ":" + remoteFilename);
-		SftpSession session = openSession();
+		log.info("Retrieve " + action.getSftpUsername() + "@" + action.getHost() + ":" + remoteFilename);
+		SftpSession session = openSession(action);
 		if (session == null)
 			return false;
 
