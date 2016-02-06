@@ -29,10 +29,15 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
 
+import org.apache.batik.ext.swing.GridBagConstants;
+import org.json.simple.parser.ParseException;
+
+import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
 import net.sf.mzmine.main.MZmineCore;
@@ -41,9 +46,7 @@ import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This dialog is presented at the start of a PeakInvestigator run. It shows the
@@ -67,24 +70,19 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     private JButton btnDetails;
 
     // Passed-in values needed later
-    protected Double availableFunds;
-    Map<String, ResponseTimeCosts> estimatedCosts = null;
+	private InitAction action;
 
     // Required in more than one place, so lazily constructed
     protected String[] responseTimeObjectives = null;
 
-	public PeakInvestigatorInitDialog(Window parent, String version,
-			double funds, Map<String, ResponseTimeCosts> estimatedCosts) {
-
+	public PeakInvestigatorInitDialog(Window parent, String version, InitAction action) {
 		super(parent, Dialog.ModalityType.DOCUMENT_MODAL);
 		setTitle("PeakInvestigator " + version);
 
-		this.estimatedCosts = estimatedCosts;
-		this.availableFunds = funds;
+		this.action = action;
 
-		addDialogComponents(version, availableFunds, estimatedCosts);
+		addDialogComponents(version, action.getFunds(), action.getEstimatedCosts());
 		setLocationRelativeTo(parent);
-
 	}
 
     /**
@@ -107,13 +105,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		mainPanel = new GridBagPanel();
 
 		JPanel quotationArea = buildPriceQuotationArea(estimatedCosts);
-		mainPanel.addCenter(quotationArea, 0, 1, 3, estimatedCosts.size() + 2);
+		mainPanel.add(quotationArea, 0, 0, 1, 1, 0, 1, GridBagConstants.BOTH);
 
 		JPanel fundsArea = buildFundsArea(funds);
-		mainPanel.addCenter(fundsArea, 0, 50, 3, 1);
+		mainPanel.add(fundsArea, 0, 1, 1, 1, 0, 1, GridBagConstants.BOTH);
 
-		JPanel comboBoxArea = buildComboBoxArea(getResponseTimeObjectives(estimatedCosts));
-		mainPanel.addCenter(comboBoxArea, 0, 51, 3, 1);
+		JPanel comboBoxArea = buildComboBoxArea(action.getResponseTimeObjectives());
+		mainPanel.add(comboBoxArea, 0, 2, 1, 1, 0, 1, GridBagConstants.BOTH);
 
 		// Create a separate panel for the buttons
 		JPanel pnlButtons = new JPanel();
@@ -151,9 +149,9 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 //	}
 
    private JPanel buildPriceQuotationArea(Map<String, ResponseTimeCosts> estimatedCosts) {
-    	JPanel panel = new JPanel();
-    	String[] RTOs = getResponseTimeObjectives(estimatedCosts);
-        String[] machineTypes = getMachineTypes(estimatedCosts);
+		JPanel panel = new JPanel();
+		String[] RTOs = action.getResponseTimeObjectives();
+		String[] machineTypes = action.getMSTypes();
         
         if (RTOs.length == 0 || machineTypes.length == 0) {
         	return panel;
@@ -223,7 +221,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	private void handleOkButton() {
 		String selectedRTO = responseTimeObjectiveComboBox.getSelectedItem()
 				.toString();
-		if (determineMaxPotentialCost(estimatedCosts, selectedRTO) > availableFunds) {
+		if (action.getMaxPotentialCost(selectedRTO) > action.getFunds()) {
 			String mesg = "The selected RTO requires more funds than are currently available in your account.";
 			MZmineCore.getDesktop().displayErrorMessage(
 					MZmineCore.getDesktop().getMainWindow(), "Error", mesg);
@@ -259,49 +257,28 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
         return responseTimeObjectiveComboBox.getSelectedItem().toString();
     }
 
-    private String[] getMachineTypes(Map<String, ResponseTimeCosts> estimatedCosts) {
-    	Set<String> keys = estimatedCosts.keySet();
-    	return keys.toArray(new String[keys.size()]);
-    }
-    
-	/**
-	 * Convenience function to get the Response Time Objectives. Assumes that
-	 * each ResponseTimeCosts value have exactly the same number and name of
-	 * RTO. This function lazily instantiates the reponseTimeObjective variable.
-	 * 
-	 * @param estimatedCosts
-	 *            As returned from InitAction.getEstimatedCosts()
-	 * @return List of strings corresponding to RTOs (e.g. "RTO-24", "RTO-0",
-	 *         etc.)
-	 */
-	private String[] getResponseTimeObjectives(Map<String, ResponseTimeCosts> estimatedCosts) {
-		if (responseTimeObjectives != null) {
-			return responseTimeObjectives;
-		}
-
-		ArrayList<ResponseTimeCosts> costs = new ArrayList<>(
-				estimatedCosts.values());
-		if (costs.size() == 0) {
-			responseTimeObjectives = new String[] {};
-			return new String[] {};
-		} else {
-			Set<String> RTOs = costs.get(0).keySet();
-			responseTimeObjectives = RTOs.toArray(new String[RTOs.size()]);
-		}
-
-		return responseTimeObjectives;
+	private static void createAndShowWindow()
+			throws UnsupportedOperationException, ParseException {
+		InitAction action = InitAction.create("3.0", "adam", "password");
+		action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
+		PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(
+				null, "test", action);
+		dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		dialog.setVisible(true);
 	}
-	
-	protected double determineMaxPotentialCost(Map<String, ResponseTimeCosts> estimatedCosts, String RTO) {
-		double maxCost = 0;
-		for (ResponseTimeCosts costs : estimatedCosts.values()) {
-			double cost = costs.getCost(RTO);
-			if (maxCost > cost) {
-				maxCost = cost;
-			}
-		}
 
-		return maxCost;
+	public static void main(String args[]) {
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					createAndShowWindow();
+				} catch (UnsupportedOperationException e) {
+					e.printStackTrace();
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 }
