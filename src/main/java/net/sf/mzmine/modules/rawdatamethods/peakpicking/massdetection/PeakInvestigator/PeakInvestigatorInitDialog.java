@@ -49,10 +49,9 @@ import net.sf.mzmine.util.components.GridBagPanel;
 import java.util.Map;
 
 /**
- * This dialog is presented at the start of a PeakInvestigator run. It shows the
- * user the current selected version of PeakInvestigator, and the associated
- * estimated costs for various MS types and Response Time Objectives (RTOs). It
- * also allows the user to select the desired RTO.
+ * This dialog is presented at the start of a PeakInvestigator run so the user
+ * can selected the desired Response Time Objective (RTO). It shows the the
+ * associated estimated costs for various MS types and RTOs.
  */
 public class PeakInvestigatorInitDialog extends JDialog implements ActionListener {
 
@@ -71,9 +70,6 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 
     // Passed-in values needed later
 	private InitAction action;
-
-    // Required in more than one place, so lazily constructed
-    protected String[] responseTimeObjectives = null;
 
 	public PeakInvestigatorInitDialog(Window parent, String version, InitAction action) {
 		super(parent, Dialog.ModalityType.DOCUMENT_MODAL);
@@ -116,10 +112,10 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		// Create a separate panel for the buttons
 		JPanel pnlButtons = new JPanel();
 
-		btnOK = GUIUtils.addButton(pnlButtons, "OK", null, this);
-		btnCancel = GUIUtils.addButton(pnlButtons, "Cancel", null, this);
 		btnDetails = GUIUtils.addButton(pnlButtons,
-				"Price quotation details...", null, this);
+				"Price Quotation Details...", null, this);
+		btnCancel = GUIUtils.addButton(pnlButtons, "Cancel", null, this);
+		btnOK = GUIUtils.addButton(pnlButtons, "Purchase", null, this);
 
 		/*
 		 * Last row in the table will be occupied by the buttons. We set the row
@@ -157,16 +153,16 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
         	return panel;
         }
     	
-        panel.setBorder(BorderFactory.createTitledBorder("Price quotation"));
+        panel.setBorder(BorderFactory.createTitledBorder("Levels of Service"));
         
         final int columnStart = 1;
         GridBagPanel grid = new GridBagPanel();
-        grid.add(new JLabel("Response Time Objective:"), 0, 0);
+        grid.add(new JLabel("Response Time Objective (<= x hrs):"), 0, 0);
         for (int i = 0; i < RTOs.length; i++) {
         	grid.add(new JLabel(RTOs[i]), columnStart + i, 0);
         }
         
-        grid.add(new JLabel("MS Type"), 0, 1);
+        grid.add(new JLabel("Price Quotation:"), 0, 1);
         grid.add(Box.createVerticalStrut(1), 0, 2, 3, 0, 0, 1);
         final int rowStart = 3;
         for (int i = 0; i < machineTypes.length; i++) {
@@ -184,10 +180,10 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
     
 	private JPanel buildFundsArea(Double funds) {
 		JPanel panel = new JPanel();
-		panel.setBorder(BorderFactory.createTitledBorder("Customer account"));
+		panel.setBorder(BorderFactory.createTitledBorder("Customer Account"));
 
 		GridBagPanel grid = new GridBagPanel();
-		grid.add(new JLabel("Current balance:"), 0, 1);
+		grid.add(new JLabel("Available Balance:"), 0, 1);
 		grid.add(new JLabel(String.format("$%.2f", funds)), 1, 1);
 
 		panel.add(grid);
@@ -198,7 +194,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		JPanel panel = new JPanel();
 
 		GridBagPanel grid = new GridBagPanel();
-		grid.add(new JLabel("Desired RTO:"), 0, 0);
+		grid.add(new JLabel("Select Level of Service:"), 0, 0);
 		responseTimeObjectiveComboBox = new JComboBox<String>(RTOs);
 		grid.add(responseTimeObjectiveComboBox, 1, 0);
 
