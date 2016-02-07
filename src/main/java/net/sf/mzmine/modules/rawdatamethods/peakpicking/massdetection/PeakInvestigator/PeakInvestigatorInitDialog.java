@@ -57,6 +57,9 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 
     private static final long serialVersionUID = 1L;
 
+    private static final Dimension SMALL_SIZE_XY = new Dimension(5, 5);
+    private static final Dimension SMALL_SIZE_X = new Dimension(5, 0);
+
     private ExitCode exitCode = ExitCode.UNKNOWN;
 
     // GUI elements needed later
@@ -101,13 +104,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		mainPanel = new GridBagPanel();
 
 		JPanel quotationArea = buildPriceQuotationArea(estimatedCosts);
-		mainPanel.add(quotationArea, 0, 0, 1, 1, 0, 1, GridBagConstants.BOTH);
+		mainPanel.add(quotationArea, 0, 0, 1, 1, 1, 1, GridBagConstants.BOTH);
 
 		JPanel fundsArea = buildFundsArea(funds);
-		mainPanel.add(fundsArea, 0, 1, 1, 1, 0, 1, GridBagConstants.BOTH);
+		mainPanel.add(fundsArea, 0, 1, 1, 1, 1, 1, GridBagConstants.BOTH);
 
 		JPanel comboBoxArea = buildComboBoxArea(action.getResponseTimeObjectives());
-		mainPanel.add(comboBoxArea, 0, 2, 1, 1, 0, 1, GridBagConstants.BOTH);
+		mainPanel.add(comboBoxArea, 0, 2, 1, 1, 1, 1, GridBagConstants.BOTH);
 
 		// Create a separate panel for the buttons
 		JPanel pnlButtons = new JPanel();
@@ -122,7 +125,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		 * number to 100 and width to 3, spanning the 3 component columns
 		 * defined above.
 		 */
-		mainPanel.addCenter(pnlButtons, 0, 100, 3, 1);
+		mainPanel.addCenter(pnlButtons, 0, 100, 1, 1);
 
 		// Add some space around the widgets
 		GUIUtils.addMargin(mainPanel, 10);
@@ -159,18 +162,22 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
         GridBagPanel grid = new GridBagPanel();
         grid.add(new JLabel("Response Time Objective (<= x hrs):"), 0, 0);
         for (int i = 0; i < RTOs.length; i++) {
-        	grid.add(new JLabel(RTOs[i]), columnStart + i, 0);
+			grid.add(Box.createRigidArea(SMALL_SIZE_X), columnStart + 2 * i, 0);
+			grid.add(new JLabel(RTOs[i]), columnStart + 2 * i + 1, 0);
         }
-        
-        grid.add(new JLabel("Price Quotation:"), 0, 1);
-        grid.add(Box.createVerticalStrut(1), 0, 2, 3, 0, 0, 1);
+
+        grid.add(Box.createRigidArea(SMALL_SIZE_XY), 0, 1);
+        grid.add(new JLabel("Price Quotation:"), 0, 2);
         final int rowStart = 3;
         for (int i = 0; i < machineTypes.length; i++) {
         	grid.add(new JLabel(machineTypes[i]), 0, rowStart + i);
         	ResponseTimeCosts costs = estimatedCosts.get(machineTypes[i]);
         	for (int j = 0; j < costs.size(); j++) {
-        		String text = String.format("$%.2f", costs.getCost(RTOs[j]));
-        		grid.add(new JLabel(text), columnStart + j, rowStart + i);
+				String text = String.format("$%.2f", costs.getCost(RTOs[j]));
+				grid.add(Box.createRigidArea(SMALL_SIZE_X),
+						columnStart + 2 * j, rowStart + 1);
+				grid.add(new JLabel(text), columnStart + 2 * j + 1, rowStart
+						+ i);
         	}
         }
         
@@ -183,8 +190,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 		panel.setBorder(BorderFactory.createTitledBorder("Customer Account"));
 
 		GridBagPanel grid = new GridBagPanel();
-		grid.add(new JLabel("Available Balance:"), 0, 1);
-		grid.add(new JLabel(String.format("$%.2f", funds)), 1, 1);
+		grid.add(new JLabel(String.format("Available Balance: $%.2f", funds)), 0, 0);
 
 		panel.add(grid);
 		return panel;
