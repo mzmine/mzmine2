@@ -58,16 +58,23 @@ import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorInitDialog;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 
+import org.json.simple.parser.ParseException;
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
 import org.xeustechnologies.jtar.TarOutputStream;
 
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.actions.BaseAction;
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.PrepAction;
 import com.veritomyx.actions.RunAction;
@@ -82,8 +89,10 @@ import com.veritomyx.actions.SftpAction;
 public class PeakInvestigatorTask
 {
 	private Logger          logger;
-	private ParameterSet parameters = null;
-	private boolean         launch;			// launch or retrieve
+	private PeakInvestigatorSaaS vtmx = null;
+	private PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
+
+	private Boolean         launch = null;			// launch or retrieve
 	private String          jobID = null;			// name of the job and the scans tar file
 	private String          desc;
 	private int             scanCnt;		// number of scans
@@ -92,13 +101,14 @@ public class PeakInvestigatorTask
 	private File workingDirectory;
 	private File inputFile;
 
-	private String			logInfo;
-	private PeakInvestigatorSaaS   vtmx = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
-	private String          username;
-	private String          password;
-	private int             projectID;
+	private String logInfo;
+	private String username;
+	private String password;
+	private int projectID;
+	private boolean displayLog = true;
+
 	private TarOutputStream tarfile = null;
-	private RawDataFile     rawDataFile;
+	private RawDataFile rawDataFile = null;
 	private int             errors;
 	
 	private static final long minutesCheckPrep = 2;
@@ -107,45 +117,62 @@ public class PeakInvestigatorTask
 	private static final int numSaaSStartSteps = 16;
 	private static final int numSaaSRetrieveSteps = 7;
 
-	public PeakInvestigatorTask(RawDataFile raw, String pickup_job,
-			String target, ParameterSet parameters, int scanCount) {
-		this.parameters = parameters;
-		rawDataFile = raw;
-		launch     = (pickup_job == null);
-		targetName = target;
-		
-		logger  = Logger.getLogger(this.getClass().getName());
+	public PeakInvestigatorTask(String server, String username,
+			String password, int projectID) {
+		this.vtmx = new PeakInvestigatorSaaS(server);
+		this.username = username;
+		this.password = password;
+		this.projectID = projectID;
+
+		logger = Logger.getLogger(this.getClass().getName());
 		logger.setLevel(MZmineCore.VtmxLive ? Level.INFO : Level.FINEST);
+	}
+
+	public PeakInvestigatorTask withRawDataFile(RawDataFile raw) {
+		this.rawDataFile = raw;
+		return this;
+	}
+
+	public PeakInvestigatorTask shouldDisplayLog(boolean displayLog) {
+		this.displayLog = displayLog;
+		return this;
+	}
+
+	public PeakInvestigatorTask withService(PeakInvestigatorSaaS vtmx) {
+		this.vtmx = vtmx;
+		return this;
+	}
+
+	public void initialize(String versionOfPi, int scanCount, int[] massRange,
+			String target) throws ResponseFormatException,
+			IllegalStateException {
+
+		this.launch = true;
+		this.targetName = target;
+
 		logger.info("Initializing PeakInvestigator™ Task");
 		desc    = "initializing";
-		
-		double minMass = parameters.getParameter(PeakInvestigatorParameters.minMass).getValue();
-		double maxMass = parameters.getParameter(PeakInvestigatorParameters.maxMass).getValue();
-		String versionOfPi = parameters.getParameter(PeakInvestigatorParameters.versions).getValue();
-		
-		MZminePreferences preferences = MZmineCore.getConfiguration()
-				.getPreferences();
-		username = preferences.getParameter(MZminePreferences.vtmxUsername)
-				.getValue();
-		password = preferences.getParameter(MZminePreferences.vtmxPassword)
-				.getValue();
-		projectID = preferences.getParameter(MZminePreferences.vtmxProject)
-				.getValue();
 
 		InitAction initAction = InitAction
 				.create(PeakInvestigatorSaaS.API_VERSION, username, password)
 				.usingProjectId(projectID).withPiVersion(versionOfPi)
-				.withScanCount(scanCount, 0).withNumberOfPoints(getMaxNumberOfPoints(raw))
-				.withMassRange((int) Math.floor(minMass), (int) Math.ceil(maxMass));
-		vtmx.executeAction(initAction);
+				.withScanCount(scanCount, 0)
+				.withNumberOfPoints(getMaxNumberOfPoints(rawDataFile))
+				.withMassRange(massRange[0], massRange[1]);
+		String response = vtmx.executeAction(initAction);
+		initAction.processResponse(response);
 		
 		// TODO : handle error
-		if(!initAction.isReady("INIT") || initAction.hasError()) {
-			return;
+		if(!initAction.isReady("INIT")) {
+			throw new IllegalStateException("Problem initializing job.");
 		}
-		PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(
-				MZmineCore.getDesktop().getMainWindow(), versionOfPi, initAction.getFunds(),
-				initAction.getEstimatedCosts());
+
+		if (initAction.hasError()) {
+			error(initAction.getErrorMessage());
+		}
+
+		InitDialog dialog = dialogFactory.createInitDialog(MZmineCore
+				.getDesktop().getMainWindow(), versionOfPi, initAction);
 		dialog.setVisible(true);
 		if(dialog.getExitCode() != ExitCode.OK) {
 			return;
@@ -169,7 +196,6 @@ public class PeakInvestigatorTask
 
 		inputFile = new File(tempPath + File.separator + jobID + ".scans.tar");
 		inputFile.deleteOnExit();
-
 	}
 
 	public String getDesc() { return desc; }
@@ -210,11 +236,20 @@ public class PeakInvestigatorTask
 	/**
 	 * Send the bundle of scans to the VTMX cloud processor via the SFTP drop
 	 */
-	public void finish()
-	{
+	public void finish() {
 		logger.finest("PeakInvestigatorTask - finish");
-		if (launch) try { finishLaunch(); } catch(InterruptedException ie) {;}
-		else        finishRetrieve();
+		if (launch) {
+			try {
+				finishLaunch();
+			} catch (InterruptedException interruptedException) {
+				// Don't do anything if cancelled
+			} catch (IllegalStateException illegalStateException) {
+				error(illegalStateException.getMessage());
+			} catch (ResponseFormatException responseFormatException) {
+				error(responseFormatException.getMessage());
+			}
+		} else
+			finishRetrieve();
 	}
 
 	private void startLaunch()
@@ -271,10 +306,58 @@ public class PeakInvestigatorTask
 		return null;	// never return peaks from pass 1
 	}
 
+	protected void uploadFileToServer(String filename)
+			throws ResponseFormatException, IllegalStateException {
+		logger.info("Transmit scans bundle, " + filename
+				+ ", to SFTP server...");
+
+		SftpAction sftpAction = new SftpAction(
+				PeakInvestigatorSaaS.API_VERSION, username, password, projectID);
+		String response = vtmx.executeAction(sftpAction);
+		sftpAction.processResponse(response);
+
+		if (!sftpAction.isReady("SFTP")) {
+			throw new IllegalStateException("Problem getting SFTP credentials.");
+		}
+
+		vtmx.putFile(sftpAction, inputFile);
+	}
+
+	protected PrepAction checkPrepAnalysis(String filename)
+			throws ResponseFormatException, IllegalStateException {
+		logger.info("Waiting for PREP analysis to complete, "
+				+ inputFile.getName() + ", on SaaS server...Please be patient.");
+		PrepAction prepAction = new PrepAction(
+				PeakInvestigatorSaaS.API_VERSION, username, password,
+				projectID, filename);
+		String response = vtmx.executeAction(prepAction);
+		prepAction.processResponse(response);
+
+		if (!prepAction.isReady("PREP")) {
+			throw new IllegalStateException("Problem with PREP analysis.");
+		}
+
+		return prepAction;
+	}
+
+	protected void initiateRun(String filename, String selectedRTO)
+			throws ResponseFormatException, IllegalStateException {
+		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
+		// TODO: Fix RTO selection
+		RunAction runAction = new RunAction(PeakInvestigatorSaaS.API_VERSION,
+				username, password, jobID, "RTO-24", inputFile.getName(), null);
+		String response = vtmx.executeAction(runAction);
+		runAction.processResponse(response);
+		if (!runAction.isReady("RUN")) {
+			throw new IllegalStateException("Problem initiating RUN.");
+		}
+	}
+
 	/**
 	 * Finish the job launch process and send job to VTMX SaaS server
+	 * @throws InterruptedException, ResponseFormatException, IllegalStateException 
 	 */
-	private void finishLaunch() throws InterruptedException
+	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException
 	{
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
@@ -288,21 +371,12 @@ public class PeakInvestigatorTask
 			tarfile.close();
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot close scans bundle file.", logger);
+			error("Cannot close scans bundle file.");
 		}
 		progressMonitor.setProgress(1);
 
-		logger.info("Transmit scans bundle, " + inputFile.getName() + ", to SFTP server...");
-		SftpAction sftpAction = new SftpAction(
-				PeakInvestigatorSaaS.API_VERSION, username, password, projectID);
-		vtmx.executeAction(sftpAction);
-		if(!sftpAction.isReady("SFTP")) {
-			MZmineCore.getDesktop().displayErrorMessage(
-					MZmineCore.getDesktop().getMainWindow(), "Error",
-					"Problem getting SFTP credentials.", logger);
-			return;
-		}
-		vtmx.putFile(sftpAction, inputFile);
+		uploadFileToServer(inputFile.getName());
+		
 		if (progressMonitor.isCanceled()) {
 		    progressMonitor.close();
 		    logger.info("Job, " + jobID + ", canceled");
@@ -316,10 +390,7 @@ public class PeakInvestigatorTask
 		logger.info("Awaiting PREP analysis, " + inputFile.getName()
 				+ ", on SaaS server...");
 		progressMonitor.setNote("Performing a pre-check analysis.");
-		PrepAction prepAction = new PrepAction(
-				PeakInvestigatorSaaS.API_VERSION, username, password,
-				projectID, jobID);
-		vtmx.executeAction(prepAction);
+		
 
 		progressMonitor.setProgress(3);
 		progressMonitor.setProgress(4);
@@ -327,29 +398,23 @@ public class PeakInvestigatorTask
 		// timeWait is based on the loop count to keep this as short as possible.
 		long timeWait = minutesTimeoutPrep;
 		int count = 0;
-		while(prepAction.isReady("PREP") && prepAction.getStatus() == PrepAction.Status.Analyzing && timeWait > 0) {
-			logger.info("Waiting for PREP analysis to complete, "
-					+ inputFile.getName()
-					+ ", on SaaS server...Please be patient.");
+		PrepAction prepAction = checkPrepAnalysis(inputFile.getName());
+		while (prepAction.getStatus() == PrepAction.Status.Analyzing
+				&& timeWait > 0) {
 			Thread.sleep(minutesCheckPrep * 60000);
-			vtmx.executeAction(prepAction);
 			timeWait -= minutesCheckPrep;
 			if (progressMonitor.isCanceled()) {
-			    progressMonitor.close();
-			    logger.info("Job, " + jobID + ", canceled");
-			    return;
+				progressMonitor.close();
+				logger.info("Job, " + jobID + ", canceled");
+				return;
 			}
-			progressMonitor.setProgress(4+count);
+			prepAction = checkPrepAnalysis(inputFile.getName());
+			progressMonitor.setProgress(4 + count);
 			count++;
 		}
-		if(!prepAction.isReady("PREP") || prepAction.getStatus() != PrepAction.Status.Ready) {
-			MZmineCore
-					.getDesktop()
-					.displayErrorMessage(
-							MZmineCore.getDesktop().getMainWindow(),
-							"Error",
-							"Failed to launch or complete PREP Phase for " + jobID,
-							logger);
+
+		if(prepAction.getStatus() != PrepAction.Status.Ready) {
+			error("Failed to launch or complete PREP Phase for " + jobID);
 			return;
 		}
 		
@@ -357,22 +422,7 @@ public class PeakInvestigatorTask
 		//####################################################################
 		// start for remote job
 		progressMonitor.setNote("Requesting job to be run...");
-		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
-// TODO: Fix RTO selection
-		RunAction runAction = new RunAction(PeakInvestigatorSaaS.API_VERSION,
-				username, password, jobID, "RTO-24", inputFile.getName(), null);
-		if (!runAction.isReady("RUN"))
-		{
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Failed to launch (RUN Phase) " + jobID, logger);
-			return;
-		}
 
-		progressMonitor.setProgress(16);
-		if (progressMonitor.isCanceled()) {
-		    progressMonitor.close();
-		    logger.info("Job, " + jobID + ", canceled");
-		    return;
-		}
 		progressMonitor.setNote("Finished");
 		progressMonitor.close();
 		
@@ -518,7 +568,7 @@ public class PeakInvestigatorTask
 
 			vtmx.getFile(sftpAction, remoteFilename, localFile);
 			progressMonitor.setProgress(6);
-			if (shouldShowLog()) {
+			if (displayLog) {
 				try (BufferedReader br = new BufferedReader(new FileReader(
 						localFile))) {
 					StringBuilder sb = new StringBuilder();
@@ -647,10 +697,6 @@ public class PeakInvestigatorTask
 		return workingDirectory + File.separator + filename;
 	}
 
-	private boolean shouldShowLog() {
-		return parameters.getParameter(PeakInvestigatorParameters.showLog).getValue();
-	}
-
 	/**
 	 * Convenience function to get the maximum number of points in a scan. Used
 	 * for PeakInvestigator InitAction.
@@ -670,6 +716,12 @@ public class PeakInvestigatorTask
 		}
 
 		return maxNumberOfPoints;
+	}
+
+	private void error(String message) {
+		MZmineCore.getDesktop().displayErrorMessage(
+				MZmineCore.getDesktop().getMainWindow(), "Error",
+				message, logger);
 	}
 
 	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
