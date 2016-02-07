@@ -37,15 +37,18 @@ public abstract class BaseAction {
 		responseObject = null;
 	}
 
-	public void processResponse(String response)
-			throws UnsupportedOperationException, ParseException {
+	public void processResponse(String response) throws ResponseFormatException {
 		if (response.startsWith("<")) {
-			throw new UnsupportedOperationException(
-					"Server response appears to be HTML/XML.");
+			throw new ResponseFormatException(
+					"Server response appears to be HTML/XML: " + response.substring(0, 15), this);
 		}
 
 		JSONParser parser = new JSONParser();
-		responseObject = (JSONObject) parser.parse(response);
+		try {
+			responseObject = (JSONObject) parser.parse(response);
+		} catch (ParseException e) {
+			throw new ResponseFormatException("Problem parsing JSON: " + e.getMessage(), this);
+		}
 	}
 
 	public boolean isReady(String action) throws IllegalStateException {
@@ -112,4 +115,22 @@ public abstract class BaseAction {
 		return retval;
 	}
 
+	public class ResponseFormatException extends Exception {
+		private BaseAction action = null;
+
+		public ResponseFormatException(String message, BaseAction action) {
+			super(message);
+			this.action = action;
+		}
+
+		public ResponseFormatException(String message, BaseAction action,
+				Throwable cause) {
+			super(message, cause);
+			this.action = action;
+		}
+
+		public BaseAction getAction() {
+			return action;
+		}
+	}
 }
