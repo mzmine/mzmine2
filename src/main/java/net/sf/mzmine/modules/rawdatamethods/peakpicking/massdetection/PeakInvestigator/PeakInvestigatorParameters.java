@@ -43,8 +43,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	
 	private static String username;
 	private static String password;
-	private static int projectID;
-	private PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(MZmineCore.VtmxLive);
+	private static String server;
 
 	public static final ComboParameter<String> versions = new ComboParameter<String>(
 			"PeakInvestigator™ version",
@@ -115,17 +114,21 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 				.getValue();
 		password = preferences.getParameter(MZminePreferences.vtmxPassword)
 				.getValue();
-		projectID = preferences.getParameter(MZminePreferences.vtmxProject)
+		server = preferences.getParameter(MZminePreferences.vtmxServer)
+				.getValue();
+		int projectID = preferences.getParameter(MZminePreferences.vtmxProject)
 				.getValue();
 
 		if ((username == null) || username.isEmpty() || (password == null)
-				|| password.isEmpty()) {
+				|| password.isEmpty() || (server == null) || server.isEmpty()) {
 			if (preferences.showSetupDialog(MZmineCore.getDesktop()
 					.getMainWindow(), false) != ExitCode.OK)
 				return false;
 			username = preferences.getParameter(MZminePreferences.vtmxUsername)
 					.getValue();
 			password = preferences.getParameter(MZminePreferences.vtmxPassword)
+					.getValue();
+			server = preferences.getParameter(MZminePreferences.vtmxServer)
 					.getValue();
 			projectID = preferences.getParameter(MZminePreferences.vtmxProject)
 					.getValue();
@@ -142,8 +145,10 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 *         are wrong and not corrected by the user.
 	 */
 	protected PiVersionsAction performPiVersionsCall() {
+		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(server);
 		PiVersionsAction action = new PiVersionsAction(
 				PeakInvestigatorSaaS.API_VERSION, username, password);
+
 		webService.executeAction(action);
 		if(!action.isReady("PI_VERSIONS")) {
 			return null;
@@ -164,12 +169,24 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 				return null;
 			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
 			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-			projectID      = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
+			int projectID = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
 
 			action = new PiVersionsAction(PeakInvestigatorSaaS.API_VERSION,
 					username, password);
 		}
 
 		return action;
+	}
+
+	public String getPiVersion() {
+		return versions.getValue();
+	}
+
+	public int[] getMassRange() {
+		return new int[] { minMass.getValue(), maxMass.getValue() };
+	}
+
+	public boolean shouldDisplayLog() {
+		return showLog.getValue();
 	}
 }
