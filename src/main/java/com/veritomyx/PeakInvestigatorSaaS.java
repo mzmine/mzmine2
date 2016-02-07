@@ -66,6 +66,8 @@ public class PeakInvestigatorSaaS
 	public static final String API_VERSION = "3.0";
 	private static final String PAGE_ENCODING = "UTF-8";
 
+	private String server = null;
+
 	enum Action { PI_VERSIONS, INIT, SFTP, PREP, RUN, STATUS, DELETE }; 
 
 	// return codes from web pages
@@ -137,13 +139,17 @@ public class PeakInvestigatorSaaS
 	 * @param reqVersion
 	 * @param live
 	 */
-	public PeakInvestigatorSaaS(boolean live)
+	public PeakInvestigatorSaaS(String server)
 	{
 		// without this we get exception in getInputStream
 		System.setProperty("java.net.preferIPv4Stack", "true");
+		if (server.startsWith("https://")) {
+			this.server = server.substring(8);
+		} else {
+			this.server = server;
+		}
 		
 		log        = Logger.getLogger(this.getClass().getName());
-		log.setLevel(live ? Level.INFO : Level.DEBUG);
 		log.info(this.getClass().getName());
 		jobID      = null;
 
@@ -320,14 +326,9 @@ public class PeakInvestigatorSaaS
 		return builder.toString();
 	}
 
-	public void executeAction(BaseAction action) {
+	public String executeAction(BaseAction action) {
 		action.reset();
-		String host = MZmineCore.getConfiguration().getPreferences()
-				.getParameter(MZminePreferences.vtmxServer).getValue();
-		if (host.startsWith("https://")) {
-			host = host.substring(8);
-		}
-		String page = "https://" + host + "/api/";
+		String page = "https://" + server + "/api/";
 			
 		HttpURLConnection connection = null;
 		try {
@@ -337,17 +338,7 @@ public class PeakInvestigatorSaaS
 			e.printStackTrace();
 		}
 		
-		String response = queryConnection(connection, action.buildQuery());
-		try {
-			action.processResponse(response);
-		} catch (UnsupportedOperationException e) {
-			error("Reponse appears not to be JSON: " + response.substring(0, 15));
-			e.printStackTrace();
-		} catch (ParseException e) {
-			error("Unable to parse response: " + response.substring(0, 15));
-			e.printStackTrace();
-		}
-
+		return queryConnection(connection, action.buildQuery());
 	}
 	/**
 	 * Get the first line of a web page from the Veritomyx server
