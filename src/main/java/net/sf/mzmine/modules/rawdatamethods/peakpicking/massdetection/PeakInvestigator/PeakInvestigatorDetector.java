@@ -24,9 +24,12 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
+
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
@@ -105,13 +108,36 @@ public class PeakInvestigatorDetector implements MassDetector
 	 * @param scanCount
 	 * @return
 	 */
-	public String startMassValuesJob(RawDataFile raw, String name, ParameterSet parameters, int scanCount)
-	{
-		PeakInvestigatorTask job = new PeakInvestigatorTask(raw, filterJobName(name), filterTargetName(name), parameters, scanCount);
+	public String startMassValuesJob(RawDataFile raw, String name,
+			ParameterSet parameterSet, int scanCount) {
+		MZminePreferences preferences = MZmineCore.getConfiguration()
+				.getPreferences();
+		String server = preferences.getParameter(MZminePreferences.vtmxServer)
+				.getValue();
+		String username = preferences.getParameter(
+				MZminePreferences.vtmxUsername).getValue();
+		String password = preferences.getParameter(
+				MZminePreferences.vtmxPassword).getValue();
+		int projectID = preferences.getParameter(MZminePreferences.vtmxProject)
+				.getValue();
+
+		PeakInvestigatorTask job = new PeakInvestigatorTask(server, username,
+				password, projectID).withRawDataFile(raw);
+
+		PeakInvestigatorParameters parameters = (PeakInvestigatorParameters) parameterSet;
+		try {
+			job.initialize(parameters.getPiVersion(), scanCount,
+					parameters.getMassRange(), filterTargetName(name));
+		} catch (IllegalStateException | ResponseFormatException e) {
+			// TODO Auto-generated catch block
+			error(e.getMessage());
+			e.printStackTrace();
+		}
+
 		String job_name = job.getName();
-		logger.finest("startMassValuesJob " + filterJobName(name) + " - " + job_name + " - " + ((job != null) ? job.getDesc() : "nojob"));
-		if (job_name != null)
-		{
+		logger.finest("startMassValuesJob " + filterJobName(name) + " - "
+				+ job_name + " - " + ((job != null) ? job.getDesc() : "nojob"));
+		if (job_name != null) {
 			jobs.add(job);
 			job.start();
 		}
@@ -171,6 +197,12 @@ public class PeakInvestigatorDetector implements MassDetector
 				return job;
 		}
 		return null;
+	}
+
+	private void error(String message) {
+		MZmineCore.getDesktop().displayErrorMessage(
+				MZmineCore.getDesktop().getMainWindow(), "Error", message,
+				logger);
 	}
 
 }

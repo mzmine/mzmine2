@@ -17,7 +17,7 @@
  * St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
+package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs;
 
 import java.awt.Dialog;
 import java.awt.Dimension;
@@ -37,6 +37,7 @@ import javax.swing.BorderFactory;
 import org.apache.batik.ext.swing.GridBagConstants;
 import org.json.simple.parser.ParseException;
 
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
@@ -53,7 +54,7 @@ import java.util.Map;
  * can selected the desired Response Time Objective (RTO). It shows the the
  * associated estimated costs for various MS types and RTOs.
  */
-public class PeakInvestigatorInitDialog extends JDialog implements ActionListener {
+public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, ActionListener {
 
     private static final long serialVersionUID = 1L;
 
@@ -262,7 +263,13 @@ public class PeakInvestigatorInitDialog extends JDialog implements ActionListene
 	private static void createAndShowWindow()
 			throws UnsupportedOperationException, ParseException {
 		InitAction action = InitAction.create("3.0", "adam", "password");
-		action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
+		try {
+			action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
+		} catch (ResponseFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(-1);
+		}
 		PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(
 				null, "test", action);
 		dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
