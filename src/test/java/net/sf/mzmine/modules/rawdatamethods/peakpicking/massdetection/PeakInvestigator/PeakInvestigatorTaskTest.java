@@ -30,6 +30,10 @@ public class PeakInvestigatorTaskTest {
 			+ "// ===================================================================\n"
 			+ "// Veritomyx";
 
+	/**
+	 * Test PeakInvestigatorTask.initialize() with real response and OK click on
+	 * dialog.
+	 */
 	@Test
 	public void testInitializeOk() throws IllegalStateException,
 			ResponseFormatException {
@@ -42,6 +46,10 @@ public class PeakInvestigatorTaskTest {
 		assertEquals("V-504.1461", task.getName());
 	}
 
+	/**
+	 * Test PeakInvestigatorTask.initialize() with real response and Cancel
+	 * click on dialog.
+	 */
 	@Test
 	public void testInitializeCancel() throws IllegalStateException,
 			ResponseFormatException {
@@ -54,6 +62,9 @@ public class PeakInvestigatorTaskTest {
 		assertEquals(null, task.getName());
 	}
 
+	/**
+	 * Test PeakInvestigatorTask.initialize() with HTML response.
+	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
 			ResponseFormatException {
@@ -64,6 +75,9 @@ public class PeakInvestigatorTaskTest {
 		fail("Should not reach here.");
 	}
 
+	/**
+	 * Test PeakInvestigatorTask.initialize() with real ERROR response.
+	 */
 	@Test
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException {
@@ -78,6 +92,10 @@ public class PeakInvestigatorTaskTest {
 				dialog.getMessage());
 	}
 
+	/**
+	 * Convenience function to build PeakInvestigatorTask that has setup with
+	 * PeakInvestigatorSaaS and RawDataFile mocks.
+	 */
 	private PeakInvestigatorTask createDefaultTask(String response) {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(argThat(new IsBaseAction()))).thenReturn(
@@ -96,6 +114,10 @@ public class PeakInvestigatorTaskTest {
 		return task;
 	}
 
+	/**
+	 * DialogFactory that creates an InitDialog that simulates OK button click and standard
+	 * Error Dialog for tracking error messages.
+	 */
 	private class EmptyOkDialogFactory implements PeakInvestigatorDialogFactory {
 
 		private ErrorDialog dialog = null;
@@ -116,6 +138,10 @@ public class PeakInvestigatorTaskTest {
 		}
 	}
 
+	/**
+	 * DialogFactory that creates an InitDialog that simulates Cancel button
+	 * click and standard Error Dialog for tracking error messages.
+	 */
 	private class EmptyCancelDialogFactory implements
 			PeakInvestigatorDialogFactory {
 
@@ -164,6 +190,9 @@ public class PeakInvestigatorTaskTest {
 		}
 	}
 
+	/**
+	 * ErrorDialog implementation that keeps track of error messages.
+	 */
 	private class EmptyErrorDialog implements ErrorDialog {
 
 		private String message = null;
@@ -178,6 +207,9 @@ public class PeakInvestigatorTaskTest {
 		}
 	}
 
+	/**
+	 * Used for specifying behavior of Mocked PeakInvestigatorSaaS.
+	 */
 	private class IsBaseAction extends ArgumentMatcher<BaseAction> {
 
 		@Override
