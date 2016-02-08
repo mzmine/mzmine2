@@ -21,8 +21,11 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 
 import java.awt.Window;
 import java.lang.Math;
+import java.util.Arrays;
+import java.util.List;
 
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.PiVersionsAction;
 
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
@@ -32,7 +35,6 @@ import net.sf.mzmine.parameters.parametertypes.ComboParameter;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.util.ExitCode;
-import ucar.ma2.Range;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -72,12 +74,19 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 			return ExitCode.CANCEL;
 		}
 
-		PiVersionsAction action = performPiVersionsCall();
+		PiVersionsAction action = null;
+		try {
+			action = performPiVersionsCall();
+		} catch (ResponseFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		if(action == null) {
 			return ExitCode.ERROR;
 		}
 
-		versions.setChoices(action.getVersions());
+		versions.setChoices(formatPiVersions(action));
 
 		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
 		for(RawDataFile file : files) {
@@ -97,6 +106,36 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();
+	}
+
+	/**
+	 * Convenience function to create a list of versions that identifies which,
+	 * if any, are the current versions and previously used versions.
+	 * 
+	 * @param action
+	 *            Valid PiVersionsAction that contains list of versions.
+	 * @return List of versions with identifications appended
+	 */
+	protected static String[] formatPiVersions(PiVersionsAction action) {
+		List<String> choices = Arrays.asList(action.getVersions());
+		int currentIndex = choices.indexOf((String) action.getCurrentVersion());
+		int lastIndex = choices.indexOf((String) action.getLastUsedVersion());
+		if (currentIndex >= 0 && lastIndex == currentIndex) {
+			String newString = choices.get(currentIndex)
+					+ " (current and last used)";
+			choices.set(currentIndex, newString);
+		} else {
+			if (currentIndex >= 0) {
+				String newString = choices.get(currentIndex) + " (current)";
+				choices.set(currentIndex, newString);
+			}
+			if (lastIndex >= 0) {
+				String newString = choices.get(lastIndex) + " (last used)";
+				choices.set(lastIndex, newString);
+			}
+		}
+
+		return choices.toArray(new String[choices.size()]);
 	}
 
 	/**
@@ -144,19 +183,20 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 * @return An object containing response from server, or null if credentials
 	 *         are wrong and not corrected by the user.
 	 */
-	protected PiVersionsAction performPiVersionsCall() {
+	protected PiVersionsAction performPiVersionsCall() throws ResponseFormatException {
 		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(server);
 		PiVersionsAction action = new PiVersionsAction(
 				PeakInvestigatorSaaS.API_VERSION, username, password);
 
-		webService.executeAction(action);
+		String response = webService.executeAction(action);
+		action.processResponse(response);
 		if(!action.isReady("PI_VERSIONS")) {
 			return null;
 		}
 
 		while(action.hasError()) {
 			String errorMessage = action.getErrorMessage();
-			int code = action.getErrorCode();
+			long code = action.getErrorCode();
 			MZmineCore.getDesktop().displayErrorMessage(
 					MZmineCore.getDesktop().getMainWindow(), "Error",
 					errorMessage);
@@ -173,6 +213,8 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 			action = new PiVersionsAction(PeakInvestigatorSaaS.API_VERSION,
 					username, password);
+			response = webService.executeAction(action);
+			action.processResponse(response);
 		}
 
 		return action;
