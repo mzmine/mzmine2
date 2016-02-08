@@ -16,9 +16,6 @@ public class ActionsTest {
 
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":2,\"Versions\":[\"1.2\",\"1.0.0\"]}";
 
-	public final static String PREP_RESPONSE_1 = "{\"Action\":\"PREP\",\"File\":\"WatersQ-TOF.tar\",\"Status\":\"Analyzing\",\"PercentComplete\":\"90%\",\"ScanCount\":0,\"MSType\":\"TBD\"}";
-	public final static String PREP_RESPONSE_2 = "{\"Action\":\"PREP\",\"File\":\"Bosch_1_1.tar\",\"Status\":\"Ready\",\"PercentComplete\":\"\",\"ScanCount\":3336,\"MSType\":\"Orbitrap\"}";
-
 	public final static String RUN_RESPONSE_1 = "{\"Action\":\"RUN\",\"Job\":\"P-504.1463\"}";
 
 	public final static String STATUS_RESPONSE_1 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Running\",\"Datetime\":\"2016-02-03 18:25:09\"}";
@@ -127,7 +124,7 @@ public class ActionsTest {
 				"Version=3.0&User=user&Code=password&Action=PREP&ID=100&File=file.tar");
 
 		// handle Analyzing case
-		action.processResponse(PREP_RESPONSE_1);
+		action.processResponse(PrepAction.EXAMPLE_RESPONSE_1);
 
 		PrepAction temp = (PrepAction) action;
 		assertEquals(temp.getStatus(), PrepAction.Status.Analyzing);
@@ -136,7 +133,7 @@ public class ActionsTest {
 		assertEquals(temp.getMStype(), "TBD");
 
 		// handle Ready case
-		action.processResponse(PREP_RESPONSE_2);
+		action.processResponse(PrepAction.EXAMPLE_RESPONSE_2);
 
 		temp = (PrepAction) action;
 		assertEquals(temp.getStatus(), PrepAction.Status.Ready);

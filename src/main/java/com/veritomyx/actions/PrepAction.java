@@ -2,7 +2,10 @@ package com.veritomyx.actions;
 
 public class PrepAction extends BaseAction {
 	private final static String action = "PREP";
-	
+
+	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"PREP\",\"File\":\"WatersQ-TOF.tar\",\"Status\":\"Analyzing\",\"PercentComplete\":\"90%\",\"ScanCount\":0,\"MSType\":\"TBD\"}";
+	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"PREP\",\"File\":\"Bosch_1_1.tar\",\"Status\":\"Ready\",\"PercentComplete\":\"\",\"ScanCount\":3336,\"MSType\":\"Orbitrap\"}";
+
 	private int projectID;
 	private String filename;
 	

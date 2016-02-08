@@ -330,7 +330,7 @@ public class PeakInvestigatorTask
 	protected PrepAction checkPrepAnalysis(String filename)
 			throws ResponseFormatException, IllegalStateException {
 		logger.info("Waiting for PREP analysis to complete, "
-				+ inputFile.getName() + ", on SaaS server...Please be patient.");
+				+ filename + ", on SaaS server...Please be patient.");
 		PrepAction prepAction = new PrepAction(
 				PeakInvestigatorSaaS.API_VERSION, username, password,
 				projectID, filename);
@@ -339,6 +339,10 @@ public class PeakInvestigatorTask
 
 		if (!prepAction.isReady("PREP")) {
 			throw new IllegalStateException("Problem with PREP analysis.");
+		}
+
+		if (prepAction.hasError()) {
+			throw new IllegalStateException(prepAction.getErrorMessage());
 		}
 
 		return prepAction;
