@@ -3,6 +3,8 @@ package com.veritomyx.actions;
 public class SftpAction extends BaseAction {
 	private static final String action = "SFTP";
 
+	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"SFTP\",\"Host\":\"peakinvestigator.veritomyx.com\",\"Port\":22022,\"Directory\":\"\\/files\",\"Login\":\"V504\",\"Password\":\"cB34lxCH0anR952gu\"}";
+
 	private int projectID;
 
 	public SftpAction(String versionOfApi, String user, String code, int projectID) {

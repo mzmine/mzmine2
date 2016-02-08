@@ -16,8 +16,6 @@ public class ActionsTest {
 
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":2,\"Versions\":[\"1.2\",\"1.0.0\"]}";
 
-	public final static String SFTP_RESPONSE_1 = "{\"Action\":\"SFTP\",\"Host\":\"peakinvestigator.veritomyx.com\",\"Port\":22022,\"Directory\":\"\\/files\",\"Login\":\"V504\",\"Password\":\"cB34lxCH0anR952gu\"}";
-
 	public final static String PREP_RESPONSE_1 = "{\"Action\":\"PREP\",\"File\":\"WatersQ-TOF.tar\",\"Status\":\"Analyzing\",\"PercentComplete\":\"90%\",\"ScanCount\":0,\"MSType\":\"TBD\"}";
 	public final static String PREP_RESPONSE_2 = "{\"Action\":\"PREP\",\"File\":\"Bosch_1_1.tar\",\"Status\":\"Ready\",\"PercentComplete\":\"\",\"ScanCount\":3336,\"MSType\":\"Orbitrap\"}";
 
@@ -102,7 +100,7 @@ public class ActionsTest {
 		assertEquals(action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=SFTP&ID=100");
 
-		action.processResponse(SFTP_RESPONSE_1);
+		action.processResponse(SftpAction.EXAMPLE_RESPONSE_1);
 
 		SftpAction temp = (SftpAction) action;
 		assertEquals(temp.getHost(), "peakinvestigator.veritomyx.com");
