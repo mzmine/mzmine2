@@ -63,7 +63,7 @@ public class PeakInvestigatorTaskSftpTest {
 	/**
 	 * Test PeakInvestigatorTask.upoadFileToServer() with real ERROR response.
 	 */
-	@Test
+	@Test(expected = IllegalStateException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException {
 
@@ -75,10 +75,7 @@ public class PeakInvestigatorTaskSftpTest {
 				.usingDialogFactory(factory);
 		task.uploadFileToServer(new File("test.tar"));
 
-		EmptyErrorDialog dialog = (EmptyErrorDialog) ((EmptyDialogFactory) factory)
-				.getDialog();
-		assertEquals("Invalid username or password - can not validate",
-				dialog.getMessage());
+		fail("Should not reach here.");
 	}
 
 	/**

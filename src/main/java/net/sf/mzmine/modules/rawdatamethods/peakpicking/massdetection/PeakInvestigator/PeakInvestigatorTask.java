@@ -321,7 +321,7 @@ public class PeakInvestigatorTask
 		}
 
 		if (sftpAction.hasError()) {
-			error(sftpAction.getErrorMessage());
+			throw new IllegalStateException(sftpAction.getErrorMessage());
 		}
 
 		vtmx.putFile(sftpAction, file);
