@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.AbstractTestDialogFactory.EmptyErrorDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.ErrorDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
@@ -118,23 +119,11 @@ public class PeakInvestigatorTaskInitTest {
 	 * DialogFactory that creates an InitDialog that simulates OK button click and standard
 	 * Error Dialog for tracking error messages.
 	 */
-	private class EmptyOkDialogFactory implements PeakInvestigatorDialogFactory {
-
-		private ErrorDialog dialog = null;
+	private class EmptyOkDialogFactory extends AbstractTestDialogFactory {
 
 		@Override
 		public InitDialog createInitDialog(String version, InitAction action) {
 			return new EmptyOkInitDialog();
-		}
-
-		@Override
-		public ErrorDialog createErrorDialog() {
-			dialog = new EmptyErrorDialog();
-			return dialog;
-		}
-
-		public ErrorDialog getDialog() {
-			return dialog;
 		}
 	}
 
@@ -142,17 +131,11 @@ public class PeakInvestigatorTaskInitTest {
 	 * DialogFactory that creates an InitDialog that simulates Cancel button
 	 * click and standard Error Dialog for tracking error messages.
 	 */
-	private class EmptyCancelDialogFactory implements
-			PeakInvestigatorDialogFactory {
+	private class EmptyCancelDialogFactory extends AbstractTestDialogFactory {
 
 		@Override
 		public InitDialog createInitDialog(String version, InitAction action) {
 			return new EmptyCancelInitDialog();
-		}
-
-		@Override
-		public ErrorDialog createErrorDialog() {
-			return new EmptyErrorDialog();
 		}
 	}
 
@@ -187,23 +170,6 @@ public class PeakInvestigatorTaskInitTest {
 		@Override
 		public ExitCode getExitCode() {
 			return ExitCode.CANCEL;
-		}
-	}
-
-	/**
-	 * ErrorDialog implementation that keeps track of error messages.
-	 */
-	private class EmptyErrorDialog implements ErrorDialog {
-
-		private String message = null;
-
-		@Override
-		public void displayMessage(String message, Logger logger) {
-			this.message = message;
-		}
-
-		public String getMessage() {
-			return message;
 		}
 	}
 
