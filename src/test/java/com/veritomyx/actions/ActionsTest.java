@@ -2,13 +2,14 @@ package com.veritomyx.actions;
 
 import static org.junit.Assert.*;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.json.simple.parser.ParseException;
 import org.junit.Test;
 
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
 public class ActionsTest {
@@ -18,6 +19,7 @@ public class ActionsTest {
 	public final static String INIT_RESPONSE_1 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"ProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
 	public final static String INIT_RESPONSE_2 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
 	public final static String INIT_RESPONSE_3 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}";
+
 	public final static String SFTP_RESPONSE_1 = "{\"Action\":\"SFTP\",\"Host\":\"peakinvestigator.veritomyx.com\",\"Port\":22022,\"Directory\":\"\\/files\",\"Login\":\"V504\",\"Password\":\"cB34lxCH0anR952gu\"}";
 
 	public final static String PREP_RESPONSE_1 = "{\"Action\":\"PREP\",\"File\":\"WatersQ-TOF.tar\",\"Status\":\"Analyzing\",\"PercentComplete\":\"90%\",\"ScanCount\":0,\"MSType\":\"TBD\"}";
@@ -31,7 +33,7 @@ public class ActionsTest {
 	public final static String DELETE_RESPONSE_1 = "{\"Action\":\"DELETE\",\"Job\":\"P-504.4256\",\"Datetime\":\"2016-02-03 18:35:06\"}";
 
 	@Test
-	public void test_PiVersionsAction_Query() throws UnsupportedOperationException, ParseException {
+	public void test_PiVersionsAction_Query() throws ResponseFormatException {
 		BaseAction action = new PiVersionsAction("3.0", "user", "password");
 		assertEquals(action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=PI_VERSIONS");
@@ -50,7 +52,7 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_InitAction_Query() throws UnsupportedOperationException, ParseException {
+	public void test_InitAction_Query() throws ResponseFormatException {
 		BaseAction action = InitAction.create("3.0", "user", "password")
 				.withMassRange(50, 100).usingProjectId(100)
 				.withPiVersion("1.2").withScanCount(5, 0)
@@ -71,6 +73,8 @@ public class ActionsTest {
 		assertEquals(costs.get("Orbitrap").getCost("RTO-24"), 0.85, 0);
 		assertEquals(costs.get("Iontrap").getCost("RTO-24"), 1.02, 0);
 
+		action.reset();
+
 		action.processResponse(INIT_RESPONSE_3);
 		temp = (InitAction) action;
 
@@ -84,29 +88,20 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_InitAction_Error() {
+	public void test_InitAction_Error() throws ResponseFormatException {
 		BaseAction action = InitAction.create("3.0", "user", "password")
 				.withMassRange(50, 100).usingProjectId(100)
 				.withPiVersion("1.2").withScanCount(5, 0)
 				.withNumberOfPoints(12345);
 
-		try {
-			action.processResponse("{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
-		} catch (UnsupportedOperationException e) {
-			e.printStackTrace();
-			fail("Trying to parse HTML.");
-		} catch (ParseException e) {
-			e.printStackTrace();
-			fail("Problem parsing JSON.");
-		}
+		action.processResponse("{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
 	}
 
 	@Test
-	public void test_SftpAction_Query() throws UnsupportedOperationException,
-			ParseException {
+	public void test_SftpAction_Query() throws ResponseFormatException {
 		BaseAction action = new SftpAction("3.0", "user", "password", 100);
 		assertEquals(action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=SFTP&ID=100");
@@ -122,25 +117,16 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_SftpAction_Error() {
+	public void test_SftpAction_Error() throws ResponseFormatException {
 		BaseAction action = new SftpAction("3.0", "user", "password", 100);
-		try {
-			action.processResponse("{\"Action\":\"SFTP\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
-		} catch (UnsupportedOperationException e) {
-			e.printStackTrace();
-			fail("Trying to parse HTML.");
-		} catch (ParseException e) {
-			e.printStackTrace();
-			fail("Problem parsing JSON.");
-		}
+		action.processResponse("{\"Action\":\"SFTP\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
 	}
 
 	@Test
-	public void test_PrepAction_Query() throws UnsupportedOperationException,
-			ParseException {
+	public void test_PrepAction_Query() throws ResponseFormatException {
 		BaseAction action = new PrepAction("3.0", "user", "password", 100,
 				"file.tar");
 		assertEquals(action.buildQuery(),
@@ -166,26 +152,17 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_PrepAction_Error() {
+	public void test_PrepAction_Error() throws ResponseFormatException {
 		BaseAction action = new PrepAction("3.0", "user", "password", 100,
 				"file.tar");
-		try {
-			action.processResponse("{\"Action\":\"PREP\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
-		} catch (UnsupportedOperationException e) {
-			e.printStackTrace();
-			fail("Trying to parse HTML.");
-		} catch (ParseException e) {
-			e.printStackTrace();
-			fail("Problem parsing JSON.");
-		}
+		action.processResponse("{\"Action\":\"PREP\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
 	}
 
 	@Test
-	public void test_RunAction_Query() throws UnsupportedOperationException,
-			ParseException {
+	public void test_RunAction_Query() throws ResponseFormatException {
 		BaseAction action = new RunAction("3.0", "user", "password",
 				"job-123", "RTO-24", "file.tar", null);
 		assertEquals(
@@ -199,25 +176,17 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_RunAction_Error() {
+	public void test_RunAction_Error() throws ResponseFormatException {
 		BaseAction action = new RunAction("3.0", "user", "password",
 				"job-123", "RTO-24", "file.tar", null);
-		try {
-			action.processResponse("{\"Action\":\"RUN\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
-		} catch (UnsupportedOperationException e) {
-			e.printStackTrace();
-			fail("Trying to parse HTML.");
-		} catch (ParseException e) {
-			e.printStackTrace();
-			fail("Problem parsing JSON.");
-		}
+		action.processResponse("{\"Action\":\"RUN\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
 	}
 
 	@Test
-	public void test_StatusAction_Query() throws UnsupportedOperationException, ParseException, java.text.ParseException {
+	public void test_StatusAction_Query() throws ResponseFormatException, ParseException {
 		BaseAction action = new StatusAction("3.0", "user", "password",
 				"job-123");
 		assertEquals(action.buildQuery(),
@@ -253,25 +222,17 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_StatusAction_Error() {
+	public void test_StatusAction_Error() throws ResponseFormatException {
 		BaseAction action = new StatusAction("3.0", "user", "password",
 				"job-123");
-		try {
-			action.processResponse("{\"Action\":\"STATUS\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
-		} catch (UnsupportedOperationException e) {
-			e.printStackTrace();
-			fail("Trying to parse HTML.");
-		} catch (ParseException e) {
-			e.printStackTrace();
-			fail("Problem parsing JSON.");
-		}
+		action.processResponse("{\"Action\":\"STATUS\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
 	}
 
 	@Test
-	public void test_DeleteAction_Query() throws UnsupportedOperationException, ParseException, java.text.ParseException {
+	public void test_DeleteAction_Query() throws ResponseFormatException, ParseException {
 		BaseAction action = new DeleteAction("3.0", "user", "password",
 				"job-123");
 		assertEquals(action.buildQuery(),
