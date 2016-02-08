@@ -2,15 +2,13 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import java.io.File;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 
 import org.junit.Test;
@@ -19,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.RunAction;
-import com.veritomyx.actions.SftpAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 
 public class PeakInvestigatorTaskRunTest {
@@ -29,7 +26,7 @@ public class PeakInvestigatorTaskRunTest {
 
 	@Test
 	public void testInitiateRunOk() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(RunAction.EXAMPLE_RESPONSE_1);
 		task.initiateRun("test.tar", "RTO-24");
@@ -43,7 +40,7 @@ public class PeakInvestigatorTaskRunTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.initiateRun("test.tar", "RTO-24");
@@ -54,12 +51,12 @@ public class PeakInvestigatorTaskRunTest {
 	/**
 	 * Test PeakInvestigatorTask.initiateRun() with real ERROR response.
 	 */
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
-				.replace("ACTION", "SFTP");
+				.replace("ACTION", "RUN");
 
 		PeakInvestigatorTask task = createDefaultTask(response);
 		task.initiateRun("test.tar", "RTO-24");

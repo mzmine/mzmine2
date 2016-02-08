@@ -11,6 +11,7 @@ import java.io.File;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class PeakInvestigatorTaskSftpTest {
 
 	@Test
 	public void testUploadFileToServerOk() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -48,7 +49,7 @@ public class PeakInvestigatorTaskSftpTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
@@ -59,9 +60,9 @@ public class PeakInvestigatorTaskSftpTest {
 	/**
 	 * Test PeakInvestigatorTask.upoadFileToServer() with real ERROR response.
 	 */
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");

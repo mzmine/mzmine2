@@ -87,6 +87,7 @@ public class PeakInvestigatorTaskInitTest {
 				.getDialog();
 		assertEquals("Invalid username or password - can not validate",
 				dialog.getMessage());
+		assertEquals(null, task.getName());
 	}
 
 	/**

@@ -4,10 +4,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 
 import org.junit.Test;
@@ -25,7 +25,7 @@ public class PeakInvestigatorTaskPrepTest {
 
 	@Test
 	public void testCheckPrepAnalysisAnalyzing() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(PrepAction.EXAMPLE_RESPONSE_1);
 		task.checkPrepAnalysis("test.tar");
@@ -36,7 +36,7 @@ public class PeakInvestigatorTaskPrepTest {
 
 	@Test
 	public void testCheckPrepAnalysisReady() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(PrepAction.EXAMPLE_RESPONSE_2);
 		task.checkPrepAnalysis("test.tar");
@@ -50,7 +50,7 @@ public class PeakInvestigatorTaskPrepTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.checkPrepAnalysis("test.tar");
@@ -61,9 +61,9 @@ public class PeakInvestigatorTaskPrepTest {
 	/**
 	 * Test PeakInvestigatorTask.checkPrepAnalysis() with real ERROR response.
 	 */
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "PREP");

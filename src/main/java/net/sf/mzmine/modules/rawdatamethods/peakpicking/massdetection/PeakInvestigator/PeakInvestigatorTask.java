@@ -87,8 +87,10 @@ public class PeakInvestigatorTask
 	private PeakInvestigatorSaaS vtmx = null;
 	private PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
 
-	private Boolean         launch = null;			// launch or retrieve
-	private String          jobID = null;			// name of the job and the scans tar file
+	private Boolean launch = null;
+	private String jobID = null;
+	private String selectedRTO = null;
+
 	private String          desc;
 	private int             scanCnt;		// number of scans
 	private String          targetName;
@@ -114,6 +116,7 @@ public class PeakInvestigatorTask
 
 	public PeakInvestigatorTask(String server, String username,
 			String password, int projectID) {
+
 		this.vtmx = new PeakInvestigatorSaaS(server);
 		this.username = username;
 		this.password = password;
@@ -177,7 +180,9 @@ public class PeakInvestigatorTask
 			return;
 		}
 		
-		jobID          = initAction.getJob();
+		jobID = initAction.getJob();
+		selectedRTO = dialog.getSelectedRTO();
+
 		Path tempPath = null;
 		try {
 			tempPath = Files.createTempDirectory(jobID + "-");
@@ -246,6 +251,8 @@ public class PeakInvestigatorTask
 				error(illegalStateException.getMessage());
 			} catch (ResponseFormatException responseFormatException) {
 				error(responseFormatException.getMessage());
+			} catch (ResponseErrorException responseError) {
+				error(responseError.getMessage());
 			}
 		} else
 			finishRetrieve();
@@ -306,7 +313,7 @@ public class PeakInvestigatorTask
 	}
 
 	protected void uploadFileToServer(File file)
-			throws ResponseFormatException, IllegalStateException {
+			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -321,16 +328,18 @@ public class PeakInvestigatorTask
 		}
 
 		if (sftpAction.hasError()) {
-			throw new IllegalStateException(sftpAction.getErrorMessage());
+			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
 		vtmx.putFile(sftpAction, file);
 	}
 
 	protected PrepAction checkPrepAnalysis(String filename)
-			throws ResponseFormatException, IllegalStateException {
+			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
+
 		logger.info("Waiting for PREP analysis to complete, "
 				+ filename + ", on SaaS server...Please be patient.");
+
 		PrepAction prepAction = new PrepAction(
 				PeakInvestigatorSaaS.API_VERSION, username, password,
 				projectID, filename);
@@ -342,30 +351,35 @@ public class PeakInvestigatorTask
 		}
 
 		if (prepAction.hasError()) {
-			throw new IllegalStateException(prepAction.getErrorMessage());
+			throw new ResponseErrorException(prepAction.getErrorMessage());
 		}
 
 		return prepAction;
 	}
 
 	protected void initiateRun(String filename, String selectedRTO)
-			throws ResponseFormatException, IllegalStateException {
+			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
+
 		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
-		// TODO: Fix RTO selection
+
 		RunAction runAction = new RunAction(PeakInvestigatorSaaS.API_VERSION,
-				username, password, jobID, "RTO-24", inputFile.getName(), null);
+				username, password, jobID, selectedRTO, filename, null);
 		String response = vtmx.executeAction(runAction);
 		runAction.processResponse(response);
+
 		if (!runAction.isReady("RUN")) {
 			throw new IllegalStateException("Problem initiating RUN.");
+		}
+
+		if (runAction.hasError()) {
+			throw new ResponseErrorException(runAction.getErrorMessage());
 		}
 	}
 
 	/**
 	 * Finish the job launch process and send job to VTMX SaaS server
-	 * @throws InterruptedException, ResponseFormatException, IllegalStateException 
 	 */
-	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException
+	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException, ResponseErrorException
 	{
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
@@ -729,6 +743,17 @@ public class PeakInvestigatorTask
 	private void error(String message) {
 		ErrorDialog dialog = dialogFactory.createErrorDialog();
 		dialog.displayMessage(message, logger);
+	}
+
+	/**
+	 * Exception for passing Response errors up the call stack.
+	 * 
+	 */
+	public class ResponseErrorException extends Exception {
+
+		public ResponseErrorException(String message) {
+			super(message);
+		}
 	}
 
 	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
