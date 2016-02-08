@@ -305,9 +305,10 @@ public class PeakInvestigatorTask
 		return null;	// never return peaks from pass 1
 	}
 
-	protected void uploadFileToServer(String filename)
+	protected void uploadFileToServer(File file)
 			throws ResponseFormatException, IllegalStateException {
-		logger.info("Transmit scans bundle, " + filename
+
+		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
 
 		SftpAction sftpAction = new SftpAction(
@@ -319,7 +320,11 @@ public class PeakInvestigatorTask
 			throw new IllegalStateException("Problem getting SFTP credentials.");
 		}
 
-		vtmx.putFile(sftpAction, inputFile);
+		if (sftpAction.hasError()) {
+			error(sftpAction.getErrorMessage());
+		}
+
+		vtmx.putFile(sftpAction, file);
 	}
 
 	protected PrepAction checkPrepAnalysis(String filename)
@@ -374,7 +379,7 @@ public class PeakInvestigatorTask
 		}
 		progressMonitor.setProgress(1);
 
-		uploadFileToServer(inputFile.getName());
+		uploadFileToServer(inputFile);
 		
 		if (progressMonitor.isCanceled()) {
 		    progressMonitor.close();
