@@ -159,26 +159,26 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
     	
         panel.setBorder(BorderFactory.createTitledBorder("Levels of Service"));
         
-        final int columnStart = 1;
+        final int columnStart = 3;
         GridBagPanel grid = new GridBagPanel();
-        grid.add(new JLabel("Response Time Objective (<= x hrs):"), 0, 0);
+        grid.add(new JLabel("Response Time Objective (≤ xx hrs):"), 0, 0, 3, 1);
         for (int i = 0; i < RTOs.length; i++) {
 			grid.add(Box.createRigidArea(SMALL_SIZE_X), columnStart + 2 * i, 0);
-			grid.add(new JLabel(RTOs[i]), columnStart + 2 * i + 1, 0);
+			grid.addCenter(new JLabel(RTOs[i]), columnStart + 2 * i + 1, 0, 1, 1);
         }
 
         grid.add(Box.createRigidArea(SMALL_SIZE_XY), 0, 1);
-        grid.add(new JLabel("Price Quotation:"), 0, 2);
+        grid.add(new JLabel("Price Quotation:"), 0, 2, 3, 1);
         final int rowStart = 3;
         for (int i = 0; i < machineTypes.length; i++) {
-        	grid.add(new JLabel(machineTypes[i]), 0, rowStart + i);
+			grid.add(new JLabel(machineTypes[i]), 1, rowStart + i);
         	ResponseTimeCosts costs = estimatedCosts.get(machineTypes[i]);
         	for (int j = 0; j < costs.size(); j++) {
-				String text = String.format("$%.2f", costs.getCost(RTOs[j]));
+				String text = String.format("$%,.2f", costs.getCost(RTOs[j]));
 				grid.add(Box.createRigidArea(SMALL_SIZE_X),
 						columnStart + 2 * j, rowStart + 1);
-				grid.add(new JLabel(text), columnStart + 2 * j + 1, rowStart
-						+ i);
+				grid.addCenter(new JLabel(text), columnStart + 2 * j + 1, rowStart
+						+ i, 1, 1);
         	}
         }
         
@@ -191,7 +191,7 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
 		panel.setBorder(BorderFactory.createTitledBorder("Customer Account"));
 
 		GridBagPanel grid = new GridBagPanel();
-		grid.add(new JLabel(String.format("Available Balance: $%.2f", funds)), 0, 0);
+		grid.add(new JLabel(String.format("Available Balance: $%,.2f", funds)), 0, 0);
 
 		panel.add(grid);
 		return panel;
@@ -264,14 +264,14 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
 			throws UnsupportedOperationException, ParseException {
 		InitAction action = InitAction.create("3.0", "adam", "password");
 		try {
-			action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
+			action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":1150.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":1200.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
 		} catch (ResponseFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(
-				null, "test", action);
+				null, "1.2", action);
 		dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		dialog.setVisible(true);
 	}
