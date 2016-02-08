@@ -11,8 +11,6 @@ import java.io.File;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.AbstractTestDialogFactory.EmptyErrorDialog;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 
 import org.junit.Test;
@@ -34,8 +32,7 @@ public class PeakInvestigatorTaskSftpTest {
 			ResponseFormatException {
 
 		PeakInvestigatorTask task = createDefaultTask(
-				SftpAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
-				new EmptyDialogFactory());
+				SftpAction.EXAMPLE_RESPONSE_1);
 		task.uploadFileToServer(new File("test.tar"));
 
 		SftpAction action = actionCaptor.getValue();
@@ -53,8 +50,7 @@ public class PeakInvestigatorTaskSftpTest {
 	public void testInitializeResponseHTML() throws IllegalStateException,
 			ResponseFormatException {
 
-		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE)
-				.usingDialogFactory(new EmptyDialogFactory());
+		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
 
 		fail("Should not reach here.");
@@ -67,12 +63,10 @@ public class PeakInvestigatorTaskSftpTest {
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException {
 
-		PeakInvestigatorDialogFactory factory = new EmptyDialogFactory();
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");
 
-		PeakInvestigatorTask task = createDefaultTask(response)
-				.usingDialogFactory(factory);
+		PeakInvestigatorTask task = createDefaultTask(response);
 		task.uploadFileToServer(new File("test.tar"));
 
 		fail("Should not reach here.");
@@ -99,6 +93,7 @@ public class PeakInvestigatorTaskSftpTest {
 		PeakInvestigatorTask task = new PeakInvestigatorTask("test.com",
 				"user", "password", 0).withService(vtmx).withRawDataFile(
 				rawFile);
+
 		return task;
 	}
 
@@ -114,7 +109,4 @@ public class PeakInvestigatorTaskSftpTest {
 		}
 	}
 
-	private class EmptyDialogFactory extends AbstractTestDialogFactory {
-
-	}
 }
