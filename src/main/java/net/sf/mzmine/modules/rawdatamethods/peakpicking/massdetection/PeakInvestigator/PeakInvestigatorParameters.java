@@ -50,20 +50,24 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	public static final ComboParameter<String> versions = new ComboParameter<String>(
 			"PeakInvestigator™ version",
 			"The PeakInvestigator version to use for the analysis.",
-			new String[] {});
+			new String[] { "lastUsed" });
 	public static final IntegerParameter minMass = new IntegerParameter(
-		    "Min Mass",
-		    "The minimum mass in the set of masses to send to the PeakInvestigator SaaS.",
+		    "Minimum m/z",
+		    "The minimum nominal m/z in the data to be used for analysis.",
 		    0);
 	public static final IntegerParameter maxMass = new IntegerParameter(
-		    "Max Mass",
-		    "The maximum mass in the set of masses to send to the PeakInvestigator SaaS.",
+		    "Maximum m/z",
+		    "The maximum nominal m/z in the data to be used for analysis.",
 		    Integer.MAX_VALUE);
-	
-	public static final BooleanParameter showLog = new BooleanParameter("Display Job Log", "Check this if you wan to display the PeakInvestigator job log when retrieving results");
+
+	public static final BooleanParameter showLog = new BooleanParameter(
+			"Display Job Log",
+			"Check this if you want to display the PeakInvestigator job log when retrieving results");
+
 	public PeakInvestigatorParameters()
 	{
 		super(new Parameter[] { versions, minMass, maxMass, showLog });
+		versions.setValue("lastUsed");
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
