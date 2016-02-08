@@ -23,7 +23,7 @@ import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 
-public class PeakInvestigatorTaskTest {
+public class PeakInvestigatorTaskInitTest {
 
 	private final static String API_SOURCE = "<html><head>\n"
 			+ "<!--\n"
