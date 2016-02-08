@@ -83,8 +83,8 @@ public abstract class BaseAction {
 		return getStringAttribute("Message");
 	}
 
-	public int getErrorCode() {
-		return getIntAttribute("Error");
+	public long getErrorCode() {
+		return getLongAttribute("Error");
 	}
 
 	public String getStringAttribute(String attribute) {

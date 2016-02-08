@@ -189,7 +189,7 @@ public class InitAction extends BaseAction {
 	}
 
 	@Override
-	public int getErrorCode() {
+	public long getErrorCode() {
 		preCheck();
 		return super.getErrorCode();
 	}
