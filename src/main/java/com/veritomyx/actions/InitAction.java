@@ -11,6 +11,10 @@ import org.json.simple.JSONObject;
 public class InitAction extends BaseAction {
 	private static final String action = "INIT";
 
+	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"ProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
+	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
+	public final static String EXAMPLE_RESPONSE_3 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}";
+
 	private int ID;
 	private String versionOfPi;
 	private int scanCount;

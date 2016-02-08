@@ -16,10 +16,6 @@ public class ActionsTest {
 
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":2,\"Versions\":[\"1.2\",\"1.0.0\"]}";
 
-	public final static String INIT_RESPONSE_1 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"ProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
-	public final static String INIT_RESPONSE_2 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
-	public final static String INIT_RESPONSE_3 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}";
-
 	public final static String SFTP_RESPONSE_1 = "{\"Action\":\"SFTP\",\"Host\":\"peakinvestigator.veritomyx.com\",\"Port\":22022,\"Directory\":\"\\/files\",\"Login\":\"V504\",\"Password\":\"cB34lxCH0anR952gu\"}";
 
 	public final static String PREP_RESPONSE_1 = "{\"Action\":\"PREP\",\"File\":\"WatersQ-TOF.tar\",\"Status\":\"Analyzing\",\"PercentComplete\":\"90%\",\"ScanCount\":0,\"MSType\":\"TBD\"}";
@@ -61,7 +57,7 @@ public class ActionsTest {
 				action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=INIT&ID=100&PI_Version=1.2&ScanCount=5&MaxPoints=12345&MinMass=50&MaxMass=100&CalibrationCount=0");
 
-		action.processResponse(INIT_RESPONSE_1);
+		action.processResponse(InitAction.EXAMPLE_RESPONSE_1);
 
 		InitAction temp = (InitAction) action;
 		assertEquals(temp.getJob(), "V-504.1461");
@@ -75,7 +71,7 @@ public class ActionsTest {
 
 		action.reset();
 
-		action.processResponse(INIT_RESPONSE_3);
+		action.processResponse(InitAction.EXAMPLE_RESPONSE_3);
 		temp = (InitAction) action;
 
 		costs = temp.getEstimatedCosts();
