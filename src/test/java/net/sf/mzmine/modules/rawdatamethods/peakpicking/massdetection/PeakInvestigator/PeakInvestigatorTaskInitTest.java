@@ -2,13 +2,10 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 
 import static org.junit.Assert.*;
 
-import java.util.logging.Logger;
-
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.AbstractTestDialogFactory.EmptyErrorDialog;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.ErrorDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
@@ -25,11 +22,6 @@ import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 
 public class PeakInvestigatorTaskInitTest {
-
-	private final static String API_SOURCE = "<html><head>\n"
-			+ "<!--\n"
-			+ "// ===================================================================\n"
-			+ "// Veritomyx";
 
 	/**
 	 * Test PeakInvestigatorTask.initialize() with real response and OK click on
@@ -69,7 +61,7 @@ public class PeakInvestigatorTaskInitTest {
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
 			ResponseFormatException {
-		PeakInvestigatorTask task = createDefaultTask(API_SOURCE)
+		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE)
 				.usingDialogFactory(new EmptyOkDialogFactory());
 		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
@@ -82,9 +74,13 @@ public class PeakInvestigatorTaskInitTest {
 	@Test
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException {
+
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
-		PeakInvestigatorTask task = createDefaultTask(
-				BaseAction.ERROR_CREDENTIALS).usingDialogFactory(factory);
+		String response = BaseAction.ERROR_CREDENTIALS
+				.replace("ACTION", "INIT");
+
+		PeakInvestigatorTask task = createDefaultTask(response)
+				.usingDialogFactory(factory);
 		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
 		EmptyErrorDialog dialog = (EmptyErrorDialog) ((EmptyOkDialogFactory) factory)

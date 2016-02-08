@@ -11,7 +11,12 @@ import org.json.simple.parser.ParseException;
 public abstract class BaseAction {
 	private static final String DATE_FORMAT = "yyyy-MM-dd kk:mm:ss";
 
-	public static final String ERROR_CREDENTIALS = "{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}";
+	/** Test Strings */
+	public static final String API_SOURCE = "<html><head>\n"
+			+ "<!--\n"
+			+ "// ===================================================================\n"
+			+ "// Veritomyx";
+	public static final String ERROR_CREDENTIALS = "{\"Action\":\"ACTION\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}";
 
 	protected String versionOfApi = null;
 	protected String user = null;
