@@ -4,5 +4,5 @@ import com.veritomyx.actions.InitAction;
 
 public interface PeakInvestigatorDialogFactory {
 
-	InitDialog createInitDialog(Object parent, String version, InitAction action);
+	InitDialog createInitDialog(String version, InitAction action);
 }

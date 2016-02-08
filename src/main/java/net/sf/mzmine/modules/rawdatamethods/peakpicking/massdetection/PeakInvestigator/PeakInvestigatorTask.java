@@ -143,6 +143,11 @@ public class PeakInvestigatorTask
 		return this;
 	}
 
+	public PeakInvestigatorTask usingDialogFactory(PeakInvestigatorDialogFactory factory) {
+		this.dialogFactory = factory;
+		return this;
+	}
+
 	public void initialize(String versionOfPi, int scanCount, int[] massRange,
 			String target) throws ResponseFormatException,
 			IllegalStateException {
@@ -171,8 +176,7 @@ public class PeakInvestigatorTask
 			error(initAction.getErrorMessage());
 		}
 
-		InitDialog dialog = dialogFactory.createInitDialog(MZmineCore
-				.getDesktop().getMainWindow(), versionOfPi, initAction);
+		InitDialog dialog = dialogFactory.createInitDialog(versionOfPi, initAction);
 		dialog.setVisible(true);
 		if(dialog.getExitCode() != ExitCode.OK) {
 			return;
