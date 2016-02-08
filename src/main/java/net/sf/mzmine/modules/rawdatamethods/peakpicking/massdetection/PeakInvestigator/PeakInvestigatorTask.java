@@ -58,6 +58,7 @@ import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.ErrorDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
@@ -723,9 +724,8 @@ public class PeakInvestigatorTask
 	}
 
 	private void error(String message) {
-		MZmineCore.getDesktop().displayErrorMessage(
-				MZmineCore.getDesktop().getMainWindow(), "Error",
-				message, logger);
+		ErrorDialog dialog = dialogFactory.createErrorDialog();
+		dialog.displayMessage(message, logger);
 	}
 
 	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
