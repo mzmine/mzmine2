@@ -11,6 +11,8 @@ import org.json.simple.parser.ParseException;
 public abstract class BaseAction {
 	private static final String DATE_FORMAT = "yyyy-MM-dd kk:mm:ss";
 
+	public static final String ERROR_CREDENTIALS = "{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}";
+
 	protected String versionOfApi = null;
 	protected String user = null;
 	protected String code = null;

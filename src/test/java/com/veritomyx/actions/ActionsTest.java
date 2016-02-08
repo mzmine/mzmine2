@@ -90,7 +90,7 @@ public class ActionsTest {
 				.withPiVersion("1.2").withScanCount(5, 0)
 				.withNumberOfPoints(12345);
 
-		action.processResponse("{\"Action\":\"INIT\",\"Error\":3,\"Message\":\"Invalid username or password - can not validate\",\"Location\":\"\"}");
+		action.processResponse(BaseAction.ERROR_CREDENTIALS);
 
 		assertEquals(action.getErrorMessage(),
 				"Invalid username or password - can not validate");
