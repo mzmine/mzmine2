@@ -16,8 +16,6 @@ public class ActionsTest {
 
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":2,\"Versions\":[\"1.2\",\"1.0.0\"]}";
 
-	public final static String RUN_RESPONSE_1 = "{\"Action\":\"RUN\",\"Job\":\"P-504.1463\"}";
-
 	public final static String STATUS_RESPONSE_1 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Running\",\"Datetime\":\"2016-02-03 18:25:09\"}";
 	public final static String STATUS_RESPONSE_2 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Done\",\"Datetime\":\"2016-02-03 18:31:05\",\"ScansInput\":3,\"ScansComplete\":3,\"ActualCost\":0.36,\"JobLogFile\":\"\\/files\\/P-504.5148\\/P-504.5148.log.txt\",\"ResultsFile\":\"\\/files\\/P-504.5148\\/P-504.5148.mass_list.tar\"}";
 
@@ -160,7 +158,7 @@ public class ActionsTest {
 				action.buildQuery(),
 				"Version=3.0&User=user&Code=password&Action=RUN&Job=job-123&RTO=RTO-24&InputFile=file.tar");
 
-		action.processResponse(RUN_RESPONSE_1);
+		action.processResponse(RunAction.EXAMPLE_RESPONSE_1);
 
 		RunAction temp = (RunAction) action;
 		assertEquals(temp.getJob(), "P-504.1463");
