@@ -37,6 +37,8 @@ import net.sf.mzmine.util.ExitCode;
 
 import org.w3c.dom.Element;
 
+import com.veritomyx.VeritomyxSettings;
+
 public class MZminePreferences extends SimpleParameterSet {
 
     public static final NumberFormatParameter mzFormat = new NumberFormatParameter(
@@ -111,6 +113,15 @@ public class MZminePreferences extends SimpleParameterSet {
         super.loadValuesFromXML(xmlElement);
         updateSystemProxySettings();
     }
+
+	public VeritomyxSettings getVeritomyxSettings() {
+		String server = vtmxServer.getValue();
+		String username = vtmxUsername.getValue();
+		String password = vtmxPassword.getValue();
+		int projectID = vtmxProject.getValue();
+
+		return new VeritomyxSettings(server, username, password, projectID);
+	}
 
     private void updateSystemProxySettings() {
         // Update system proxy settings
