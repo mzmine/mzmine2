@@ -47,4 +47,26 @@ public class PiVersionsAction extends BaseAction {
 		preCheck();
 		return super.getErrorCode();
 	}
+
+	@Override
+	public String toString() {
+		if (!isReady("PI_VERSIONS")) {
+			return "PiVersions not ready.";
+		}
+
+		if (hasError()) {
+			return String.format("Error: %s (%d)", getErrorMessage(),
+					getErrorCode());
+		}
+
+		StringBuilder builder = new StringBuilder();
+		builder.append("Versions: \n");
+		for (String version : getVersions()) {
+			builder.append("   " + version + "\n");
+		}
+		builder.append("Current: " + getCurrentVersion() + "\n");
+		builder.append("Last used: " + getLastUsedVersion());
+
+		return builder.toString();
+	}
 }

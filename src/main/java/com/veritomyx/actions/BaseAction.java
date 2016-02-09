@@ -84,7 +84,11 @@ public abstract class BaseAction {
 	}
 
 	public long getErrorCode() {
-		return getLongAttribute("Error");
+		if (responseObject.containsKey("Error")) {
+			return getLongAttribute("Error");
+		}
+
+		return 0;
 	}
 
 	public String getStringAttribute(String attribute) {
