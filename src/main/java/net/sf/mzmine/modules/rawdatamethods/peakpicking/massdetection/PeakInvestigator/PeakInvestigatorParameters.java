@@ -25,10 +25,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.PiVersionsAction;
 
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.ErrorDialog;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.ComboParameter;
@@ -42,10 +46,8 @@ import net.sf.mzmine.desktop.preferences.MZminePreferences;
 
 public class PeakInvestigatorParameters extends SimpleParameterSet
 {
-	
-	private static String username;
-	private static String password;
-	private static String server;
+	private final static int BAD_CREDENTIALS_ERROR_CODE = 3;
+	private static PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
 
 	public static final ComboParameter<String> versions = new ComboParameter<String>(
 			"PeakInvestigator™ version",
@@ -70,20 +72,21 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		versions.setValue("lastUsed");
 	}
 
+	public static void setDialogFactory(PeakInvestigatorDialogFactory dialogFactory) {
+		PeakInvestigatorParameters.dialogFactory = dialogFactory;
+	}
+
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
 		Integer maxMasses = 0, minMasses = Integer.MAX_VALUE;
 
-		if(!getCredentialsFromPreferences()) {
-			return ExitCode.CANCEL;
-		}
-
 		PiVersionsAction action = null;
 		try {
-			action = performPiVersionsCall();
+			action = performPiVersionsCall(MZmineCore.getConfiguration()
+					.getPreferences());
 		} catch (ResponseFormatException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return ExitCode.ERROR;
 		}
 
 		if(action == null) {
@@ -143,80 +146,78 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	}
 
 	/**
-	 * Get credentials stored in preferences. If the credentials are not valid,
-	 * show a dialog.
+	 * Make a call into PI_VERSIONS API to have a list of PeakInvestigator
+	 * versions available. This also checks that credentials are correct. This
+	 * uses the version of the method that takes more parameters, using sensible
+	 * defaults.
 	 * 
-	 * @return false if credentials are not valid, and user doesn't set new
-	 *         valid ones; otherwise, true.
+	 * @param preferences
+	 *            A MZminePreferences object to get Veritomyx credentials.
+	 * 
+	 * @return An object containing response from server, or null if credentials
+	 *         are wrong and not corrected by the user.
+	 * @throws ResponseFormatException
 	 */
-	protected boolean getCredentialsFromPreferences() {
-		// pickup all the parameters
-		MZminePreferences preferences = MZmineCore.getConfiguration()
-				.getPreferences();
-		username = preferences.getParameter(MZminePreferences.vtmxUsername)
-				.getValue();
-		password = preferences.getParameter(MZminePreferences.vtmxPassword)
-				.getValue();
-		server = preferences.getParameter(MZminePreferences.vtmxServer)
-				.getValue();
-		int projectID = preferences.getParameter(MZminePreferences.vtmxProject)
-				.getValue();
+	protected static PiVersionsAction performPiVersionsCall(
+			MZminePreferences preferences) throws ResponseFormatException {
 
-		if ((username == null) || username.isEmpty() || (password == null)
-				|| password.isEmpty() || (server == null) || server.isEmpty()) {
-			if (preferences.showSetupDialog(MZmineCore.getDesktop()
-					.getMainWindow(), false) != ExitCode.OK)
-				return false;
-			username = preferences.getParameter(MZminePreferences.vtmxUsername)
-					.getValue();
-			password = preferences.getParameter(MZminePreferences.vtmxPassword)
-					.getValue();
-			server = preferences.getParameter(MZminePreferences.vtmxServer)
-					.getValue();
-			projectID = preferences.getParameter(MZminePreferences.vtmxProject)
-					.getValue();
-		}
-
-		return true;
+		VeritomyxSettings settings = preferences.getVeritomyxSettings();
+		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(
+				settings.server);
+		return performPiVersionsCall(preferences, webService, MZmineCore
+				.getDesktop().getMainWindow());
 	}
 
 	/**
 	 * Make a call into PI_VERSIONS API to have a list of PeakInvestigator
-	 * versions available. This also checks that credentials are correct.
+	 * versions available. This also checks that credentials are correct. This
+	 * function takes more arguments than necessary to make it testable.
+	 * 
+	 * @param preferences
+	 *            A MZminePreferences instance to get Veritomyx credentials
+	 *            from, and display dialog if credentials are incorrect.
+	 * @param webService
+	 *            A PeakInvestigatorSaaS instance for making calls to the public
+	 *            API
+	 * @param widnow
+	 *            A generic window object (hack to make testable)
 	 * 
 	 * @return An object containing response from server, or null if credentials
 	 *         are wrong and not corrected by the user.
+	 * @throws ResponseFormatException
 	 */
-	protected PiVersionsAction performPiVersionsCall() throws ResponseFormatException {
-		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(server);
+	protected static PiVersionsAction performPiVersionsCall(
+			MZminePreferences preferences, PeakInvestigatorSaaS webService,
+			Window window) throws ResponseFormatException {
+
+		VeritomyxSettings settings = preferences.getVeritomyxSettings();
 		PiVersionsAction action = new PiVersionsAction(
-				PeakInvestigatorSaaS.API_VERSION, username, password);
+				PeakInvestigatorSaaS.API_VERSION, settings.username,
+				settings.password);
 
 		String response = webService.executeAction(action);
 		action.processResponse(response);
-		if(!action.isReady("PI_VERSIONS")) {
+		if (!action.isReady("PI_VERSIONS")) {
 			return null;
 		}
 
-		while(action.hasError()) {
-			String errorMessage = action.getErrorMessage();
+		while (action.hasError()) {
+			ErrorDialog dialog = dialogFactory.createErrorDialog();
+			dialog.displayMessage(action.getErrorMessage(), null);
+
 			long code = action.getErrorCode();
-			MZmineCore.getDesktop().displayErrorMessage(
-					MZmineCore.getDesktop().getMainWindow(), "Error",
-					errorMessage);
-			if ((code != PeakInvestigatorSaaS.W_ERROR_LOGIN) && (code != PeakInvestigatorSaaS.W_ERROR_PID))
+			// Check if error is credentials problem
+			if (code != BAD_CREDENTIALS_ERROR_CODE) {
+				return null;
+			}
+
+			if (preferences.showSetupDialog(window, false) != ExitCode.OK)
 				return null;
 
-			MZminePreferences preferences = MZmineCore.getConfiguration()
-					.getPreferences();
-			if (preferences.showSetupDialog(MZmineCore.getDesktop().getMainWindow(), false) != ExitCode.OK)
-				return null;
-			username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-			password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-			int projectID = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
+			settings = preferences.getVeritomyxSettings();
 
 			action = new PiVersionsAction(PeakInvestigatorSaaS.API_VERSION,
-					username, password);
+					settings.username, settings.password);
 			response = webService.executeAction(action);
 			action.processResponse(response);
 		}
