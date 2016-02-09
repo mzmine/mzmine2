@@ -26,7 +26,7 @@ public class PeakInvestigatorParametersTest {
 	public final static String VERSIONS_RESPONSE_3 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"1.2\",\"Count\":3,\"Versions\":[\"1.2\",\"1.1\",\"1.0.0\"]}";
 
 	@Test
-	public void testFormatPiVersionsEmptyLastUsed()
+	public void testFormatPiVersions_LastUsedEmpty()
 			throws ResponseFormatException {
 		PiVersionsAction action = new PiVersionsAction("server", "username",
 				"password");
@@ -37,7 +37,7 @@ public class PeakInvestigatorParametersTest {
 	}
 
 	@Test
-	public void testFormatPiVersionsLastUsedOld()
+	public void testFormatPiVersions_LastUsedSameAsOldestVersion()
 			throws ResponseFormatException {
 		PiVersionsAction action = new PiVersionsAction("server", "username",
 				"password");
@@ -48,7 +48,7 @@ public class PeakInvestigatorParametersTest {
 	}
 
 	@Test
-	public void testFormatPiVersionsLastUsedCurrent()
+	public void testFormatPiVersions_LastUsedSameAsCurrentVersion()
 			throws ResponseFormatException {
 		PiVersionsAction action = new PiVersionsAction("server", "username",
 				"password");
@@ -62,11 +62,13 @@ public class PeakInvestigatorParametersTest {
 	public void testPerformPiVersionCall_OkOnFirstTry()
 			throws ResponseFormatException {
 
+		// mock preferences, returning a dummy settings
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
 				"password", 0);
 		MZminePreferences preferences = mock(MZminePreferences.class);
 		when(preferences.getVeritomyxSettings()).thenReturn(settings);
 
+		// mock PI service to return as if everything is OK
 		PeakInvestigatorSaaS service = mock(PeakInvestigatorSaaS.class);
 		when(service.executeAction(argThat(new IsPiVersionsAction())))
 				.thenReturn(VERSIONS_RESPONSE_1);
@@ -83,15 +85,18 @@ public class PeakInvestigatorParametersTest {
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
 				"password", 0);
 
-		// mock preferences, and return Cancel exitcode from dialog
+		// mock preferences, and return dummy settings and Cancel exitcode from
+		// dialog
+		IsWindowOrNull matcher = new IsWindowOrNull();
 		MZminePreferences preferences = mock(MZminePreferences.class);
 		when(preferences.getVeritomyxSettings()).thenReturn(settings);
-		when(preferences.showSetupDialog(argThat(new IsWindowOrNull()), anyBoolean()))
+		when(preferences.showSetupDialog(argThat(matcher), anyBoolean()))
 				.thenReturn(ExitCode.CANCEL);
 
 		// mock PI service, and then return error due to bad credentials
 		PeakInvestigatorSaaS service = mock(PeakInvestigatorSaaS.class);
-		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION", "PI_VERSIONS");
+		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION",
+				"PI_VERSIONS");
 		when(service.executeAction(argThat(new IsPiVersionsAction())))
 				.thenReturn(response);
 
@@ -109,15 +114,19 @@ public class PeakInvestigatorParametersTest {
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
 				"password", 0);
 
-		// mock preferences, and return Cancel exitcode from dialog
+		// mock preferences, and return dummy settings and OK exitcode from
+		// dialog
+		IsWindowOrNull matcher = new IsWindowOrNull();
 		MZminePreferences preferences = mock(MZminePreferences.class);
 		when(preferences.getVeritomyxSettings()).thenReturn(settings);
-		when(preferences.showSetupDialog(argThat(new IsWindowOrNull()), anyBoolean()))
+		when(preferences.showSetupDialog(argThat(matcher), anyBoolean()))
 				.thenReturn(ExitCode.OK);
 
-		// mock PI service, and then return error due to bad credentials
+		// mock PI service, and then first return error due to bad credentials
+		// and then good response because of good credentials
 		PeakInvestigatorSaaS service = mock(PeakInvestigatorSaaS.class);
-		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION", "PI_VERSIONS");
+		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION",
+				"PI_VERSIONS");
 		when(service.executeAction(argThat(new IsPiVersionsAction())))
 				.thenReturn(response, VERSIONS_RESPONSE_1);
 
