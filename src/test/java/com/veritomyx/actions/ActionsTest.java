@@ -197,6 +197,7 @@ public class ActionsTest {
 		calendar.set(2016, 1, 3, 18, 25, 9);
 		assertEquals(calendar.getTime().toString(), temp.getDate().toString());
 
+		// start of second test
 		action.reset();
 		action.processResponse(StatusAction.EXAMPLE_RESPONSE_2);
 		temp = (StatusAction) action;
@@ -214,6 +215,16 @@ public class ActionsTest {
 				temp.getResultsFilename());
 		assertEquals("/files/P-504.5148/P-504.5148.log.txt",
 				temp.getLogFilename());
+
+		// start of 3rd test
+		action.reset();
+		action.processResponse(StatusAction.EXAMPLE_RESPONSE_3);
+		temp = (StatusAction) action;
+		assertEquals(StatusAction.Status.Deleted, temp.getStatus());
+
+		// test date
+		calendar.set(2016, 1, 3, 18, 36, 5);
+		assertEquals(calendar.getTime().toString(), temp.getDate().toString());
 	}
 
 	@Test
