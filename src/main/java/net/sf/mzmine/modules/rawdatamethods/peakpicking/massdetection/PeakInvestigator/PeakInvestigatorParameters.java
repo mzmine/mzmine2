@@ -49,10 +49,12 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	private final static int BAD_CREDENTIALS_ERROR_CODE = 3;
 	private static PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
 
+	public final static String LAST_USED_STRING = "lastUsed";
+
 	public static final ComboParameter<String> versions = new ComboParameter<String>(
 			"PeakInvestigator™ version",
 			"The PeakInvestigator version to use for the analysis.",
-			new String[] { "lastUsed" });
+			new String[] { LAST_USED_STRING });
 	public static final IntegerParameter minMass = new IntegerParameter(
 		    "Minimum m/z",
 		    "The minimum nominal m/z in the data to be used for analysis.",
@@ -66,10 +68,22 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 			"Display Job Log",
 			"Check this if you want to display the PeakInvestigator job log when retrieving results");
 
-	public PeakInvestigatorParameters()
-	{
+	public PeakInvestigatorParameters() {
 		super(new Parameter[] { versions, minMass, maxMass, showLog });
+
 		versions.setValue("lastUsed");
+
+		RawDataFile[] files = MZmineCore.getProjectManager()
+				.getCurrentProject().getDataFiles();
+		int[] massRange = determineMassRangeFromData(files);
+
+		minMass.setValue(massRange[0]);
+		minMass.setMinMax(massRange[0], massRange[1] - 1);
+
+		maxMass.setValue(massRange[1]);
+		maxMass.setMinMax(massRange[0] + 1, massRange[1]);
+
+		showLog.setValue(true);
 	}
 
 	public static void setDialogFactory(PeakInvestigatorDialogFactory dialogFactory) {
@@ -78,8 +92,6 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
 	{
-		Integer maxMasses = 0, minMasses = Integer.MAX_VALUE;
-
 		PiVersionsAction action = null;
 		try {
 			action = performPiVersionsCall(MZmineCore.getConfiguration()
@@ -95,24 +107,50 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 
 		versions.setChoices(formatPiVersions(action));
 
-		RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
-		for(RawDataFile file : files) {
-		        int[] scanNumbers = file.getScanNumbers();
-			for(int scanNum : scanNumbers) {
-				Scan scan = file.getScan(scanNum);
-				int n,x;
-				x = (int)Math.ceil(scan.getDataPointMZRange().upperEndpoint());
-				maxMasses = Math.max(x, maxMasses);
-				n = (int)Math.floor(scan.getDataPointMZRange().lowerEndpoint());
-				minMasses = Math.min(n, minMasses);
-			}
-		}
-		minMass.setMinMax(minMasses, maxMasses-1);
-		maxMass.setMinMax(minMasses+1, maxMasses);
-		showLog.setValue(true);
-		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent, valueCheckRequired, PeakInvestigatorDetector.class, this);
+		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent,
+				valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
 		return dialog.getExitCode();
+	}
+
+	/**
+	 * Convenience function to determine the encompassing mass range in scans
+	 * across files.
+	 * 
+	 * @param files
+	 *            Array of RawDataFiles.
+	 * @return int[2] massRange: lower and upper m/z
+	 */
+	protected static int[] determineMassRangeFromData(RawDataFile[] files) {
+		if (files.length == 0) {
+			throw new IllegalStateException(
+					"Number of RawDataFiles must be > 0 to determine mass range.");
+		}
+
+		int[] massRange = new int[] { Integer.MAX_VALUE, 0 };
+
+		for (RawDataFile file : files) {
+			int[] scanNumbers = file.getScanNumbers();
+			for (int scanNum : scanNumbers) {
+				Scan scan = file.getScan(scanNum);
+
+				// determine minimum value
+				int value = (int) Math.floor(scan.getDataPointMZRange()
+						.lowerEndpoint());
+				if (value < massRange[0]) {
+					massRange[0] = value;
+				}
+
+				value = (int) Math.ceil(scan.getDataPointMZRange()
+						.upperEndpoint());
+				if (value > massRange[1]) {
+					massRange[1] = value;
+				}
+
+			}
+		}
+
+		return massRange;
 	}
 
 	/**
@@ -158,7 +196,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 *         are wrong and not corrected by the user.
 	 * @throws ResponseFormatException
 	 */
-	protected static PiVersionsAction performPiVersionsCall(
+	public static PiVersionsAction performPiVersionsCall(
 			MZminePreferences preferences) throws ResponseFormatException {
 
 		VeritomyxSettings settings = preferences.getVeritomyxSettings();

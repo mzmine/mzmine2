@@ -4,15 +4,17 @@ import static org.junit.Assert.*;
 
 import java.awt.Window;
 
+import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.util.ExitCode;
 
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
 import static org.mockito.Mockito.*;
 
+import com.google.common.collect.Range;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
@@ -135,6 +137,140 @@ public class PeakInvestigatorParametersTest {
 				.performPiVersionsCall(preferences, service, null);
 
 		assertFalse(action.hasError());
+	}
+
+	public final static Range<Double> MASS_RANGE_1 = Range.closed(50.35, 100.7);
+	public final static int[] TEST_CONTROL_1 = new int[] { 50, 101 };
+
+	public final static Range<Double> MASS_RANGE_2A = Range.closed(60.35, 90.7);
+	public final static Range<Double> MASS_RANGE_2B = Range.closed(40.35, 90.7);
+	public final static Range<Double> MASS_RANGE_2C = Range
+			.closed(60.35, 110.7);
+	public final static Range<Double> MASS_RANGE_2D = Range.closed(110.35,
+			190.7);
+
+	public final static int[] TEST_CONTROL_2B = new int[] { 40, 101 };
+	public final static int[] TEST_CONTROL_2C = new int[] { 50, 111 };
+	public final static int[] TEST_CONTROL_2D = new int[] { 50, 191 };
+
+	@Test
+	public void testDetermineMassRangeFromData_SingleFile() {
+
+		@SuppressWarnings("unchecked")
+		RawDataFile file = mockRawDataFile(new int[] { 0 }, MASS_RANGE_1);
+
+		int[] massRange = PeakInvestigatorParameters
+				.determineMassRangeFromData(new RawDataFile[] { file });
+
+		assertArrayEquals(TEST_CONTROL_1, massRange);
+	}
+
+	/**
+	 * Tests the following possible mass ranges:
+	 * 
+	 * <ul>
+	 * <li>Scan 1 --+---------+--
+	 * <li>Scan 2 -----+--+------
+	 * </ul>
+	 */
+	@Test
+	public void testDetermineMassRangeFromData_TwoFilesA() {
+
+		@SuppressWarnings("unchecked")
+		RawDataFile file = mockRawDataFile(new int[] { 0, 1 }, MASS_RANGE_1,
+				MASS_RANGE_2A);
+
+		int[] massRange = PeakInvestigatorParameters
+				.determineMassRangeFromData(new RawDataFile[] { file });
+
+		assertArrayEquals(TEST_CONTROL_1, massRange);
+	}
+
+	/**
+	 * Tests the following possible mass ranges:
+	 * 
+	 * <ul>
+	 * <li>Scan 1 ---+------+--
+	 * <li>Scan 2 -+----+------
+	 * </ul>
+	 */
+	@Test
+	public void testDetermineMassRangeFromData_TwoFilesB() {
+
+		@SuppressWarnings("unchecked")
+		RawDataFile file = mockRawDataFile(new int[] { 0, 1 }, MASS_RANGE_1,
+				MASS_RANGE_2B);
+
+		int[] massRange = PeakInvestigatorParameters
+				.determineMassRangeFromData(new RawDataFile[] { file });
+
+		assertArrayEquals(TEST_CONTROL_2B, massRange);
+	}
+
+	/**
+	 * Tests the following possible mass ranges:
+	 * 
+	 * <ul>
+	 * <li>Scan 1 --+-----+----
+	 * <li>Scan 2 ----+-----+--
+	 * </ul>
+	 */
+	@Test
+	public void testDetermineMassRangeFromData_TwoFilesC() {
+
+		@SuppressWarnings("unchecked")
+		RawDataFile file = mockRawDataFile(new int[] { 0, 1 }, MASS_RANGE_1,
+				MASS_RANGE_2C);
+
+		int[] massRange = PeakInvestigatorParameters
+				.determineMassRangeFromData(new RawDataFile[] { file });
+
+		assertArrayEquals(TEST_CONTROL_2C, massRange);
+	}
+
+	/**
+	 * Tests the following possible mass ranges:
+	 * 
+	 * <ul>
+	 * <li>Scan 1 --+--+---------
+	 * <li>Scan 2 ---------+--+--
+	 * </ul>
+	 */
+	@Test
+	public void testDetermineMassRangeFromData_TwoFilesD() {
+
+		@SuppressWarnings("unchecked")
+		RawDataFile file = mockRawDataFile(new int[] { 0, 1 }, MASS_RANGE_1,
+				MASS_RANGE_2D);
+
+		int[] massRange = PeakInvestigatorParameters
+				.determineMassRangeFromData(new RawDataFile[] { file });
+
+		assertArrayEquals(TEST_CONTROL_2D, massRange);
+	}
+
+	@SuppressWarnings("unchecked")
+	private RawDataFile mockRawDataFile(int[] scanNumbers,
+			Range<Double>... ranges) {
+		if (scanNumbers.length != ranges.length) {
+			throw new IllegalArgumentException(
+					"Numbers of scan and ranges don't agree.");
+		}
+
+		Scan[] scans = new Scan[ranges.length];
+		for (int i = 0; i < ranges.length; i++) {
+			Scan scan = mock(Scan.class);
+			when(scan.getDataPointMZRange()).thenReturn(ranges[i]);
+			scans[i] = scan;
+		}
+
+		RawDataFile file = mock(RawDataFile.class);
+		when(file.getScanNumbers()).thenReturn(scanNumbers);
+		for (int i = 0; i < scans.length; i++) {
+			when(file.getScan(i)).thenReturn(scans[i]);
+		}
+
+		return file;
 	}
 
 	private class EmptyDialogFactory extends AbstractTestDialogFactory {
