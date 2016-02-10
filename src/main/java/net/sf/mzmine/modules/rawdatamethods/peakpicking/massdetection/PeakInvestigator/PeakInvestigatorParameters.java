@@ -38,7 +38,7 @@ import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.dialogs.DefaultDialogFactory;
 import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
-import net.sf.mzmine.util.dialogs.interfaces.ErrorDialog;
+import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -241,8 +241,8 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		}
 
 		while (action.hasError()) {
-			ErrorDialog dialog = dialogFactory.createErrorDialog();
-			dialog.displayMessage(action.getErrorMessage(), null);
+			BasicDialog dialog = dialogFactory.createDialog();
+			dialog.displayErrorMessage(action.getErrorMessage(), null);
 
 			long code = action.getErrorCode();
 			// Check if error is credentials problem

@@ -1,18 +1,18 @@
 package net.sf.mzmine.util.dialogs;
 
 import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
-import net.sf.mzmine.util.dialogs.interfaces.ErrorDialog;
+import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
 
 public class HeadlessDialogFactory implements DialogFactory {
-	private ErrorDialog dialog = null;
+	private BasicDialog dialog = null;
 
 	@Override
-	public ErrorDialog createErrorDialog() {
-		dialog = new HeadlessErrorDialog();
+	public BasicDialog createDialog() {
+		dialog = new HeadlessBasicDialog();
 		return dialog;
 	}
 
-	public ErrorDialog getDialog() {
+	public BasicDialog getDialog() {
 		return dialog;
 	}
 }

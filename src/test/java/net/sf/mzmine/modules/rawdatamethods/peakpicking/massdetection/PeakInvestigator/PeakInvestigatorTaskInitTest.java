@@ -9,7 +9,7 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
-import net.sf.mzmine.util.dialogs.HeadlessErrorDialog;
+import net.sf.mzmine.util.dialogs.HeadlessBasicDialog;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -83,10 +83,10 @@ public class PeakInvestigatorTaskInitTest {
 				.usingDialogFactory(factory);
 		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
-		HeadlessErrorDialog dialog = (HeadlessErrorDialog) ((EmptyOkDialogFactory) factory)
+		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((EmptyOkDialogFactory) factory)
 				.getDialog();
 		assertEquals("Invalid username or password - can not validate",
-				dialog.getMessage());
+				dialog.getErrorMessage());
 		assertEquals(null, task.getName());
 	}
 

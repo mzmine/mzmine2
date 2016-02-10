@@ -61,7 +61,7 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
-import net.sf.mzmine.util.dialogs.interfaces.ErrorDialog;
+import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
 
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
@@ -742,8 +742,8 @@ public class PeakInvestigatorTask
 	}
 
 	private void error(String message) {
-		ErrorDialog dialog = dialogFactory.createErrorDialog();
-		dialog.displayMessage(message, logger);
+		BasicDialog dialog = dialogFactory.createDialog();
+		dialog.displayErrorMessage(message, logger);
 	}
 
 	/**
