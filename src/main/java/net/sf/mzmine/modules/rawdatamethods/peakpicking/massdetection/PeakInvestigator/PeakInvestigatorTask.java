@@ -444,6 +444,7 @@ public class PeakInvestigatorTask
 		//####################################################################
 		// start for remote job
 		progressMonitor.setNote("Requesting job to be run...");
+		initiateRun(inputFile.getName(), selectedRTO);
 
 		progressMonitor.setNote("Finished");
 		progressMonitor.close();
