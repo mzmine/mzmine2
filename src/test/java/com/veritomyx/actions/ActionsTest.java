@@ -16,9 +16,6 @@ public class ActionsTest {
 
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":2,\"Versions\":[\"1.2\",\"1.0.0\"]}";
 
-	public final static String STATUS_RESPONSE_1 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Running\",\"Datetime\":\"2016-02-03 18:25:09\"}";
-	public final static String STATUS_RESPONSE_2 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Done\",\"Datetime\":\"2016-02-03 18:31:05\",\"ScansInput\":3,\"ScansComplete\":3,\"ActualCost\":0.36,\"JobLogFile\":\"\\/files\\/P-504.5148\\/P-504.5148.log.txt\",\"ResultsFile\":\"\\/files\\/P-504.5148\\/P-504.5148.mass_list.tar\"}";
-
 	public final static String DELETE_RESPONSE_1 = "{\"Action\":\"DELETE\",\"Job\":\"P-504.4256\",\"Datetime\":\"2016-02-03 18:35:06\"}";
 
 	@Test
@@ -189,7 +186,7 @@ public class ActionsTest {
 				"Version=3.0&User=user&Code=password&Action=STATUS&Job=job-123",
 				action.buildQuery());
 
-		action.processResponse(STATUS_RESPONSE_1);
+		action.processResponse(StatusAction.EXAMPLE_RESPONSE_1);
 
 		StatusAction temp = (StatusAction) action;
 		assertEquals("P-504.5148", temp.getJob());
@@ -201,7 +198,7 @@ public class ActionsTest {
 		assertEquals(calendar.getTime().toString(), temp.getDate().toString());
 
 		action.reset();
-		action.processResponse(STATUS_RESPONSE_2);
+		action.processResponse(StatusAction.EXAMPLE_RESPONSE_2);
 		temp = (StatusAction) action;
 		assertEquals("P-504.5148", temp.getJob());
 		assertEquals(StatusAction.Status.Done, temp.getStatus());

@@ -6,6 +6,13 @@ import java.util.Date;
 public class StatusAction extends BaseAction {
 	private static final String action = "STATUS";
 
+	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Running\",\"Datetime\":\"2016-02-03 18:25:09\"}";
+	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Done\",\"Datetime\":\"2016-02-03 18:31:05\",\"ScansInput\":3,\"ScansComplete\":3,\"ActualCost\":0.36,\"JobLogFile\":\"\\/files\\/P-504.5148\\/P-504.5148.log.txt\",\"ResultsFile\":\"\\/files\\/P-504.5148\\/P-504.5148.mass_list.tar\"}";
+
+	public final static String RUNNING_STRING = "Remote job not complete. Please try again later.";
+	public final static String DONE_STRING = "Remote job complete. Results will be downloaded and all data deleted from the servers.";
+	public final static String DELETED_STRING = "Remote job has been deleted.";
+
 	private String jobID;
 
 	public StatusAction(String versionOfApi, String user, String code, String jobID) {
@@ -67,6 +74,20 @@ public class StatusAction extends BaseAction {
 	public String getResultsFilename() {
 		preCheck();
 		return getStringAttribute("ResultsFile");
+	}
+
+	public String getMessage() {
+		switch (getStatus()) {
+		case Running:
+			return RUNNING_STRING;
+		case Done:
+			return DONE_STRING;
+		case Deleted:
+			return DELETED_STRING;
+		default:
+			throw new IllegalStateException(
+					"Unknown status returned from server.");
+		}
 	}
 
 	@Override
