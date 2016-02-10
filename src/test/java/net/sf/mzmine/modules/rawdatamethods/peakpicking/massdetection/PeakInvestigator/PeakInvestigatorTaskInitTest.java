@@ -1,15 +1,15 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import static org.junit.Assert.*;
-
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.AbstractTestDialogFactory.EmptyErrorDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
+import net.sf.mzmine.util.dialogs.HeadlessErrorDialog;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -83,7 +83,7 @@ public class PeakInvestigatorTaskInitTest {
 				.usingDialogFactory(factory);
 		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
-		EmptyErrorDialog dialog = (EmptyErrorDialog) ((EmptyOkDialogFactory) factory)
+		HeadlessErrorDialog dialog = (HeadlessErrorDialog) ((EmptyOkDialogFactory) factory)
 				.getDialog();
 		assertEquals("Invalid username or password - can not validate",
 				dialog.getMessage());
@@ -116,7 +116,7 @@ public class PeakInvestigatorTaskInitTest {
 	 * DialogFactory that creates an InitDialog that simulates OK button click and standard
 	 * Error Dialog for tracking error messages.
 	 */
-	private class EmptyOkDialogFactory extends AbstractTestDialogFactory {
+	private class EmptyOkDialogFactory extends HeadlessDialogFactory implements PeakInvestigatorDialogFactory {
 
 		@Override
 		public InitDialog createInitDialog(String version, InitAction action) {
@@ -128,7 +128,7 @@ public class PeakInvestigatorTaskInitTest {
 	 * DialogFactory that creates an InitDialog that simulates Cancel button
 	 * click and standard Error Dialog for tracking error messages.
 	 */
-	private class EmptyCancelDialogFactory extends AbstractTestDialogFactory {
+	private class EmptyCancelDialogFactory extends HeadlessDialogFactory implements PeakInvestigatorDialogFactory {
 
 		@Override
 		public InitDialog createInitDialog(String version, InitAction action) {

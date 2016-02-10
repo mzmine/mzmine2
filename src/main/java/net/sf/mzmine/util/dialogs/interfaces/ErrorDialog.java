@@ -1,4 +1,4 @@
-package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs;
+package net.sf.mzmine.util.dialogs.interfaces;
 
 import java.util.logging.Logger;
 

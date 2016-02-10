@@ -8,6 +8,7 @@ import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -114,7 +115,7 @@ public class PeakInvestigatorParametersTest {
 		when(service.executeAction(argThat(new IsPiVersionsAction())))
 				.thenReturn(response);
 
-		PeakInvestigatorParameters.setDialogFactory(new EmptyDialogFactory());
+		PeakInvestigatorParameters.setDialogFactory(new HeadlessDialogFactory());
 		PiVersionsAction action = PeakInvestigatorParameters
 				.performPiVersionsCall(preferences, service, null);
 
@@ -144,7 +145,7 @@ public class PeakInvestigatorParametersTest {
 		when(service.executeAction(argThat(new IsPiVersionsAction())))
 				.thenReturn(response, VERSIONS_RESPONSE_1);
 
-		PeakInvestigatorParameters.setDialogFactory(new EmptyDialogFactory());
+		PeakInvestigatorParameters.setDialogFactory(new HeadlessDialogFactory());
 		PiVersionsAction action = PeakInvestigatorParameters
 				.performPiVersionsCall(preferences, service, null);
 
@@ -283,10 +284,6 @@ public class PeakInvestigatorParametersTest {
 		}
 
 		return file;
-	}
-
-	private class EmptyDialogFactory extends AbstractTestDialogFactory {
-
 	}
 
 	/**

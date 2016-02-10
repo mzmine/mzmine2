@@ -30,15 +30,15 @@ import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.PiVersionsAction;
 
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectorSetupDialog;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.ErrorDialog;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
-import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.ComboParameter;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.util.dialogs.DefaultDialogFactory;
+import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
+import net.sf.mzmine.util.dialogs.interfaces.ErrorDialog;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -47,7 +47,7 @@ import net.sf.mzmine.desktop.preferences.MZminePreferences;
 public class PeakInvestigatorParameters extends SimpleParameterSet
 {
 	private final static int BAD_CREDENTIALS_ERROR_CODE = 3;
-	private static PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
+	private static DialogFactory dialogFactory = new DefaultDialogFactory();
 
 	public final static String LAST_USED_STRING = "lastUsed";
 
@@ -75,8 +75,8 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		showLog.setValue(true);
 	}
 
-	public static void setDialogFactory(PeakInvestigatorDialogFactory dialogFactory) {
-		PeakInvestigatorParameters.dialogFactory = dialogFactory;
+	public static void setDialogFactory(DialogFactory headlessDialogFactory) {
+		PeakInvestigatorParameters.dialogFactory = headlessDialogFactory;
 	}
 
 	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {
