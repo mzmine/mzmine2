@@ -19,10 +19,19 @@
 
 package net.sf.mzmine.datamodel.impl;
 
+import java.util.logging.Logger;
+
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.VeritomyxSettings;
+import com.veritomyx.actions.BaseAction.ResponseFormatException;
+import com.veritomyx.actions.StatusAction;
+
 import net.sf.mzmine.datamodel.RemoteJobInfo;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.util.dialogs.DefaultDialogFactory;
+import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
+import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
 import net.sf.mzmine.datamodel.RawDataFile;
 
 /**
@@ -30,6 +39,11 @@ import net.sf.mzmine.datamodel.RawDataFile;
  */
 public class RemoteJob implements RemoteJobInfo
 {
+	public enum Status { ERROR, RUNNING, DONE, DELETED };
+
+	private DialogFactory dialogFactory = new DefaultDialogFactory();
+	private Logger logger;
+
 	private String        jobID;
 	private RawDataFile   rawDataFile;
 	private String        targetName;
@@ -37,6 +51,8 @@ public class RemoteJob implements RemoteJobInfo
 	
 	public RemoteJob(String name, RawDataFile raw, String target, PeakInvestigatorSaaS vtmxConn)
 	{
+		logger = Logger.getLogger(this.getClass().getName());
+
 		jobID       = name;
 		rawDataFile = raw;
 		targetName  = target;
@@ -46,20 +62,79 @@ public class RemoteJob implements RemoteJobInfo
 //			this.vtmx = new VeritomyxSaaS(username, password, pid, name);
 	}
 
+	protected RemoteJob setDialogFactory(DialogFactory dialogFactory) {
+		this.dialogFactory = dialogFactory;
+		return this;
+	}
+
     public String      getName()        { return jobID; }
     public String      toString()       { return jobID; }
     public RawDataFile getRawDataFile() { return rawDataFile; }
     public String      getTargetName()  { return targetName; }
-    public int         getStatus()      { return (vtmx != null) ? vtmx.getPageStatus() : PeakInvestigatorSaaS.W_UNDEFINED; }
-    
+
+	public int getStatus() {
+		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
+		VeritomyxSettings settings = preferences.getVeritomyxSettings();
+		PeakInvestigatorSaaS server = new PeakInvestigatorSaaS(settings.server);
+
+		try {
+			return getStatus(server, settings);
+		} catch (ResponseFormatException e) {
+			error(e.getMessage());
+			return Status.ERROR.ordinal();
+		}
+	}
+
+	protected int getStatus(PeakInvestigatorSaaS server,
+			VeritomyxSettings settings) throws ResponseFormatException {
+
+		StatusAction action = new StatusAction(
+				PeakInvestigatorSaaS.API_VERSION, settings.username,
+				settings.password, jobID);
+		String response = server.executeAction(action);
+		action.processResponse(response);
+		if (action.hasError()) {
+			error(action.getErrorMessage());
+			return Status.ERROR.ordinal();
+		}
+
+		StatusAction.Status status = action.getStatus();
+		switch (status) {
+		case Running:
+			message(action.getMessage());
+			return Status.RUNNING.ordinal();
+		case Done:
+			message(action.getMessage());
+			return Status.DONE.ordinal();
+		case Deleted:
+			message(action.getMessage());
+			return Status.DELETED.ordinal();
+		default:
+			throw new IllegalStateException(
+					"Unknown status returned from server.");
+		}
+	}
+
     public int 			deleteJob() {
-    	if(vtmx == null)
-    		vtmx = new PeakInvestigatorSaaS(true);
     	MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-		String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
+		String server = preferences.getParameter(MZminePreferences.vtmxServer).getValue();
+    	String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
 		String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
 		Integer account  = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
-		
+
+    	if(vtmx == null)
+    		vtmx = new PeakInvestigatorSaaS(server);
+
     	return vtmx.deleteJob(username, password, account, jobID.substring(4));
     }
+
+	private void error(String message) {
+		BasicDialog dialog = dialogFactory.createDialog();
+		dialog.displayErrorMessage(message, logger);
+	}
+
+	private void message(String message) {
+		BasicDialog dialog = dialogFactory.createDialog();
+		dialog.displayInfoMessage(message, logger);
+	}
 }
