@@ -23,6 +23,18 @@ import com.veritomyx.actions.PiVersionsAction;
 
 public class PeakInvestigatorParametersTest {
 
+	/**
+	 * When parameters are first created, the mass range should (0,
+	 * Integer.MAX_VALUE). This tests for that condition, which should try to
+	 * load data files to use for the range, and thus, throw a
+	 * NullPointerException.
+	 */
+	@Test(expected = NullPointerException.class)
+	public void testDefault_MassRange() {
+		PeakInvestigatorParameters parameters = new PeakInvestigatorParameters();
+		parameters.getMassRange();
+	}
+
 	public final static String VERSIONS_RESPONSE_1 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"\",\"Count\":3,\"Versions\":[\"1.2\",\"1.1\",\"1.0.0\"]}";
 	public final static String VERSIONS_RESPONSE_2 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"1.0.0\",\"Count\":3,\"Versions\":[\"1.2\",\"1.1\",\"1.0.0\"]}";
 	public final static String VERSIONS_RESPONSE_3 = "{\"Action\":\"PI_VERSIONS\",\"Current\":\"1.2\",\"LastUsed\":\"1.2\",\"Count\":3,\"Versions\":[\"1.2\",\"1.1\",\"1.0.0\"]}";

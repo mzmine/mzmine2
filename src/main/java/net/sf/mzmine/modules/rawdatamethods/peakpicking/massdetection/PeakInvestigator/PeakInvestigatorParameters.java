@@ -72,17 +72,6 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		super(new Parameter[] { versions, minMass, maxMass, showLog });
 
 		versions.setValue("lastUsed");
-
-		RawDataFile[] files = MZmineCore.getProjectManager()
-				.getCurrentProject().getDataFiles();
-		int[] massRange = determineMassRangeFromData(files);
-
-		minMass.setValue(massRange[0]);
-		minMass.setMinMax(massRange[0], massRange[1] - 1);
-
-		maxMass.setValue(massRange[1]);
-		maxMass.setMinMax(massRange[0] + 1, massRange[1]);
-
 		showLog.setValue(true);
 	}
 
@@ -90,8 +79,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		PeakInvestigatorParameters.dialogFactory = dialogFactory;
 	}
 
-	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired)
-	{
+	public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {
 		PiVersionsAction action = null;
 		try {
 			action = performPiVersionsCall(MZmineCore.getConfiguration()
@@ -101,16 +89,30 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 			return ExitCode.ERROR;
 		}
 
-		if(action == null) {
+		if (action == null) {
 			return ExitCode.ERROR;
 		}
 
 		versions.setChoices(formatPiVersions(action));
+		setupMassParamters();
 
 		MassDetectorSetupDialog dialog = new MassDetectorSetupDialog(parent,
 				valueCheckRequired, PeakInvestigatorDetector.class, this);
 		dialog.setVisible(true);
+
 		return dialog.getExitCode();
+	}
+
+	private void setupMassParamters() {
+		RawDataFile[] files = MZmineCore.getProjectManager()
+				.getCurrentProject().getDataFiles();
+		int[] massRange = determineMassRangeFromData(files);
+
+		minMass.setValue(massRange[0]);
+		minMass.setMinMax(massRange[0], massRange[1] - 1);
+
+		maxMass.setValue(massRange[1]);
+		maxMass.setMinMax(massRange[0] + 1, massRange[1]);
 	}
 
 	/**
@@ -122,12 +124,11 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 * @return int[2] massRange: lower and upper m/z
 	 */
 	protected static int[] determineMassRangeFromData(RawDataFile[] files) {
-		if (files.length == 0) {
-			throw new IllegalStateException(
-					"Number of RawDataFiles must be > 0 to determine mass range.");
-		}
-
 		int[] massRange = new int[] { Integer.MAX_VALUE, 0 };
+
+		if (files.length == 0) {
+			return massRange;
+		}
 
 		for (RawDataFile file : files) {
 			int[] scanNumbers = file.getScanNumbers();
@@ -268,6 +269,16 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	}
 
 	public int[] getMassRange() {
+		int minMassValue = minMass.getValue();
+		int maxMassValue = maxMass.getValue();
+
+		// if we still have default (0, MAX_VALUE), then calculate
+		if (minMassValue == 0 && maxMassValue == Integer.MAX_VALUE) {
+			RawDataFile[] files = MZmineCore.getProjectManager()
+					.getCurrentProject().getDataFiles();
+			return determineMassRangeFromData(files);
+		}
+
 		return new int[] { minMass.getValue(), maxMass.getValue() };
 	}
 
