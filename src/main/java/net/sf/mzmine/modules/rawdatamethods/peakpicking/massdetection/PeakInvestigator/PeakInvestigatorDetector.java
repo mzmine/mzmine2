@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
+import com.veritomyx.actions.PiVersionsAction;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
@@ -110,28 +112,30 @@ public class PeakInvestigatorDetector implements MassDetector
 	 */
 	public String startMassValuesJob(RawDataFile raw, String name,
 			ParameterSet parameterSet, int scanCount) {
+
 		MZminePreferences preferences = MZmineCore.getConfiguration()
 				.getPreferences();
-		String server = preferences.getParameter(MZminePreferences.vtmxServer)
-				.getValue();
-		String username = preferences.getParameter(
-				MZminePreferences.vtmxUsername).getValue();
-		String password = preferences.getParameter(
-				MZminePreferences.vtmxPassword).getValue();
-		int projectID = preferences.getParameter(MZminePreferences.vtmxProject)
-				.getValue();
+		VeritomyxSettings settings = preferences.getVeritomyxSettings();
 
-		PeakInvestigatorTask job = new PeakInvestigatorTask(server, username,
-				password, projectID).withRawDataFile(raw);
+		PeakInvestigatorTask job = new PeakInvestigatorTask(settings.server,
+				settings.username, settings.password, settings.projectID)
+				.withRawDataFile(raw);
 
 		PeakInvestigatorParameters parameters = (PeakInvestigatorParameters) parameterSet;
 		try {
-			job.initialize(parameters.getPiVersion(), scanCount,
+
+			String selectedPiVersion = selectPiVersion(parameters, preferences);
+			int[] massRange = parameters.getMassRange();
+			logger.info(String.format(
+					"Starting analysis on mass range %d - %d.", massRange[0],
+					massRange[1]));
+			job.initialize(selectedPiVersion, scanCount,
 					parameters.getMassRange(), filterTargetName(name));
+
 		} catch (IllegalStateException | ResponseFormatException e) {
-			// TODO Auto-generated catch block
 			error(e.getMessage());
 			e.printStackTrace();
+			return null;
 		}
 
 		String job_name = job.getName();
@@ -141,7 +145,26 @@ public class PeakInvestigatorDetector implements MassDetector
 			jobs.add(job);
 			job.start();
 		}
+
 		return job_name;
+	}
+
+	public String selectPiVersion(PeakInvestigatorParameters parameters,
+			MZminePreferences preferences) throws ResponseFormatException {
+
+		String selectedPiVersion = parameters.getPiVersion();
+
+		if (selectedPiVersion == PeakInvestigatorParameters.LAST_USED_STRING) {
+			PiVersionsAction action = PeakInvestigatorParameters
+					.performPiVersionsCall(preferences);
+			if (action.getLastUsedVersion() != "") {
+				selectedPiVersion = action.getLastUsedVersion();
+			} else {
+				selectedPiVersion = action.getCurrentVersion();
+			}
+		}
+
+		return selectedPiVersion;
 	}
 
 	/**
