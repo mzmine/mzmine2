@@ -265,12 +265,18 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	}
 
 	public String getPiVersion() {
-		return versions.getValue();
+		String version = getParameter(versions).getValue();
+		if (version.contains("(")) {
+			int index = version.indexOf("(");
+			return version.substring(0, index - 1);
+		}
+
+		return version;
 	}
 
 	public int[] getMassRange() {
-		int minMassValue = minMass.getValue();
-		int maxMassValue = maxMass.getValue();
+		int minMassValue = getParameter(minMass).getValue();
+		int maxMassValue = getParameter(maxMass).getValue();
 
 		// if we still have default (0, MAX_VALUE), then calculate
 		if (minMassValue == 0 && maxMassValue == Integer.MAX_VALUE) {
