@@ -30,5 +30,4 @@ public interface RemoteJobInfo
     @Nonnull public String      toString();
     @Nonnull public RawDataFile getRawDataFile();
     @Nonnull public String      getFutureMassList();
-    @Nonnull public int         getStatus();
 }

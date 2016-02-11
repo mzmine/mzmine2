@@ -22,9 +22,6 @@ package net.sf.mzmine.datamodel.impl;
 import java.util.logging.Logger;
 
 import com.veritomyx.PeakInvestigatorSaaS;
-import com.veritomyx.VeritomyxSettings;
-import com.veritomyx.actions.BaseAction.ResponseFormatException;
-import com.veritomyx.actions.StatusAction;
 
 import net.sf.mzmine.datamodel.RemoteJobInfo;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
@@ -116,49 +113,6 @@ public class RemoteJob implements RemoteJobInfo
 		return futureMassList;
 	}
 
-	public int getStatus() {
-		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-		VeritomyxSettings settings = preferences.getVeritomyxSettings();
-		PeakInvestigatorSaaS server = new PeakInvestigatorSaaS(settings.server);
-
-		try {
-			return getStatus(server, settings);
-		} catch (ResponseFormatException e) {
-			error(e.getMessage());
-			return Status.ERROR.ordinal();
-		}
-	}
-
-	protected int getStatus(PeakInvestigatorSaaS server,
-			VeritomyxSettings settings) throws ResponseFormatException {
-
-		StatusAction action = new StatusAction(
-				PeakInvestigatorSaaS.API_VERSION, settings.username,
-				settings.password, jobID);
-		String response = server.executeAction(action);
-		action.processResponse(response);
-		if (action.hasError()) {
-			error(action.getErrorMessage());
-			return Status.ERROR.ordinal();
-		}
-
-		StatusAction.Status status = action.getStatus();
-		switch (status) {
-		case Running:
-			message(action.getMessage());
-			return Status.RUNNING.ordinal();
-		case Done:
-			message(action.getMessage());
-			return Status.DONE.ordinal();
-		case Deleted:
-			message(action.getMessage());
-			return Status.DELETED.ordinal();
-		default:
-			throw new IllegalStateException(
-					"Unknown status returned from server.");
-		}
-	}
-
     public int 			deleteJob() {
     	MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
 		String server = preferences.getParameter(MZminePreferences.vtmxServer).getValue();
@@ -177,8 +131,4 @@ public class RemoteJob implements RemoteJobInfo
 		dialog.displayErrorMessage(message, logger);
 	}
 
-	private void message(String message) {
-		BasicDialog dialog = dialogFactory.createDialog();
-		dialog.displayInfoMessage(message, logger);
-	}
 }
