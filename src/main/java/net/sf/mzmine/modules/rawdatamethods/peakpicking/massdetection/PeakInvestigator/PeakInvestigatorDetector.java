@@ -20,6 +20,7 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -141,10 +142,24 @@ public class PeakInvestigatorDetector implements MassDetector
 		String job_name = job.getName();
 		logger.finest("startMassValuesJob " + RemoteJob.filterJobName(name) + " - "
 				+ job_name + " - " + ((job != null) ? job.getDesc() : "nojob"));
-		if (job_name != null) {
-			jobs.add(job);
-			job.start();
+
+		if (job_name == null) {
+			return null;
 		}
+
+		try {
+			job.start();
+		} catch (FileNotFoundException | ResponseFormatException | ResponseErrorException e) {
+			error(e.getMessage());
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			error(e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+
+		jobs.add(job);
 
 		return job_name;
 	}
