@@ -144,9 +144,9 @@ public class MassDetectionParameters extends SimpleParameterSet {
 			raw = job.getRawDataFile();
 			massDetector.setValueToVeritomxy();
 			// encode the job into the name field so to flag as retrieval
-			name.setValue(job.toString());
+			name.setValue(job.getCompoundName());
 		}
-    
+
     	RawDataFile[] newValue = new RawDataFile[1];
     	newValue[0] = raw;
     	RawDataFilesSelection newSelection = new RawDataFilesSelection();

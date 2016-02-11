@@ -72,6 +72,10 @@ public class RemoteJob implements RemoteJobInfo
 	}
 
 	public String toString() {
+		return jobID;
+	}
+
+	public String getCompoundName() {
 		return "|" + jobID + "[" + futureMassList + "]";
 	}
 
