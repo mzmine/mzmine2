@@ -237,8 +237,6 @@ class RawDataFileSaveHandler {
                     "CDATA", job.getFutureMassList());
             hd.startElement("", "", RawDataElementName.JOB.getElementName(),
                     atts);
-            String s = String.valueOf(job.getStatus());
-            hd.characters(s.toCharArray(), 0, s.length());
             hd.endElement("", "", RawDataElementName.JOB.getElementName());
             atts.clear();
         }
