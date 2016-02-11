@@ -86,30 +86,41 @@ import com.veritomyx.actions.StatusAction;
  */
 public class PeakInvestigatorTask
 {
-	private Logger          logger;
+	// utility classes
+	private Logger logger;
 	private PeakInvestigatorSaaS vtmx = null;
 	private PeakInvestigatorDialogFactory dialogFactory = new PeakInvestigatorDefaultDialogFactory();
 
-	private Boolean launch = null;
-	private String jobID = null;
-	private String selectedRTO = null;
-	private RemoteJob job = null;
-
-	private String          desc;
-	private int             scanCnt;		// number of scans
-	private String          targetName;
-
-	private File workingDirectory;
-	private File inputFile;
-
-	private String logInfo;
+	// credentials and project info
 	private String username;
 	private String password;
 	private int projectID;
-	private boolean displayLog = true;
 
-	private TarOutputStream tarfile = null;
+	// keep track of state (both submit and fetch)
+	private Boolean launch = null;
 	private RawDataFile rawDataFile = null;
+	private String jobID = null;
+	private String targetName;
+
+	// keep track of state (submit)
+	private String selectedRTO = null;
+
+	// keep track of state (fetch)
+	private RemoteJob job = null;
+	private boolean displayLog;
+
+	private String          desc;
+	private int             scanCnt;		// number of scans
+
+	// temporary storage
+	private File workingDirectory;
+	private File workingFile;
+	private TarOutputStream tarfile = null;
+
+	// remote files once job is finished
+	private File remoteResultsFile;
+	private File remoteLogFile;
+
 	private int             errors;
 	
 	private static final long minutesCheckPrep = 2;
@@ -265,8 +276,8 @@ public class PeakInvestigatorTask
 		workingDirectory = new File(tempPath.toString());
 		workingDirectory.deleteOnExit();
 
-		inputFile = new File(tempPath + File.separator + jobID + extension);
-		inputFile.deleteOnExit();
+		workingFile = new File(tempPath + File.separator + jobID + extension);
+		workingFile.deleteOnExit();
 	}
 
 	public String getDesc() { return desc; }
@@ -333,7 +344,7 @@ public class PeakInvestigatorTask
 
 		try {
 			tarfile = new TarOutputStream(new BufferedOutputStream(
-					new GZIPOutputStream(new FileOutputStream(inputFile))));
+					new GZIPOutputStream(new FileOutputStream(workingFile))));
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot create scans bundle file", logger);
@@ -464,7 +475,7 @@ public class PeakInvestigatorTask
 		}
 		progressMonitor.setProgress(1);
 
-		uploadFileToServer(inputFile);
+		uploadFileToServer(workingFile);
 		
 		if (progressMonitor.isCanceled()) {
 		    progressMonitor.close();
@@ -476,7 +487,7 @@ public class PeakInvestigatorTask
 
 		//####################################################################
 		// Prepare for remote job in a loop as it might take some time to analyze
-		logger.info("Awaiting PREP analysis, " + inputFile.getName()
+		logger.info("Awaiting PREP analysis, " + workingFile.getName()
 				+ ", on SaaS server...");
 		progressMonitor.setNote("Performing a pre-check analysis.");
 		
@@ -487,7 +498,7 @@ public class PeakInvestigatorTask
 		// timeWait is based on the loop count to keep this as short as possible.
 		long timeWait = minutesTimeoutPrep;
 		int count = 0;
-		PrepAction prepAction = checkPrepAnalysis(inputFile.getName());
+		PrepAction prepAction = checkPrepAnalysis(workingFile.getName());
 		while (prepAction.getStatus() == PrepAction.Status.Analyzing
 				&& timeWait > 0) {
 			Thread.sleep(minutesCheckPrep * 60000);
@@ -497,7 +508,7 @@ public class PeakInvestigatorTask
 				logger.info("Job, " + jobID + ", canceled");
 				return;
 			}
-			prepAction = checkPrepAnalysis(inputFile.getName());
+			prepAction = checkPrepAnalysis(workingFile.getName());
 			progressMonitor.setProgress(4 + count);
 			count++;
 		}
@@ -511,7 +522,7 @@ public class PeakInvestigatorTask
 		//####################################################################
 		// start for remote job
 		progressMonitor.setNote("Requesting job to be run...");
-		initiateRun(inputFile.getName(), selectedRTO);
+		initiateRun(workingFile.getName(), selectedRTO);
 
 		progressMonitor.setNote("Finished");
 		progressMonitor.close();
@@ -670,7 +681,7 @@ public class PeakInvestigatorTask
 						line = br.readLine();
 					}
 
-					logInfo = sb.toString();
+					String logInfo = sb.toString();
 					PeakInvestigatorLogDialog logDialog = new PeakInvestigatorLogDialog(logInfo);
 					logDialog.setVisible(true);
 
