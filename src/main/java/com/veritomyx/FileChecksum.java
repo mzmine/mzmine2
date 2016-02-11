@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
@@ -47,9 +49,9 @@ public class FileChecksum
 
 	/**
 	 * @param filename
-	 * @throws Exception
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public FileChecksum(String filename) throws Exception
+	public FileChecksum(String filename) throws NoSuchAlgorithmException
 	{
 		this.filename = filename;
 		file = new File(filename);
@@ -58,9 +60,9 @@ public class FileChecksum
 
 	/**
 	 * @param file
-	 * @throws Exception
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public FileChecksum(File file) throws Exception
+	public FileChecksum(File file) throws NoSuchAlgorithmException 
 	{
 		this.file = file;
 		filename = file.getPath();
@@ -69,10 +71,9 @@ public class FileChecksum
 
 	/**
 	 * Reset the hash values to those of a new instance.
-	 * 
-	 * @throws Exception
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public void reset() throws Exception
+	public void reset() throws NoSuchAlgorithmException
 	{
 		md    = MessageDigest.getInstance("SHA-1");
 		fsum  = "";
@@ -86,7 +87,6 @@ public class FileChecksum
 	 * 
 	 * @param line
 	 * @return String		// returns input unmodified line
-	 * @throws Exception
 	 */
 	public String hash_line(String line)
 	{
@@ -101,12 +101,14 @@ public class FileChecksum
 	}
 
 	/**
-	 * Calculate the hash for the entire file specified.
-	 * Any cumulative computed hash (hash_line()) will be lost.
+	 * Calculate the hash for the entire file specified. Any cumulative computed
+	 * hash (hash_line()) will be lost.
 	 * 
-	 * @throws Exception
+	 * @throws NoSuchAlgorithmException
+	 * @throws FileNotFoundException
+	 * @throws IOException
 	 */
-	public void hash_file() throws Exception
+	public void hash_file() throws NoSuchAlgorithmException, FileNotFoundException, IOException
 	{
 		reset();
 		String line;
@@ -153,9 +155,11 @@ public class FileChecksum
 	 * 
 	 * @param validate
 	 * @return
-	 * @throws Exception
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public boolean append_txt(boolean validate) throws Exception
+	public boolean append_txt(boolean validate) throws FileNotFoundException, IOException, NoSuchAlgorithmException
 	{
 		BufferedWriter fd = openWriteFile(filename, true);
 		fd.write(checksum_line());
@@ -165,11 +169,11 @@ public class FileChecksum
 	}
 
 	/**
-	 * Append the computed hash to the XML file.
-	 * The data should all have been pre-written to the file except for the 
-	 * terminating tag which will be added by this method.
-	 * The checksum will be enclosed in <chksum_tag>hash</ckksum_tag>
-	 * and the file will be terminated with </file_tag>
+	 * Append the computed hash to the XML file. The data should all have been
+	 * pre-written to the file except for the terminating tag which will be
+	 * added by this method. The checksum will be enclosed in
+	 * <chksum_tag>hash</ckksum_tag> and the file will be terminated with
+	 * </file_tag>
 	 * 
 	 * @param chksum_tag
 	 * @param file_tag
@@ -194,14 +198,16 @@ public class FileChecksum
 	}
 
 	/**
-	 * Verify the hash within the file matches the computed hash.
-	 * Any cumulative computed hash (hash_line()) will be lost.
+	 * Verify the hash within the file matches the computed hash. Any cumulative
+	 * computed hash (hash_line()) will be lost.
 	 * 
 	 * @param verbose
 	 * @return
-	 * @throws Exception
+	 * @throws NoSuchAlgorithmException
+	 * @throws FileNotFoundException
+	 * @throws IOException
 	 */
-	public boolean verify(boolean verbose) throws Exception
+	public boolean verify(boolean verbose) throws NoSuchAlgorithmException, FileNotFoundException, IOException
 	{
 		hash_file();
 		boolean good = sum.equals(fsum);
@@ -216,9 +222,10 @@ public class FileChecksum
 	 * @param path
 	 * @param append
 	 * @return
+	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	private BufferedWriter openWriteFile(String path, boolean append) throws IOException
+	private BufferedWriter openWriteFile(String path, boolean append) throws FileNotFoundException, IOException
 	{
 		BufferedWriter fd;
 		if (path.endsWith(".gz"))
@@ -234,9 +241,10 @@ public class FileChecksum
 	 * @param path
 	 * @param mode
 	 * @return
+	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	private BufferedReader openReadFile(String path) throws IOException
+	private BufferedReader openReadFile(String path) throws FileNotFoundException, IOException
 	{
 		BufferedReader fd;
 		if (filename.endsWith(".gz"))
