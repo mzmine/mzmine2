@@ -31,6 +31,7 @@ import com.veritomyx.actions.PiVersionsAction;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
@@ -55,8 +56,8 @@ public class PeakInvestigatorDetector implements MassDetector
 
 	public String getDescription(String orig, String str)
 	{
-		String jobName = filterJobName(orig);
-		String target  = filterTargetName(orig);
+		String jobName = RemoteJob.filterJobName(orig);
+		String target  = RemoteJob.filterTargetName(orig);
 		desc = "target: " + target + "; ";
 		PeakInvestigatorTask job = null;
 		if (jobName == null)
@@ -86,24 +87,7 @@ public class PeakInvestigatorDetector implements MassDetector
 	 */
 	public String filterTargetName(String compoundName)
 	{
-		if (compoundName.startsWith("|job-"))
-			return compoundName.substring(compoundName.indexOf('[') + 1, compoundName.indexOf(']'));
-		return compoundName;
-	}
-
-	/**
-	 * Given a compound name that identifies a job and its target (i.e. future
-	 * mass list), return the job name.
-	 * 
-	 * @param compoundName
-	 *            Takes the form "|job-####-###[target]".
-	 * @return ####-###
-	 */
-	private String filterJobName(String compoundName)
-	{
-		if (compoundName.startsWith("|job-"))
-			return compoundName.substring(5, compoundName.indexOf('['));
-		return null;
+		return RemoteJob.filterTargetName(compoundName);
 	}
 
 	/**
@@ -147,7 +131,7 @@ public class PeakInvestigatorDetector implements MassDetector
 		}
 
 		String job_name = job.getName();
-		logger.finest("startMassValuesJob " + filterJobName(name) + " - "
+		logger.finest("startMassValuesJob " + RemoteJob.filterJobName(name) + " - "
 				+ job_name + " - " + ((job != null) ? job.getDesc() : "nojob"));
 		if (job_name != null) {
 			jobs.add(job);

@@ -109,6 +109,7 @@ public interface RawDataFile {
     public void addJob(String name, RawDataFile raw, String targetName, PeakInvestigatorSaaS vtmx);
     public void removeJob(String name);
     public ArrayList<RemoteJob> getJobs();
+    public RemoteJob getJob(String compoundName);
 
     /**
      * Close the file in case it is removed from the project

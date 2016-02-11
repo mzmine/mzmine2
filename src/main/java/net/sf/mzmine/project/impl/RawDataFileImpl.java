@@ -444,7 +444,16 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
     {
     	return jobs_info;
     }
-    
+
+	public RemoteJob getJob(String compoundName) {
+		for (RemoteJob job : jobs_info) {
+			if (job.getCompoundName() == compoundName) {
+				return job;
+			}
+		}
+		return null;
+	}
+
     /**
      * @see net.sf.mzmine.datamodel.RawDataFileWriter#finishWriting()
      */

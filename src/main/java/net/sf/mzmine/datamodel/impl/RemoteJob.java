@@ -79,6 +79,35 @@ public class RemoteJob implements RemoteJobInfo
 		return "|" + jobID + "[" + futureMassList + "]";
 	}
 
+	/**
+	 * Given a compound name that identifies a job and its target (i.e. future
+	 * mass list), return the job name.
+	 * 
+	 * @param compoundName
+	 *            Takes the form "|job-####-###[target]".
+	 * @return (e.g. ####-###)
+	 */
+	public static String filterJobName(String compoundName) {
+		if (compoundName.startsWith("|job-"))
+			return compoundName.substring(5, compoundName.indexOf('['));
+		return null;
+	}
+
+	/**
+	 * Given a compound name that identifies a job and its target (i.e. future
+	 * mass list), return the target name.
+	 * 
+	 * @param compoundName
+	 *            Takes the form "|job-####-###[target]".
+	 * @return (e.g. target)
+	 */
+	public static String filterTargetName(String compoundName) {
+		if (compoundName.startsWith("|job-"))
+			return compoundName.substring(compoundName.indexOf('[') + 1,
+					compoundName.indexOf(']'));
+		return compoundName;
+	}
+
 	public RawDataFile getRawDataFile() {
 		return rawDataFile;
 	}
