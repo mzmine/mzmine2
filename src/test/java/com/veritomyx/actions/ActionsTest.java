@@ -28,7 +28,7 @@ public class ActionsTest {
 
 		PiVersionsAction temp = (PiVersionsAction) action;
 		assertEquals("1.2", temp.getCurrentVersion());
-		assertEquals("", temp.getLastUsedVersion());
+		assertTrue(temp.getLastUsedVersion().isEmpty());
 		assertArrayEquals(new String[] { "1.2", "1.0.0" }, temp.getVersions());
 	}
 

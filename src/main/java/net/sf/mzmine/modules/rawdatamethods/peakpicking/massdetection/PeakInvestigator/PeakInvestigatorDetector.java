@@ -105,7 +105,7 @@ public class PeakInvestigatorDetector implements MassDetector
 	 * Create a new job task from the given parameters
 	 * 
 	 * @param raw
-	 * @param targetName
+	 * @param name The name of the mass list after centroiding.
 	 * @param parameters
 	 * @param scanCount
 	 * @return
@@ -157,7 +157,7 @@ public class PeakInvestigatorDetector implements MassDetector
 		if (selectedPiVersion == PeakInvestigatorParameters.LAST_USED_STRING) {
 			PiVersionsAction action = PeakInvestigatorParameters
 					.performPiVersionsCall(preferences);
-			if (action.getLastUsedVersion() != "") {
+			if (!action.getLastUsedVersion().isEmpty()) {
 				selectedPiVersion = action.getLastUsedVersion();
 			} else {
 				selectedPiVersion = action.getCurrentVersion();
