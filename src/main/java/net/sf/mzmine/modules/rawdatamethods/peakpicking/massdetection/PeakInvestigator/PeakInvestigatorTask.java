@@ -54,7 +54,9 @@ import java.nio.file.Path;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
+import net.sf.mzmine.datamodel.impl.RemoteJob.Status;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
@@ -74,6 +76,7 @@ import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.PrepAction;
 import com.veritomyx.actions.RunAction;
 import com.veritomyx.actions.SftpAction;
+import com.veritomyx.actions.StatusAction;
 
 /**
  * This class is used to run a set of scans through the Veritomyx SaaS servers
@@ -90,6 +93,7 @@ public class PeakInvestigatorTask
 	private Boolean launch = null;
 	private String jobID = null;
 	private String selectedRTO = null;
+	private RemoteJob job = null;
 
 	private String          desc;
 	private int             scanCnt;		// number of scans
@@ -183,7 +187,7 @@ public class PeakInvestigatorTask
 		selectedRTO = dialog.getSelectedRTO();
 
 		try {
-			initializeTemporaryStorage(jobID);
+			initializeTemporaryStorage(jobID, ".scans.tar");
 		} catch (IOException e) {
 			error("Unable to create temporary diretory.");
 			jobID = null;
@@ -191,14 +195,77 @@ public class PeakInvestigatorTask
 		}
 	}
 
-	private void initializeTemporaryStorage(String jobID) throws IOException {
+	/**
+	 * Initialize the object to start downloading results. First checks status
+	 * of results, and if still running or already deleted, display a message
+	 * and return. Otherwise, acknowledge job is done and set variables for
+	 * later steps.
+	 * 
+	 * @param compoundJobName
+	 * @throws ResponseFormatException
+	 * @throws ResponseErrorException 
+	 */
+	public void initializeFetch(String compoundJobName, boolean displayLog)
+			throws ResponseFormatException, ResponseErrorException {
+
+		this.job = rawDataFile.getJob(compoundJobName);
+		if (this.job == null) {
+			return;
+		}
+
+		this.launch = false;
+		this.displayLog = displayLog;
+		this.jobID = RemoteJob.filterJobName(compoundJobName);
+		this.targetName = RemoteJob.filterTargetName(compoundJobName);
+
+		StatusAction action = new StatusAction(
+				PeakInvestigatorSaaS.API_VERSION, username, password, jobID);
+		String response = vtmx.executeAction(action);
+		action.processResponse(response);
+
+		if (!action.isReady("STATUS")) {
+			throw new IllegalStateException("Problem initializing fetch job.");
+		}
+
+		if (action.hasError()) {
+			throw new ResponseErrorException(action.getErrorMessage());
+		}
+
+		StatusAction.Status status = action.getStatus();
+		switch (status) {
+		case Running:
+			message(action.getMessage());
+			this.jobID = null;
+			return;
+		case Done:
+			message(action.getMessage());
+			break;
+		case Deleted:
+			message(action.getMessage());
+			this.jobID = null;
+			return;
+		default:
+			throw new IllegalStateException(
+					"Unknown status returned from server.");
+		}
+
+		try {
+			initializeTemporaryStorage(jobID, ".mass_list.tar");
+		} catch (IOException e) {
+			error("Unable to create temporary diretory.");
+			jobID = null;
+			return;
+		}
+	}
+
+	private void initializeTemporaryStorage(String jobID, String extension) throws IOException {
 		Path tempPath = null;
 		tempPath = Files.createTempDirectory(jobID + "-");
 
 		workingDirectory = new File(tempPath.toString());
 		workingDirectory.deleteOnExit();
 
-		inputFile = new File(tempPath + File.separator + jobID + ".scans.tar");
+		inputFile = new File(tempPath + File.separator + jobID + extension);
 		inputFile.deleteOnExit();
 	}
 
@@ -744,6 +811,11 @@ public class PeakInvestigatorTask
 	private void error(String message) {
 		BasicDialog dialog = dialogFactory.createDialog();
 		dialog.displayErrorMessage(message, logger);
+	}
+
+	private void message(String message) {
+		BasicDialog dialog = dialogFactory.createDialog();
+		dialog.displayInfoMessage(message, logger);
 	}
 
 	/**

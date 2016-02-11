@@ -3,6 +3,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import static org.junit.Assert.*;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
@@ -11,14 +12,19 @@ import net.sf.mzmine.project.impl.RawDataFileImpl;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
 import net.sf.mzmine.util.dialogs.HeadlessBasicDialog;
+import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction;
+import com.veritomyx.actions.StatusAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 
@@ -29,10 +35,10 @@ public class PeakInvestigatorTaskInitTest {
 	 * dialog.
 	 */
 	@Test
-	public void testInitializeOk() throws IllegalStateException,
+	public void testInitialize_SubmitOk() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException {
 
-		PeakInvestigatorTask task = createDefaultTask(
+		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
 				new EmptyOkDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
@@ -45,10 +51,10 @@ public class PeakInvestigatorTaskInitTest {
 	 * click on dialog.
 	 */
 	@Test
-	public void testInitializeCancel() throws IllegalStateException,
+	public void testInitialize_SubmitCancel() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException {
 
-		PeakInvestigatorTask task = createDefaultTask(
+		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
 				new EmptyCancelDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
@@ -60,9 +66,9 @@ public class PeakInvestigatorTaskInitTest {
 	 * Test PeakInvestigatorTask.initialize() with HTML response.
 	 */
 	@Test(expected = ResponseFormatException.class)
-	public void testInitializeResponseHTML() throws IllegalStateException,
+	public void testInitialize_SubmitResponseHTML() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException {
-		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE)
+		PeakInvestigatorTask task = createDefaultSubmitTask(BaseAction.API_SOURCE)
 				.usingDialogFactory(new EmptyOkDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
@@ -73,14 +79,14 @@ public class PeakInvestigatorTaskInitTest {
 	 * Test PeakInvestigatorTask.initialize() with real ERROR response.
 	 */
 	@Test(expected = ResponseErrorException.class)
-	public void testInitializeResponseError() throws IllegalStateException,
+	public void testInitialize_SubResponseError() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "INIT");
 
-		PeakInvestigatorTask task = createDefaultTask(response)
+		PeakInvestigatorTask task = createDefaultSubmitTask(response)
 				.usingDialogFactory(factory);
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
@@ -91,7 +97,7 @@ public class PeakInvestigatorTaskInitTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultTask(String response) {
+	private PeakInvestigatorTask createDefaultSubmitTask(String response) {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(argThat(new IsBaseAction()))).thenReturn(
 				response);
@@ -107,6 +113,96 @@ public class PeakInvestigatorTaskInitTest {
 				"user", "password", 0).withService(vtmx).withRawDataFile(
 				rawFile);
 		return task;
+	}
+
+	private PeakInvestigatorTask createDefaultFetchTask(String response,
+			ArgumentCaptor<StatusAction> action) {
+		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
+		when(vtmx.executeAction(action.capture())).thenReturn(response);
+
+		RemoteJob job = mock(RemoteJob.class);
+		RawDataFile rawFile = mock(RawDataFileImpl.class);
+		when(rawFile.getJob(anyString())).thenReturn(job);
+
+		PeakInvestigatorTask task = new PeakInvestigatorTask("test.com",
+				"user", "password", 0).withService(vtmx).withRawDataFile(
+				rawFile);
+		return task;
+	}
+
+	@Test
+	public void testInitialize_FetchRunning() throws ResponseFormatException, ResponseErrorException {
+		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
+				.forClass(StatusAction.class);
+		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
+
+		PeakInvestigatorTask task = createDefaultFetchTask(
+				StatusAction.EXAMPLE_RESPONSE_1, actionCaptor);
+		task.usingDialogFactory(factory);
+		task.initializeFetch("|job-C1.10[PI]", true);
+
+		StatusAction action = actionCaptor.getValue();
+		assertEquals(StatusAction.Status.Running, action.getStatus());
+		assertNull(task.getName());
+
+		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((HeadlessDialogFactory) factory)
+				.getDialog();
+		assertEquals(StatusAction.RUNNING_STRING, dialog.getInfoMessage());
+	}
+
+	@Test
+	public void testInitialize_FetchDone() throws ResponseFormatException, ResponseErrorException {
+		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
+				.forClass(StatusAction.class);
+		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
+
+		PeakInvestigatorTask task = createDefaultFetchTask(
+				StatusAction.EXAMPLE_RESPONSE_2, actionCaptor);
+		task.usingDialogFactory(factory);
+		task.initializeFetch("|job-C1.10[PI]", true);
+
+		StatusAction action = actionCaptor.getValue();
+		assertEquals(StatusAction.Status.Done, action.getStatus());
+		assertEquals("C1.10", task.getName());
+
+		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((HeadlessDialogFactory) factory)
+				.getDialog();
+		assertEquals(StatusAction.DONE_STRING, dialog.getInfoMessage());
+	}
+
+	@Test(expected = ResponseErrorException.class)
+	public void testInitialize_FetchError() throws ResponseFormatException, ResponseErrorException {
+		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
+				.forClass(StatusAction.class);
+		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
+
+		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION", "STATUS");
+		PeakInvestigatorTask task = createDefaultFetchTask(response,
+				actionCaptor);
+		task.usingDialogFactory(factory);
+		task.initializeFetch("|job-C1.10[PI]", true);
+
+		fail("Should not reach here.");
+	}
+
+	@Test
+	public void testInitialize_FetchDeleted() throws ResponseFormatException, ResponseErrorException {
+		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
+				.forClass(StatusAction.class);
+		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
+
+		PeakInvestigatorTask task = createDefaultFetchTask(
+				StatusAction.EXAMPLE_RESPONSE_3, actionCaptor);
+		task.usingDialogFactory(factory);
+		task.initializeFetch("|job-C1.10[PI]", true);
+
+		StatusAction action = actionCaptor.getValue();
+		assertEquals(StatusAction.Status.Deleted, action.getStatus());
+		assertNull(task.getName());
+
+		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((HeadlessDialogFactory) factory)
+				.getDialog();
+		assertEquals(StatusAction.DELETED_STRING, dialog.getInfoMessage());
 	}
 
 	/**

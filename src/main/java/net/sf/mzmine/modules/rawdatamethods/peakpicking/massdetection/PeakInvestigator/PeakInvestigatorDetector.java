@@ -116,13 +116,21 @@ public class PeakInvestigatorDetector implements MassDetector
 		PeakInvestigatorParameters parameters = (PeakInvestigatorParameters) parameterSet;
 		try {
 
-			String selectedPiVersion = selectPiVersion(parameters, preferences);
-			int[] massRange = parameters.getMassRange();
-			logger.info(String.format(
-					"Starting analysis on mass range %d - %d.", massRange[0],
-					massRange[1]));
-			job.initializeSubmit(selectedPiVersion, scanCount,
-					parameters.getMassRange(), filterTargetName(name));
+			// not only does this get versions, it validates credentials
+			String selectedPiVersion = selectPiVersion(parameters,
+					preferences);
+
+			if (!name.startsWith("|")) {
+				int[] massRange = parameters.getMassRange();
+				logger.info(String.format(
+						"Starting analysis on mass range %d - %d.",
+						massRange[0], massRange[1]));
+				job.initializeSubmit(selectedPiVersion, scanCount,
+						parameters.getMassRange(), filterTargetName(name));
+			} else {
+				logger.info("Checking status of job.");
+				job.initializeFetch(name, parameters.shouldDisplayLog());
+			}
 
 		} catch (IllegalStateException | ResponseFormatException | ResponseErrorException e) {
 			error(e.getMessage());
