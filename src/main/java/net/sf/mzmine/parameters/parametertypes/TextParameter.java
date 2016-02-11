@@ -40,7 +40,7 @@ public class TextParameter implements UserParameter<String, TextComponent> {
     }
 
     /**
-     * @see net.sf.mzmine.data.Parameter#getName()
+     * @see net.sf.mzmine.data.Parameter#getJobID()
      */
     @Override
     public String getName() {

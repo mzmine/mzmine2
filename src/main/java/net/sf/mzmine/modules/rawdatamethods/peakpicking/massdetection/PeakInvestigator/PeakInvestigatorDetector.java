@@ -76,10 +76,12 @@ public class PeakInvestigatorDetector implements MassDetector
 	public Class<? extends ParameterSet> getParameterSetClass() { return PeakInvestigatorParameters.class; }
 
 	/**
-	 * Return target name and filter out possible job name from "|job-########-#####[target]"
+	 * Given a compound name that identifies a job and its target (i.e. future
+	 * mass list), return the target.
 	 * 
 	 * @param compoundName
-	 * @return
+	 *            Takes the form "|job-####-###[target]
+	 * @return target
 	 */
 	public String filterTargetName(String compoundName)
 	{
@@ -89,10 +91,12 @@ public class PeakInvestigatorDetector implements MassDetector
 	}
 
 	/**
-	 * Return job name and filter out target name from "|job[target]"
+	 * Given a compound name that identifies a job and its target (i.e. future
+	 * mass list), return the job name.
 	 * 
 	 * @param compoundName
-	 * @return
+	 *            Takes the form "|job-####-###[target]".
+	 * @return ####-###
 	 */
 	private String filterJobName(String compoundName)
 	{
@@ -105,7 +109,10 @@ public class PeakInvestigatorDetector implements MassDetector
 	 * Create a new job task from the given parameters
 	 * 
 	 * @param raw
-	 * @param name The name of the mass list after centroiding.
+	 * @param name
+	 *            When launching job, the name of the mass list after
+	 *            centroiding. When retrieving job, name of job plus mass list
+	 *            (e.g. |job-C-1022.1483[PI]).
 	 * @param parameters
 	 * @param scanCount
 	 * @return

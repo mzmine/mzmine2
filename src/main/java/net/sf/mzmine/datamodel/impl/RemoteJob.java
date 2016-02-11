@@ -46,16 +46,16 @@ public class RemoteJob implements RemoteJobInfo
 
 	private String        jobID;
 	private RawDataFile   rawDataFile;
-	private String        targetName;
+	private String        futureMassList;
 	private PeakInvestigatorSaaS vtmx;
 	
-	public RemoteJob(String name, RawDataFile raw, String target, PeakInvestigatorSaaS vtmxConn)
+	public RemoteJob(String jobID, RawDataFile raw, String futureMassList, PeakInvestigatorSaaS vtmxConn)
 	{
 		logger = Logger.getLogger(this.getClass().getName());
 
-		jobID       = name;
-		rawDataFile = raw;
-		targetName  = target;
+		this.jobID       = jobID;
+		this.rawDataFile = raw;
+		this.futureMassList  = futureMassList;
 //		if (vtmx != null)
 			vtmx = vtmxConn;
 //		else
@@ -67,10 +67,21 @@ public class RemoteJob implements RemoteJobInfo
 		return this;
 	}
 
-    public String      getName()        { return jobID; }
-    public String      toString()       { return jobID; }
-    public RawDataFile getRawDataFile() { return rawDataFile; }
-    public String      getTargetName()  { return targetName; }
+	public String getJobID() {
+		return jobID;
+	}
+
+	public String toString() {
+		return "|" + jobID + "[" + futureMassList + "]";
+	}
+
+	public RawDataFile getRawDataFile() {
+		return rawDataFile;
+	}
+
+	public String getFutureMassList() {
+		return futureMassList;
+	}
 
 	public int getStatus() {
 		MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();

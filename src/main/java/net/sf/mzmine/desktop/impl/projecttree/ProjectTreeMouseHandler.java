@@ -255,11 +255,11 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
                         MZmineCore.getDesktop().getMainWindow(),
                         "Unretrieved results will be lost.\n"
                                 + "Are you sure you want to delete "
-                                + job.getName() + "?", "Remove Job",
+                                + job.getJobID() + "?", "Remove Job",
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (selectedValue == 0) // yes response
                 	job.deleteJob();
-                    job.getRawDataFile().removeJob(job.getName());
+                    job.getRawDataFile().removeJob(job.getJobID());
                 
             }
         }

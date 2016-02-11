@@ -138,14 +138,14 @@ public class MassDetectionParameters extends SimpleParameterSet {
      */
     public ExitCode setJobParams(RawDataFile raw, RemoteJob job)
     {
-    	ExitCode ret = ExitCode.OK;
-    	if (job != null)	// set Veritomyx parameters
-    	{
-    		raw = job.getRawDataFile();
-    		massDetector.setValueToVeritomxy();
-    		// encode the job into the name field so it can be detected as a retrieval job
-    		name.setValue("|" + job.getName() + "[" + job.getTargetName() + "]");
-    	}
+		ExitCode ret = ExitCode.OK;
+		if (job != null) // set Veritomyx parameters
+		{
+			raw = job.getRawDataFile();
+			massDetector.setValueToVeritomxy();
+			// encode the job into the name field so to flag as retrieval
+			name.setValue(job.toString());
+		}
     
     	RawDataFile[] newValue = new RawDataFile[1];
     	newValue[0] = raw;

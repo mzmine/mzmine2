@@ -231,10 +231,10 @@ class RawDataFileSaveHandler {
         for (RemoteJob job : jobs) {
             atts.addAttribute("", "",
                     RawDataElementName.JOB_NAME.getElementName(), "CDATA",
-                    job.getName());
+                    job.getJobID());
             atts.addAttribute("", "",
                     RawDataElementName.JOB_TARGET_NAME.getElementName(),
-                    "CDATA", job.getTargetName());
+                    "CDATA", job.getFutureMassList());
             hd.startElement("", "", RawDataElementName.JOB.getElementName(),
                     atts);
             String s = String.valueOf(job.getStatus());
