@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -72,6 +73,7 @@ import org.xeustechnologies.jtar.TarOutputStream;
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
+import com.veritomyx.actions.DeleteAction;
 import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.PrepAction;
 import com.veritomyx.actions.RunAction;
@@ -331,13 +333,24 @@ public class PeakInvestigatorTask
 				// Don't do anything if cancelled
 			} catch (IllegalStateException illegalStateException) {
 				error(illegalStateException.getMessage());
+				illegalStateException.printStackTrace();
 			} catch (ResponseFormatException responseFormatException) {
 				error(responseFormatException.getMessage());
+				responseFormatException.printStackTrace();
 			} catch (ResponseErrorException responseError) {
 				error(responseError.getMessage());
+				responseError.printStackTrace();
 			}
 		} else
-			finishRetrieve();
+			try {
+				finishRetrieve();
+			} catch (ResponseFormatException responseFormatException) {
+				error(responseFormatException.getMessage());
+				responseFormatException.printStackTrace();
+			} catch (ResponseErrorException responseErrorException) {
+				error(responseErrorException.getMessage());
+				responseErrorException.printStackTrace();
+			}
 	}
 
 	private void startLaunch() throws FileNotFoundException, IOException {
@@ -465,7 +478,7 @@ public class PeakInvestigatorTask
 		progressMonitor.setMillisToPopup(0);
 		progressMonitor.setMillisToDecideToPopup(0);
 		progressMonitor.setNote("Sending scans to PeakInvestigator service.");
-		
+
 		try {
 			tarfile.close();
 		} catch (IOException e) {
@@ -475,13 +488,13 @@ public class PeakInvestigatorTask
 		progressMonitor.setProgress(1);
 
 		uploadFileToServer(workingFile);
-		
+
 		if (progressMonitor.isCanceled()) {
 		    progressMonitor.close();
 		    logger.info("Job, " + jobID + ", canceled");
 		    return;
 		}
-		
+
 		progressMonitor.setProgress(2);
 
 		//####################################################################
@@ -610,6 +623,19 @@ public class PeakInvestigatorTask
 		desc = "results downloaded";
 	}
 
+	/**
+	 * Function to download file from Veritomyx servers. Calls the public API
+	 * for SFTP credentials.
+	 * 
+	 * @param remoteFile
+	 *            A file object representing the file to be downloaded from the
+	 *            remote server.
+	 * @param localFile
+	 *            A file object representing the file once downloaded to local
+	 *            disk.
+	 * @throws ResponseFormatException
+	 * @throws ResponseErrorException
+	 */
 	protected void downloadFileFromServer(File remoteFile, File localFile)
 			throws ResponseFormatException, ResponseErrorException {
 
@@ -690,11 +716,8 @@ public class PeakInvestigatorTask
 	 */
 	private DataPoint[] processScanRetrieve(int scan_num)
 	{
-		if (errors > 0)
-			return null;
-
 		desc = "parsing scan " + scan_num;
-		List<DataPoint> mzPeaks = null;
+		List<DataPoint> mzPeaks = new ArrayList<DataPoint>();;
 
 		// read in the peaks for this scan
 		// convert filename to expected peak file name
@@ -707,17 +730,20 @@ public class PeakInvestigatorTask
 			centfile.deleteOnExit();
 
 			FileChecksum fchksum = new FileChecksum(centfile);
-			fchksum.verify(false);
+
 // TODO: handle checksums
-//			if (!fchksum.verify(false))
-//				throw new IOException("Invalid checksum");
-	
+			if (!fchksum.verify(false)) {
+				error("File has invalid checksum: " + basename);
+				return new DataPoint[0];
+			}
+
 			List<String> lines = fchksum.getFileStrings();
-			mzPeaks = new ArrayList<DataPoint>();
 			for (String line:lines)
 			{
-				if (line.startsWith("#") || line.isEmpty())	// skip comment lines
+				// skip comment or blank lines
+				if (line.startsWith("#") || line.isEmpty()) {
 					continue;
+				}
 	
 				Scanner sc = new Scanner(line);
 				double mz  = sc.nextDouble();
@@ -726,22 +752,27 @@ public class PeakInvestigatorTask
 				sc.close();
 			}
 
-		}
-		catch (FileNotFoundException e) { /* expect some scans might not be included in original processing */ }
-		catch (Exception e)
-		{
-			logger.finest(e.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot parse peaks file, " + pfilename + " (" + e.getMessage() + ")", logger);
+		} catch (FileNotFoundException e) {
+			error(e.getMessage());
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			error(e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			error(e.getMessage());
+			e.printStackTrace();
 		}
 
 		desc = "scan " + scan_num + " parsed";
-		return (mzPeaks == null) ? null : mzPeaks.toArray(new DataPoint[mzPeaks.size()]);
+		return mzPeaks.toArray(new DataPoint[mzPeaks.size()]);
 	}
 
 	/**
 	 * Finish the retrieval process
+	 * @throws ResponseErrorException 
+	 * @throws ResponseFormatException 
 	 */
-	private void finishRetrieve()
+	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException
 	{
 		if (errors > 0)
 			return;
@@ -749,22 +780,44 @@ public class PeakInvestigatorTask
 		desc = "finishing retrieve";
 		logger.info("Finishing retrieval of job " + jobID);
 
+		File remoteFile = new File(statusAction.getLogFilename());
+		File logFile = new File(getFilenameWithPath(remoteFile.getName()));
+		downloadFileFromServer(remoteFile, logFile);
+
+		String mesg = "PeakInvestigator results successfully downloaded.\n"
+				+ "All your job files will now be deleted from the Veritomyx servers.\n"
+				+ "Remember to save your project before closing MZmine.";
+		message(mesg);
+
+		desc = "retrieve finished";
+
 		if (System.getProperty("PeakInvestigatorTask.deleteJob")
 				.equals("false")) {
 			logger.info("Job " + jobID + " not being deleted as requested.");
 			return;
 		}
 
-		// read the job log tar file and extract all the peak list files
-//		progressMonitor.setNote("Reading log, " + remoteFile.getName() + ", from SFTP drop...");
-//		logger.info("Reading log, " + remoteFilename + ", from SFTP drop...");
-
-		vtmx.getPageDone();
+		deleteJob(jobID);
 		rawDataFile.removeJob(jobID);
-		desc = "retrieve finished";
-		MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "PeakInvestigator results successfully downloaded.\n" + 
-											"All your job files will now be deleted from the Veritomyx servers.\n" +
-											"Remember to save your project before closing MZminePI.", logger);
+	}
+
+	protected void deleteJob(String jobID) throws ResponseFormatException,
+			ResponseErrorException {
+
+		DeleteAction action = new DeleteAction(
+				PeakInvestigatorSaaS.API_VERSION, username, password, jobID);
+		String response = vtmx.executeAction(action);
+		action.processResponse(response);
+
+		if (!action.isReady("DELETE")) {
+			throw new IllegalStateException("Problem with DELETE call.");
+		}
+
+		if (action.hasError()) {
+			throw new ResponseErrorException(action.getErrorMessage());
+		}
+
+		logger.info("Job " + jobID + " deleted from server");
 	}
 
 	protected void displayJobLog(File localFile) {
