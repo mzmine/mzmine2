@@ -146,9 +146,9 @@ public class PeakInvestigatorTask
 		return this;
 	}
 
-	public void initialize(String versionOfPi, int scanCount, int[] massRange,
+	public void initializeSubmit(String versionOfPi, int scanCount, int[] massRange,
 			String target) throws ResponseFormatException,
-			IllegalStateException {
+			ResponseErrorException, IllegalStateException {
 
 		this.launch = true;
 		this.targetName = target;
@@ -164,14 +164,13 @@ public class PeakInvestigatorTask
 				.withMassRange(massRange[0], massRange[1]);
 		String response = vtmx.executeAction(initAction);
 		initAction.processResponse(response);
-		
-		// TODO : handle error
+
 		if(!initAction.isReady("INIT")) {
-			throw new IllegalStateException("Problem initializing job.");
+			throw new IllegalStateException("Problem initializing submit job.");
 		}
 
 		if (initAction.hasError()) {
-			error(initAction.getErrorMessage());
+			throw new ResponseErrorException(initAction.getErrorMessage());
 		}
 
 		InitDialog dialog = dialogFactory.createInitDialog(versionOfPi, initAction);
@@ -179,21 +178,22 @@ public class PeakInvestigatorTask
 		if(dialog.getExitCode() != ExitCode.OK) {
 			return;
 		}
-		
+
 		jobID = initAction.getJob();
 		selectedRTO = dialog.getSelectedRTO();
 
-		Path tempPath = null;
 		try {
-			tempPath = Files.createTempDirectory(jobID + "-");
+			initializeTemporaryStorage(jobID);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			MZmineCore.getDesktop().displayErrorMessage(
-					MZmineCore.getDesktop().getMainWindow(), "Error",
-					"Unable to create temporary diretory.", logger);
-			jobID = "";
+			error("Unable to create temporary diretory.");
+			jobID = null;
 			return;
 		}
+	}
+
+	private void initializeTemporaryStorage(String jobID) throws IOException {
+		Path tempPath = null;
+		tempPath = Files.createTempDirectory(jobID + "-");
 
 		workingDirectory = new File(tempPath.toString());
 		workingDirectory.deleteOnExit();

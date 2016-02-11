@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
@@ -29,12 +30,12 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitializeOk() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
 				new EmptyOkDialogFactory());
-		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
+		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
 		assertEquals("V-504.1461", task.getName());
 	}
@@ -45,12 +46,12 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitializeCancel() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
 				new EmptyCancelDialogFactory());
-		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
+		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
 		assertEquals(null, task.getName());
 	}
@@ -60,10 +61,10 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE)
 				.usingDialogFactory(new EmptyOkDialogFactory());
-		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
+		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
 		fail("Should not reach here.");
 	}
@@ -71,9 +72,9 @@ public class PeakInvestigatorTaskInitTest {
 	/**
 	 * Test PeakInvestigatorTask.initialize() with real ERROR response.
 	 */
-	@Test
+	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException {
+			ResponseFormatException, ResponseErrorException {
 
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
 		String response = BaseAction.ERROR_CREDENTIALS
@@ -81,13 +82,9 @@ public class PeakInvestigatorTaskInitTest {
 
 		PeakInvestigatorTask task = createDefaultTask(response)
 				.usingDialogFactory(factory);
-		task.initialize("1.2", 2, new int[] { 50, 500 }, "job-blah");
+		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
-		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((EmptyOkDialogFactory) factory)
-				.getDialog();
-		assertEquals("Invalid username or password - can not validate",
-				dialog.getErrorMessage());
-		assertEquals(null, task.getName());
+		fail("Should not reach here.");
 	}
 
 	/**

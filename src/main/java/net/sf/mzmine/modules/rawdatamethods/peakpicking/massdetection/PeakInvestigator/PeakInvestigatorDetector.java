@@ -34,6 +34,7 @@ import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.desktop.preferences.MZminePreferences;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.parameters.ParameterSet;
 
 public class PeakInvestigatorDetector implements MassDetector
@@ -136,10 +137,10 @@ public class PeakInvestigatorDetector implements MassDetector
 			logger.info(String.format(
 					"Starting analysis on mass range %d - %d.", massRange[0],
 					massRange[1]));
-			job.initialize(selectedPiVersion, scanCount,
+			job.initializeSubmit(selectedPiVersion, scanCount,
 					parameters.getMassRange(), filterTargetName(name));
 
-		} catch (IllegalStateException | ResponseFormatException e) {
+		} catch (IllegalStateException | ResponseFormatException | ResponseErrorException e) {
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
