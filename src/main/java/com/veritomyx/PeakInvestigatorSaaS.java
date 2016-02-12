@@ -23,42 +23,27 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Date;
 
-import net.sf.mzmine.datamodel.RawDataFile;
-import net.sf.mzmine.datamodel.Scan;
-import net.sf.mzmine.desktop.preferences.MZminePreferences;
-import net.sf.mzmine.main.MZmineCore;
-import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
-import net.sf.mzmine.util.ExitCode;
 import net.sf.opensftp.SftpException;
 import net.sf.opensftp.SftpResult;
 import net.sf.opensftp.SftpSession;
 import net.sf.opensftp.SftpUtil;
 import net.sf.opensftp.SftpUtilFactory;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import javax.swing.JOptionPane;
-
-import org.json.simple.parser.ParseException;
-
-import java.util.Map;
-
 import com.veritomyx.actions.*;
-import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
 /**
  * This class is used to access the Veritomyx SaaS servers
  * 
- * @author dschmidt
+ * @author Dan Schmidt
+ * @author Adam Tenderholt
  */
 public class PeakInvestigatorSaaS
 {
@@ -67,8 +52,6 @@ public class PeakInvestigatorSaaS
 	private static final String PAGE_ENCODING = "UTF-8";
 
 	private String server = null;
-
-	enum Action { PI_VERSIONS, INIT, SFTP, PREP, RUN, STATUS, DELETE }; 
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -101,37 +84,9 @@ public class PeakInvestigatorSaaS
 	public  static final int W_ERROR_NUM_SCAN_FILES = -21;
 	public  static final int W_ERROR_CANNOT_BE_BLACK = -22;
 
-	// page actions
-	private static final String dateFormating = "yyyy-MM-dd kk:mm:ss";
-
 	private Logger log;
-	private String username;
-	private String password;
-	private int    aid;
-	private String jobID;				// name of the job and the scans tar file
-	private Double funds;
-	private Map<String, ResponseTimeCosts> SLAs = null;
-	private String[] PIversions;
-	private String   SLA_key;
-	private String   PIversion;
 
 	private SftpUtil  sftp;
-	
-	public  enum 	prep_status_type {PREP_ANALYZING, PREP_READY, PREP_ERROR };
-	private prep_status_type prep_status;
-	private int  	prep_scan_count;
-	private String 	prep_ms_type;
- 
-	private int 	s_scansInput;
-	private int 	s_scansComplete;
-	private double 	s_actualCost;
-	private String 	s_jobLogFile;
-	private String  s_resultsFile;
-	
-	private Date    event_date;
-	
-	private int    web_result;
-	private String web_str;
 
 	/**
 	 * Constructor
@@ -151,118 +106,9 @@ public class PeakInvestigatorSaaS
 		
 		log        = Logger.getLogger(this.getClass().getName());
 		log.info(this.getClass().getName());
-		jobID      = null;
 
 		sftp       = SftpUtilFactory.getSftpUtil();
-		web_result = W_UNDEFINED;
-		web_str    = null;
-		funds 	   = null;
-		PIversions = null;
-		SLA_key	   = null;
-		PIversion  = null;
-		
-		prep_status     = prep_status_type.PREP_ANALYZING; // TODO : unncessary?
-		prep_scan_count = 0;
-		prep_ms_type    = null;
 	}
-
-	/**
-	 * Define the JobID
-	 *  
-	 * @param email
-	 * @param passwd
-	 * @param account
-	 * @param existingJobName
-	 * @param scanCount
-	 * @return
-	 */
-//	public int init(String email, String passwd, int account, String existingJobName, int scanCount, int minMass, int maxMass)
-//	{
-//		jobID    = null;	// if jobID is set, this is a valid job
-//		username = email;
-//		password = passwd;
-//		aid      = account;
-//		boolean pickup = (existingJobName != null);
-//
-//		// make sure we have access to the Veritomyx Server
-//		// this also gets the job_id and SFTP credentials
-//		if (!pickup)
-//		{
-//			if (getPage(Action.INIT, scanCount, minMass, maxMass) != W_INFO)
-//				return web_result;
-//			// Ask user which SLA and PIversion
-//			PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(MZmineCore
-//                    .getDesktop().getMainWindow(), funds,
-//	                SLAs, PIversions);
-//	        dialog.setVisible(true);
-//			if(dialog.getExitCode() == ExitCode.OK) 
-//			{
-//				SLA_key = dialog.getSLA();
-//				PIversion = dialog.getPIversion();
-//			} else {
-//				return web_result;
-//			}
-//
-//			if (getPage(Action.SFTP, 0) != W_INFO)
-//				return web_result;
-//			if (getPage(Action.PREP, 0) != W_INFO)
-//				return web_result;
-//			if (jobID != null)	// we have a valid job
-//			{
-//				sftp = SftpUtilFactory.getSftpUtil();
-//				SftpSession session = openSession();	// open to verify we can
-//				if (session == null)
-//				{
-//					jobID      = null;
-//					web_str    = "SFTP access not available";
-//					web_result = W_ERROR_SFTP;
-//					return web_result;
-//				}
-//				closeSession(session);
-//			}
-//		}
-//		else
-//		{
-//			// check this job STATUS
-//			jobID = existingJobName;
-//			web_result = getPageStatus();
-//			if (web_result == W_RUNNING) {
-////				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Warning", "Remote job not complete. Please try again later.", log);
-//			} else if (web_result == W_DONE) {
-////				MZmineCore.getDesktop().displayMessage(MZmineCore.getDesktop().getMainWindow(), "Completed", "Remote job complete." + web_str, log);
-//			} else {
-//				jobID = null;
-//				return web_result;
-//			}
-//		}
-//
-//		return web_result;
-//	}
-
-	/**
-	 * Provide access to some private data
-	 * 
-	 * @return
-	 */
-	public String getJobID()            { return jobID; }
-	public int    getPageStatus()       { return getPage(Action.STATUS,     0); }
-	public int    getPageRun(int count) { return getPage(Action.RUN,    count); }
-	public int	  getPagePrep(int count){ return getPage(Action.PREP, 	 count); }
-	public int    getPageDone()         { return getPage(Action.DELETE,       0); }
-	public int	  getPageSftp()			{ return getPage(Action.SFTP, 		 0); }
-	public String getPageStr()          { return web_str; }
-	public int	  getPage(Action action, int count) { return getPage(action, count, 0, Integer.MAX_VALUE); }
-	
-	public prep_status_type getPrepStatus() { return prep_status; }
-	
-	public Double	getFunds()				{ return funds; }
-	public Map<String, ResponseTimeCosts> getSLAs()	{ return SLAs; }
-	public String[] getPIversions()			{ return PIversions; }
-	public String   getResultsFilename()	{ return s_resultsFile; }
-	public String   getJobLogFilename()		{ return s_jobLogFile; }
-	
-	public  int 	getScansInput() { return s_scansInput; }
-	public  int 	getScansComplete() { return s_scansComplete; }
 
 	private void error(String message) {
 		System.err.println(message);
@@ -340,247 +186,6 @@ public class PeakInvestigatorSaaS
 		
 		return queryConnection(connection, action.buildQuery());
 	}
-	/**
-	 * Get the first line of a web page from the Veritomyx server
-	 * Puts first line of results into web_results String
-	 * 
-	 * @param action
-	 * @param count
-	 * @return int
-	 */
-	private int getPage(Action action, int count, int minMass, int maxMass)
-	{
-
-		BufferedReader    in = null;
-		HttpURLConnection uc = null;
-		String page = null;
-		try {
-			// build the URL with parameters
-
-			String host = MZmineCore.getConfiguration().getPreferences()
-					.getParameter(MZminePreferences.vtmxServer).getValue();
-			if (host.startsWith("https://")) {
-				host = host.substring(8);
-			}
-			page = "https://" + host + "/api/";
-			
-			MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-			String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-			String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-
-			BaseAction actionObject = null;
-			switch (action) {
-			case PI_VERSIONS:
-				actionObject = new PiVersionsAction(API_VERSION,
-						username, password);
-				break;
-			case INIT:
-				break;
-			case SFTP:
-				actionObject = new SftpAction(API_VERSION, username, password, aid);
-				break;
-			case PREP:
-				actionObject = new PrepAction(API_VERSION, username,
-						password, aid, null);
-				break;
-			case RUN:
-				// TODO: calibration when available
-				actionObject = new RunAction(API_VERSION, username,
-						password, jobID, SLA_key, null, null);
-				break;
-			case STATUS:
-				actionObject = new StatusAction(API_VERSION,
-						username, password, jobID);
-				break;
-			case DELETE:
-				actionObject = new DeleteAction(API_VERSION,
-						username, password, jobID);
-				break;
-			default:
-				web_result = W_ERROR_ACTION;
-				web_str = "Invalid action";
-				return web_result;
-			}
-
-			web_result = W_UNDEFINED;
-			web_str = "";
-
-// TODO: remove when refactor code works
-//			if ((action == JOB_INIT) && (jobID == null))	// new job request
-//			{
-//				// Check the MaxMass to ensure it is not bigger than the size of the maximum datapoints in the job.
-//				Integer maxMasses = 0;
-//				
-//				RawDataFile[] files = MZmineCore.getProjectManager().getCurrentProject().getDataFiles();
-//				for(RawDataFile file : files) {
-//					int[] scanNumbers = file.getScanNumbers();
-//					for(int scanNum : scanNumbers) {
-//						Scan scan = file.getScan(scanNum);
-//						int dpCount = scan.getNumberOfDataPoints();
-//						maxMasses = Math.max(maxMasses.intValue(), dpCount);
-//					}
-//				}
-//				if(maxMass > maxMasses) {
-//					maxMass = maxMasses;
-//				}
-//
-//			}
-
-			log.debug(page);
-
-			String query = actionObject.buildQuery();
-			log.debug(query);
-
-			URL url = new URL(page);
-			uc = (HttpURLConnection)url.openConnection();
-			uc.setUseCaches(false);
-			uc.setRequestMethod("POST");
-			uc.setRequestProperty("Content-Type", 
-			           "application/x-www-form-urlencoded");
-			uc.setRequestProperty("Content-Length", "" + 
-			               Integer.toString(query.getBytes().length));
-			uc.setRequestProperty("Content-Language", "en-US");  
-			uc.setReadTimeout(240 * 1000);	// give it 4 minutes to respond
-			System.setProperty("java.net.preferIPv4Stack", "true");	// without this we get exception in getInputStream
-			uc.setDoInput(true);
-			uc.setDoOutput(true);
-			
-			//Send request
-			OutputStream os = uc.getOutputStream();
-			BufferedWriter writer = new BufferedWriter(
-			        new OutputStreamWriter(os, "UTF-8"));
-			writer.write(query);
-			writer.flush();
-			writer.close();
-			os.close();
-			
-			uc.connect();
-
-			// Read the response from the HTTP server
-			in = new BufferedReader(new InputStreamReader(uc.getInputStream()));
-			String line;
-			StringBuilder builder = new StringBuilder();
-			while ((line = in.readLine()) != null)
-			{
-				builder.append(line);
-			}
-
-			String decodedString = builder.toString();
-
-			log.debug(decodedString);
-			try {
-				actionObject.processResponse(decodedString);
-			} catch (Exception e) {
-				log.error(e);
-				if (e instanceof ParseException) {
-					log.error("JSON Parse Error at position: "
-							+ ((ParseException) e).getPosition());
-				}
-
-				JOptionPane
-						.showMessageDialog(
-								MZmineCore.getDesktop().getMainWindow(),
-								"The response from Peak Investigator Saas was not understood.",
-								MZmineCore.MZmineName,
-								JOptionPane.ERROR_MESSAGE);
-				web_str = decodedString;
-				return (web_result = W_ERROR);
-			}		
-			
-			if (web_result == W_UNDEFINED) {
-
-				if (!actionObject.hasError()) {
-
-					if (actionObject instanceof InitAction) {
-						web_result = W_INFO;
-
-						InitAction temp = (InitAction) actionObject;
-						jobID = temp.getJob();
-						funds = temp.getFunds();
-					} else if (actionObject instanceof SftpAction) {
-						web_result = W_SFTP;
-
-						SftpAction temp = (SftpAction) actionObject;
-
-					} else if (actionObject instanceof PrepAction) {
-						web_result = W_PREP;
-
-						PrepAction temp = (PrepAction) actionObject;
-						switch (temp.getStatus()) {
-						case Ready:
-							prep_status = prep_status_type.PREP_READY;
-							prep_ms_type = temp.getMStype();
-							prep_scan_count = temp.getScanCount();
-							if (prep_scan_count != count) {
-								// TODO Need to check the return value and
-								// process
-								String mesg = "Peak Investigator Saas returned a Scan Count that does not match "
-										+ "the Scan Count determined by MZMine.  Do you want to continue "
-										+ "submitting the job?";
-								JOptionPane.showMessageDialog(MZmineCore
-										.getDesktop().getMainWindow(), mesg,
-										MZmineCore.MZmineName,
-										JOptionPane.QUESTION_MESSAGE);
-							}
-							break;
-						case Analyzing:
-							prep_status = prep_status_type.PREP_ANALYZING;
-							break;
-						default:
-							String mesg = "Peak Investigator Saas returned an error in the PREP phase.";
-							JOptionPane.showMessageDialog(MZmineCore
-									.getDesktop().getMainWindow(), mesg,
-									MZmineCore.MZmineName,
-									JOptionPane.ERROR_MESSAGE);
-						}
-					} else if (actionObject instanceof StatusAction) {
-						web_result = W_RUNNING;
-
-						StatusAction temp = (StatusAction) actionObject;
-						event_date = temp.getDate();
-						switch (temp.getStatus()) {
-						case Done:
-							web_result = W_DONE;
-							s_scansInput = temp.getNumberOfInputScans();
-							s_scansComplete = temp.getNumberOfCompleteScans();
-							s_actualCost = temp.getActualCost();
-							s_jobLogFile = temp.getLogFilename();
-							s_resultsFile = temp.getResultsFilename();
-							web_str += "\nScans Input: " + s_scansInput
-									+ "\nScans Completed: " + s_scansComplete
-									+ "\nActual Cost:  " + s_actualCost
-									+ "\nJob Log File: " + s_jobLogFile
-									+ "\nResults File: " + s_resultsFile;
-							break;
-						case Running:
-							break;
-						default:
-							break;
-						}
-					} else if (actionObject instanceof RunAction) {
-						web_result = W_RUNNING;
-					} else if (actionObject instanceof DeleteAction) {
-						web_result = W_DONE;
-						event_date = ((DeleteAction) actionObject).getDate();
-					} else {
-						long err = actionObject.getErrorCode(); // "Error":#
-						web_result = -(int) err;
-						web_str = actionObject.getErrorMessage();
-					}
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			log.error(e.getMessage());
-			web_result = W_EXCEPTION;
-			web_str    = "Web exception - Unable to connect to server:\n" + page;
-		}
-		try { in.close();      } catch (Exception e) { }
-		try { uc.disconnect(); } catch (Exception e) { }
-		log.debug("Web results: [" + web_result + "] '" + web_str + "'");
-		return web_result;
-	}
 
 	/**
 	 * Open the SFTP session
@@ -597,8 +202,6 @@ public class PeakInvestigatorSaaS
 					SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
 		} catch (SftpException e) {
 			session = null;
-			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot connect to SFTP server " + action.getSftpUsername() + "@" + action.getHost();
 			return null;
 		}
 		String directory = action.getDirectory();
@@ -606,10 +209,8 @@ public class PeakInvestigatorSaaS
 		if (!result.getSuccessFlag())
 		{
 			result = sftp.mkdir(session, directory);
-			if (!result.getSuccessFlag())
+			if (!result.getSuccessFlag()) // TODO : handle error
 			{
-				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot create remote directory, " + directory;
 				return null;
 			}
 			sftp.chmod(session, 0770, directory);
@@ -653,8 +254,6 @@ public class PeakInvestigatorSaaS
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
-			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot write file: " + tempFilename;
 			return false;
 		}
 		else
@@ -664,8 +263,6 @@ public class PeakInvestigatorSaaS
 			if (!result.getSuccessFlag())
 			{
 				closeSession(session);
-				web_result = W_ERROR_SFTP;
-				web_str    = "Cannot rename file: " + tempFilename;
 				return false;
 			}
 		}
@@ -689,21 +286,11 @@ public class PeakInvestigatorSaaS
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
-			web_result = W_ERROR_SFTP;
-			web_str    = "Cannot read file: " + remoteFilename;
 			return false;
 		}
 
 		closeSession(session);
 		return true;
 	}
-	
-	public int deleteJob(String email, String passwd, int account, String existingJobName) {
-		if(existingJobName == null) return W_ERROR_JOB_NOT_FOUND;
-		username = email;
-		password = passwd;
-		aid      = account;
-		jobID = existingJobName;
-		return getPageDone();
-	}
+
 }
