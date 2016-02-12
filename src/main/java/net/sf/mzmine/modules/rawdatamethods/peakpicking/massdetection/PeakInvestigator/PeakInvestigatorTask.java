@@ -739,7 +739,7 @@ public class PeakInvestigatorTask
 				+ "Remember to save your project before closing MZmine.";
 		message(mesg);
 
-		rawDataFile.removeJob(jobID);
+		rawDataFile.removeJob("job-" + jobID);
 		desc = "retrieve finished";
 
 		if (System.getProperty("PeakInvestigatorTask.deleteJob")
