@@ -12,7 +12,6 @@ import net.sf.mzmine.project.impl.RawDataFileImpl;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
 import net.sf.mzmine.util.dialogs.HeadlessBasicDialog;
-import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +21,6 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 import com.veritomyx.PeakInvestigatorSaaS;
-import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.StatusAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;

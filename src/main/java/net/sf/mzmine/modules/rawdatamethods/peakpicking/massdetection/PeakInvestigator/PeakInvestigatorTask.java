@@ -57,7 +57,6 @@ import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
-import net.sf.mzmine.datamodel.impl.RemoteJob.Status;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
@@ -113,7 +112,6 @@ public class PeakInvestigatorTask
 	private StatusAction statusAction = null;
 
 	private String          desc;
-	private int             scanCnt;		// number of scans
 
 	// temporary storage
 	private File workingDirectory;
@@ -356,7 +354,6 @@ public class PeakInvestigatorTask
 	private void startLaunch() throws FileNotFoundException, IOException {
 		desc = "starting launch";
 		logger.info("Preparing to launch new job, " + jobID);
-		scanCnt = 0;
 
 		FileOutputStream stream = new FileOutputStream(workingFile);
 		tarfile = new TarOutputStream(new BufferedOutputStream(
@@ -393,7 +390,6 @@ public class PeakInvestigatorTask
 			origin.close();
 			f.delete();			// remove the local copy of the scan file
 			tarfile.flush();
-			scanCnt += 1;		// count this scan
 		} catch (IOException e) {
 			logger.finest(e.getMessage());
 			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Cannot write to scans bundle file", logger);
@@ -559,7 +555,6 @@ public class PeakInvestigatorTask
 	{
 		errors = 0;
 		desc = "checking for results";
-		int status;
 		logger.info("Checking previously launched job, " + jobID);
 		
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
@@ -896,6 +891,8 @@ public class PeakInvestigatorTask
 	 * 
 	 */
 	public class ResponseErrorException extends Exception {
+
+		private static final long serialVersionUID = 1L;
 
 		public ResponseErrorException(String message) {
 			super(message);
