@@ -188,34 +188,34 @@ public class PeakInvestigatorSaaS
 	}
 
 	/**
-	 * Open the SFTP session
+	 * Open a SFTP session on remote server.
 	 * 
-	 * @return boolean
+	 * @param SftpAction
+	 *            Action object containing host, port, username, password, and
+	 *            directory to upload files.
+	 * @return The SftpSession
+	 * @throws SftpException
+	 *             When unable to connect via password or cannot enter the
+	 *             directory, even after trying to make it.
 	 */
-	private SftpSession openSession(SftpAction action)
-	{
-		SftpSession session;
-		try {
-			session = sftp.connectByPasswdAuth(action.getHost(),
-					action.getPort(), action.getSftpUsername(),
-					action.getSftpPassword(),
-					SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
-		} catch (SftpException e) {
-			session = null;
-			return null;
-		}
+	protected SftpSession openSession(SftpAction action) throws SftpException {
+		SftpSession session = sftp.connectByPasswdAuth(action.getHost(),
+				action.getPort(), action.getSftpUsername(),
+				action.getSftpPassword(),
+				SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
+
 		String directory = action.getDirectory();
-		SftpResult result = sftp.cd(session, directory);	// cd into the account directory
-		if (!result.getSuccessFlag())
-		{
+		SftpResult result = sftp.cd(session, directory);
+		if (!result.getSuccessFlag()) {
 			result = sftp.mkdir(session, directory);
-			if (!result.getSuccessFlag()) // TODO : handle error
-			{
-				return null;
+			if (!result.getSuccessFlag()) {
+				throw new SftpException(
+						"Unable to enter remote SFTP directory: " + directory);
 			}
 			sftp.chmod(session, 0770, directory);
-			result = sftp.cd(session, directory);		
+			result = sftp.cd(session, directory);
 		}
+
 		return session;
 	}
 
@@ -233,8 +233,9 @@ public class PeakInvestigatorSaaS
 	 * Transfer the given file to SFTP drop
 	 * 
 	 * @param fname
+	 * @throws SftpException 
 	 */
-	public boolean putFile(SftpAction action, File file)
+	public void putFile(SftpAction action, File file) throws SftpException
 	{
 		String filename = file.getName();
 		String tempFilename = filename + ".filepart";
@@ -242,9 +243,8 @@ public class PeakInvestigatorSaaS
 		log.info("Transmit " + action.getSftpUsername() + "@"
 				+ action.getSftpPassword() + ":" + action.getDirectory() + "/"
 				+ filename);
+
 		SftpSession session = openSession(action);
-		if (session == null)
-			return false;
 
 		sftp.cd(session, action.getDirectory());
 		sftp.rm(session, filename);
@@ -254,43 +254,42 @@ public class PeakInvestigatorSaaS
 		if (!result.getSuccessFlag())
 		{
 			closeSession(session);
-			return false;
+			throw new SftpException("Unable to upload file: " + file.toString());
 		}
 		else
 		{
 			result = sftp.rename(session, tempFilename, filename); //rename a remote file
-			sftp.cd(session, "..");
 			if (!result.getSuccessFlag())
 			{
 				closeSession(session);
-				return false;
+				throw new SftpException("Unable to rename temporary file: " + tempFilename);
 			}
 		}
 		closeSession(session);
-		return true;
+
 	}
 
 	/**
 	 * Transfer the given file from SFTP drop
 	 * 
 	 * @param fname
+	 * @throws SftpException 
 	 */
-	public boolean getFile(SftpAction action, String remoteFilename, File localFile)
-	{
-		log.info("Retrieve " + action.getSftpUsername() + "@" + action.getHost() + ":" + remoteFilename);
+	public void getFile(SftpAction action, String remoteFilename, File localFile)
+			throws SftpException {
+		log.info("Retrieve " + action.getSftpUsername() + "@"
+				+ action.getHost() + ":" + remoteFilename);
 		SftpSession session = openSession(action);
-		if (session == null)
-			return false;
 
-		SftpResult result = sftp.get(session, remoteFilename, localFile.toString());
-		if (!result.getSuccessFlag())
-		{
+		SftpResult result = sftp.get(session, remoteFilename,
+				localFile.toString());
+		if (!result.getSuccessFlag()) {
 			closeSession(session);
-			return false;
+			throw new SftpException("Unable to download remote file: "
+					+ remoteFilename);
 		}
 
 		closeSession(session);
-		return true;
 	}
 
 }

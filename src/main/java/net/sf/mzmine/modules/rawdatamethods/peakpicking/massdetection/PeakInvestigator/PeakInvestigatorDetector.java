@@ -38,6 +38,7 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.parameters.ParameterSet;
+import net.sf.opensftp.SftpException;
 
 public class PeakInvestigatorDetector implements MassDetector
 {
@@ -153,7 +154,7 @@ public class PeakInvestigatorDetector implements MassDetector
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
-		} catch (IOException e) {
+		} catch (IOException | SftpException e) {
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;

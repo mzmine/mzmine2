@@ -64,6 +64,7 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
+import net.sf.opensftp.SftpException;
 
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
@@ -291,7 +292,7 @@ public class PeakInvestigatorTask
 	public String getName() { return jobID; }
 
 	public void start() throws FileNotFoundException, ResponseFormatException,
-			ResponseErrorException, IOException {
+			ResponseErrorException, IOException, SftpException {
 
 		logger.finest("PeakInvestigatorTask - start");
 		if (launch) {
@@ -338,6 +339,9 @@ public class PeakInvestigatorTask
 			} catch (ResponseErrorException responseError) {
 				error(responseError.getMessage());
 				responseError.printStackTrace();
+			} catch (SftpException sftpException) {
+				error(sftpException.getMessage());
+				sftpException.printStackTrace();
 			}
 		} else
 			try {
@@ -348,6 +352,9 @@ public class PeakInvestigatorTask
 			} catch (ResponseErrorException responseErrorException) {
 				error(responseErrorException.getMessage());
 				responseErrorException.printStackTrace();
+			} catch (SftpException sftpException) {
+				error(sftpException.getMessage());
+				sftpException.printStackTrace();
 			}
 	}
 
@@ -399,7 +406,7 @@ public class PeakInvestigatorTask
 	}
 
 	protected void uploadFileToServer(File file)
-			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
+			throws ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -464,8 +471,9 @@ public class PeakInvestigatorTask
 
 	/**
 	 * Finish the job launch process and send job to VTMX SaaS server
+	 * @throws SftpException 
 	 */
-	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException, ResponseErrorException
+	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException
 	{
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
@@ -549,8 +557,9 @@ public class PeakInvestigatorTask
 	 * @throws ResponseErrorException 
 	 * @throws ResponseFormatException 
 	 * @throws FileNotFoundException 
+	 * @throws SftpException 
 	 */
-	private void startRetrieve() throws ResponseFormatException, ResponseErrorException, FileNotFoundException
+	private void startRetrieve() throws ResponseFormatException, ResponseErrorException, FileNotFoundException, SftpException
 	{
 		errors = 0;
 		desc = "checking for results";
@@ -629,9 +638,10 @@ public class PeakInvestigatorTask
 	 *            disk.
 	 * @throws ResponseFormatException
 	 * @throws ResponseErrorException
+	 * @throws SftpException 
 	 */
 	protected void downloadFileFromServer(File remoteFile, File localFile)
-			throws ResponseFormatException, ResponseErrorException {
+			throws ResponseFormatException, ResponseErrorException, SftpException {
 
 		logger.info("Receive file, " + remoteFile.getName()
 				+ ", from SFTP server...");
@@ -765,8 +775,9 @@ public class PeakInvestigatorTask
 	 * Finish the retrieval process
 	 * @throws ResponseErrorException 
 	 * @throws ResponseFormatException 
+	 * @throws SftpException 
 	 */
-	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException
+	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException, SftpException
 	{
 		if (errors > 0)
 			return;

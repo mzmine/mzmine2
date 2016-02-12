@@ -3,8 +3,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.io.File;
 
@@ -13,6 +12,7 @@ import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
+import net.sf.opensftp.SftpException;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,7 +30,7 @@ public class PeakInvestigatorTaskSftpTest {
 
 	@Test
 	public void testUploadFileToServerOk() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, SftpException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -49,7 +49,7 @@ public class PeakInvestigatorTaskSftpTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, SftpException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
@@ -62,7 +62,7 @@ public class PeakInvestigatorTaskSftpTest {
 	 */
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, SftpException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");
@@ -77,11 +77,10 @@ public class PeakInvestigatorTaskSftpTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultTask(String response) {
+	private PeakInvestigatorTask createDefaultTask(String response) throws SftpException {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 
-		when(vtmx.putFile(actionCaptor.capture(), argThat(new IsFile())))
-				.thenReturn(true);
+		doNothing().when(vtmx).putFile(actionCaptor.capture(), argThat(new IsFile()));
 		when(vtmx.executeAction(actionCaptor.capture())).thenReturn(response);
 
 		RawDataFile rawFile = mock(RawDataFileImpl.class);
