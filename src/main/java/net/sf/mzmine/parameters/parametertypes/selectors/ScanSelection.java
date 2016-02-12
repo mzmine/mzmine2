@@ -93,6 +93,10 @@ public class ScanSelection {
     }
 
     public Scan[] getMatchingScans(RawDataFile dataFile) {
+    	return getMatchingScans(dataFile, false);
+    }
+
+    public Scan[] getMatchingScans(RawDataFile dataFile, boolean includeOnlyScansWithMassLists) {
 
         final List<Scan> matchingScans = new ArrayList<>();
 
@@ -101,6 +105,9 @@ public class ScanSelection {
 
             Scan scan = dataFile.getScan(scanNumber);
 
+            if (includeOnlyScansWithMassLists && scan.getMassLists().length == 0)
+            	continue;
+            
             if ((msLevel != null) && (!msLevel.equals(scan.getMSLevel())))
                 continue;
 

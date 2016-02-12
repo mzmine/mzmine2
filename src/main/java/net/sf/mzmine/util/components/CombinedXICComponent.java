@@ -24,6 +24,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -76,7 +77,7 @@ public class CombinedXICComponent extends JComponent {
 	    maxIntensity = Math.max(maxIntensity, peak
 		    .getRawDataPointsIntensityRange().upperEndpoint());
 	    if (rtRange == null)
-		rtRange = peak.getDataFile().getDataRTRange(1);
+		rtRange = peak.getRawDataPointsRTRange();
 	    else
 		rtRange = rtRange.span(peak.getDataFile().getDataRTRange(1));
 	}
@@ -120,7 +121,7 @@ public class CombinedXICComponent extends JComponent {
 	    // painted image
 	    int xValues[] = new int[scanNumbers.length + 2];
 	    int yValues[] = new int[scanNumbers.length + 2];
-
+	    
 	    // find one datapoint with maximum intensity in each scan
 	    for (int i = 0; i < scanNumbers.length; i++) {
 

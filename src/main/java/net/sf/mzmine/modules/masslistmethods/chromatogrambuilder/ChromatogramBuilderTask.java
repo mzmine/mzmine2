@@ -121,7 +121,7 @@ public class ChromatogramBuilderTask extends AbstractTask {
 
         logger.info("Started chromatogram builder on " + dataFile);
 
-        scans = scanSelection.getMatchingScans(dataFile);
+        scans = scanSelection.getMatchingScans(dataFile, true);
         int allScanNumbers[] = scanSelection.getMatchingScanNumbers(dataFile);
         totalScans = scans.length;
 
