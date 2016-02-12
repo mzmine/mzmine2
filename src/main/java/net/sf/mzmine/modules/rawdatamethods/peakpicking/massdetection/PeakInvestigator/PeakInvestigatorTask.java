@@ -542,7 +542,7 @@ public class PeakInvestigatorTask
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
 
-		rawDataFile.addJob("job-" + jobID, rawDataFile, targetName, vtmx);	// record this job start
+		rawDataFile.addJob("job-" + jobID, rawDataFile, targetName);	// record this job start
 		logger.finest(vtmx.getPageStr());
 
 		desc = "launch finished";

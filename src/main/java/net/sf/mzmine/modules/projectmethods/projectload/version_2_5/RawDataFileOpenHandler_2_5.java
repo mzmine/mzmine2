@@ -162,7 +162,7 @@ public class RawDataFileOpenHandler_2_5 extends DefaultHandler
             String targetName = attrs
                     .getValue(RawDataElementName_2_5.JOB_TARGET_NAME
                             .getElementName());
-            newRawDataFile.addJob(jobName, newRawDataFile, targetName, null);
+            newRawDataFile.addJob(jobName, newRawDataFile, targetName);
         }
     }
 

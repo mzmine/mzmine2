@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
-import com.veritomyx.PeakInvestigatorSaaS;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.RawDataFileWriter;
@@ -418,9 +417,9 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
     /**
      * Add a remote job descriptor to the data file
      */
-    public synchronized void addJob(String name, RawDataFile raw, String targetName, PeakInvestigatorSaaS vtmx)
+    public synchronized void addJob(String name, RawDataFile raw, String targetName)
     {
-    	RemoteJob job = new RemoteJob(name, raw, targetName, vtmx);
+		RemoteJob job = new RemoteJob(name, raw, targetName);
     	this.jobs_info.add(job);
     	MZmineCore.getProjectManager().getCurrentProject().addJob(job);
     }

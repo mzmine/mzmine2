@@ -108,8 +108,6 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         jobPopupMenu = new JPopupMenu();
         GUIUtils.addMenuItem(jobPopupMenu, "Retrieve job results", this,
                 "RETRIEVE_JOB");
-        GUIUtils.addMenuItem(jobPopupMenu,
-                "Remove job without picking up results", this, "REMOVE_JOB");
 
         scanPopupMenu = new JPopupMenu();
 
@@ -247,21 +245,6 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         if (command.equals("RETRIEVE_JOB")) {
             for (RemoteJob job : getObjList(RemoteJob.class))
                 startJob(job.getRawDataFile(), job);
-        }
-
-        if (command.equals("REMOVE_JOB")) {
-            for (RemoteJob job : getObjList(RemoteJob.class)) {
-                int selectedValue = JOptionPane.showConfirmDialog(
-                        MZmineCore.getDesktop().getMainWindow(),
-                        "Unretrieved results will be lost.\n"
-                                + "Are you sure you want to delete "
-                                + job.getJobID() + "?", "Remove Job",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (selectedValue == 0) // yes response
-                	job.deleteJob();
-                    job.getRawDataFile().removeJob(job.getJobID());
-                
-            }
         }
 
         // Actions for scans

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Veritomyx Inc.
+ * Copyright 2013-2016 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -19,16 +19,7 @@
 
 package net.sf.mzmine.datamodel.impl;
 
-import java.util.logging.Logger;
-
-import com.veritomyx.PeakInvestigatorSaaS;
-
 import net.sf.mzmine.datamodel.RemoteJobInfo;
-import net.sf.mzmine.desktop.preferences.MZminePreferences;
-import net.sf.mzmine.main.MZmineCore;
-import net.sf.mzmine.util.dialogs.DefaultDialogFactory;
-import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
-import net.sf.mzmine.util.dialogs.interfaces.DialogFactory;
 import net.sf.mzmine.datamodel.RawDataFile;
 
 /**
@@ -38,30 +29,15 @@ public class RemoteJob implements RemoteJobInfo
 {
 	public enum Status { ERROR, RUNNING, DONE, DELETED };
 
-	private DialogFactory dialogFactory = new DefaultDialogFactory();
-	private Logger logger;
-
 	private String        jobID;
 	private RawDataFile   rawDataFile;
 	private String        futureMassList;
-	private PeakInvestigatorSaaS vtmx;
 	
-	public RemoteJob(String jobID, RawDataFile raw, String futureMassList, PeakInvestigatorSaaS vtmxConn)
+	public RemoteJob(String jobID, RawDataFile raw, String futureMassList)
 	{
-		logger = Logger.getLogger(this.getClass().getName());
-
 		this.jobID       = jobID;
 		this.rawDataFile = raw;
 		this.futureMassList  = futureMassList;
-//		if (vtmx != null)
-			vtmx = vtmxConn;
-//		else
-//			this.vtmx = new VeritomyxSaaS(username, password, pid, name);
-	}
-
-	protected RemoteJob setDialogFactory(DialogFactory dialogFactory) {
-		this.dialogFactory = dialogFactory;
-		return this;
 	}
 
 	public String getJobID() {
@@ -111,24 +87,6 @@ public class RemoteJob implements RemoteJobInfo
 
 	public String getFutureMassList() {
 		return futureMassList;
-	}
-
-    public int 			deleteJob() {
-    	MZminePreferences preferences = MZmineCore.getConfiguration().getPreferences();
-		String server = preferences.getParameter(MZminePreferences.vtmxServer).getValue();
-    	String username = preferences.getParameter(MZminePreferences.vtmxUsername).getValue();
-		String password = preferences.getParameter(MZminePreferences.vtmxPassword).getValue();
-		Integer account  = preferences.getParameter(MZminePreferences.vtmxProject).getValue();
-
-    	if(vtmx == null)
-    		vtmx = new PeakInvestigatorSaaS(server);
-
-    	return vtmx.deleteJob(username, password, account, jobID.substring(4));
-    }
-
-	private void error(String message) {
-		BasicDialog dialog = dialogFactory.createDialog();
-		dialog.displayErrorMessage(message, logger);
 	}
 
 }
