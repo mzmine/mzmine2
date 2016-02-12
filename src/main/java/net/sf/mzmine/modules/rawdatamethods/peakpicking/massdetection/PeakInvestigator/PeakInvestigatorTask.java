@@ -131,7 +131,7 @@ public class PeakInvestigatorTask
 	private static final int numSaaSRetrieveSteps = 7;
 
 	public PeakInvestigatorTask(String server, String username,
-			String password, int projectID) {
+			String password, int projectID) throws JSchException {
 
 		this.vtmx = new PeakInvestigatorSaaS(server);
 		this.username = username;

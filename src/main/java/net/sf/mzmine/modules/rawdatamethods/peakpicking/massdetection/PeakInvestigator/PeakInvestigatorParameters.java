@@ -24,6 +24,7 @@ import java.lang.Math;
 import java.util.Arrays;
 import java.util.List;
 
+import com.jcraft.jsch.JSchException;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
@@ -84,7 +85,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		try {
 			action = performPiVersionsCall(MZmineCore.getConfiguration()
 					.getPreferences());
-		} catch (ResponseFormatException e) {
+		} catch (ResponseFormatException | JSchException e) {
 			e.printStackTrace();
 			return ExitCode.ERROR;
 		}
@@ -196,9 +197,10 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 * @return An object containing response from server, or null if credentials
 	 *         are wrong and not corrected by the user.
 	 * @throws ResponseFormatException
+	 * @throws JSchException 
 	 */
 	public static PiVersionsAction performPiVersionsCall(
-			MZminePreferences preferences) throws ResponseFormatException {
+			MZminePreferences preferences) throws ResponseFormatException, JSchException {
 
 		VeritomyxSettings settings = preferences.getVeritomyxSettings();
 		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(

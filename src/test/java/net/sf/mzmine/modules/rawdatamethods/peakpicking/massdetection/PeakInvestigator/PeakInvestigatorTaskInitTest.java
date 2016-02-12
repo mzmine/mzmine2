@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatcher;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
+import com.jcraft.jsch.JSchException;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.StatusAction;
@@ -34,7 +35,7 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitialize_SubmitOk() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
@@ -50,7 +51,7 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitialize_SubmitCancel() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
@@ -65,7 +66,7 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitialize_SubmitResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 		PeakInvestigatorTask task = createDefaultSubmitTask(BaseAction.API_SOURCE)
 				.usingDialogFactory(new EmptyOkDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
@@ -78,7 +79,7 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test(expected = ResponseErrorException.class)
 	public void testInitialize_SubResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
 		String response = BaseAction.ERROR_CREDENTIALS
@@ -95,7 +96,7 @@ public class PeakInvestigatorTaskInitTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultSubmitTask(String response) {
+	private PeakInvestigatorTask createDefaultSubmitTask(String response) throws JSchException {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(argThat(new IsBaseAction()))).thenReturn(
 				response);
@@ -114,7 +115,7 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	private PeakInvestigatorTask createDefaultFetchTask(String response,
-			ArgumentCaptor<StatusAction> action) {
+			ArgumentCaptor<StatusAction> action) throws JSchException {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(action.capture())).thenReturn(response);
 
@@ -129,7 +130,9 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	@Test
-	public void testInitialize_FetchRunning() throws ResponseFormatException, ResponseErrorException {
+	public void testInitialize_FetchRunning() throws ResponseFormatException,
+			ResponseErrorException, JSchException {
+
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
@@ -149,7 +152,9 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	@Test
-	public void testInitialize_FetchDone() throws ResponseFormatException, ResponseErrorException {
+	public void testInitialize_FetchDone() throws ResponseFormatException,
+			ResponseErrorException, JSchException {
+
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
@@ -169,7 +174,9 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	@Test(expected = ResponseErrorException.class)
-	public void testInitialize_FetchError() throws ResponseFormatException, ResponseErrorException {
+	public void testInitialize_FetchError() throws ResponseFormatException,
+			ResponseErrorException, JSchException {
+
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
@@ -184,7 +191,9 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	@Test
-	public void testInitialize_FetchDeleted() throws ResponseFormatException, ResponseErrorException {
+	public void testInitialize_FetchDeleted() throws ResponseFormatException,
+			ResponseErrorException, JSchException {
+
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();

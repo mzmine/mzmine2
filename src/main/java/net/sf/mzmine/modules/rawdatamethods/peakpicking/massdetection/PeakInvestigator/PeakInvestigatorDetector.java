@@ -113,13 +113,14 @@ public class PeakInvestigatorDetector implements MassDetector
 		MZminePreferences preferences = MZmineCore.getConfiguration()
 				.getPreferences();
 		VeritomyxSettings settings = preferences.getVeritomyxSettings();
-
-		PeakInvestigatorTask job = new PeakInvestigatorTask(settings.server,
-				settings.username, settings.password, settings.projectID)
-				.withRawDataFile(raw);
-
 		PeakInvestigatorParameters parameters = (PeakInvestigatorParameters) parameterSet;
+		PeakInvestigatorTask job = null;
+
 		try {
+
+			job = new PeakInvestigatorTask(settings.server,
+					settings.username, settings.password, settings.projectID)
+					.withRawDataFile(raw);
 
 			// not only does this get versions, it validates credentials
 			String selectedPiVersion = selectPiVersion(parameters,
@@ -138,6 +139,10 @@ public class PeakInvestigatorDetector implements MassDetector
 			}
 
 		} catch (IllegalStateException | ResponseFormatException | ResponseErrorException e) {
+			error(e.getMessage());
+			e.printStackTrace();
+			return null;
+		} catch (JSchException e) {
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
@@ -173,7 +178,8 @@ public class PeakInvestigatorDetector implements MassDetector
 	}
 
 	public String selectPiVersion(PeakInvestigatorParameters parameters,
-			MZminePreferences preferences) throws ResponseFormatException {
+			MZminePreferences preferences) throws ResponseFormatException,
+			JSchException {
 
 		String selectedPiVersion = parameters.getPiVersion();
 

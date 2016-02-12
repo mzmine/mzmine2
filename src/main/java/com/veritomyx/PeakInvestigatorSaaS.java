@@ -57,7 +57,7 @@ public class PeakInvestigatorSaaS
 	private static final String PAGE_ENCODING = "UTF-8";
 
 	private String server = null;
-	JSch temp = new JSch();
+	JSch jsch = new JSch();
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -97,9 +97,9 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param reqVersion
 	 * @param live
+	 * @throws JSchException 
 	 */
-	public PeakInvestigatorSaaS(String server)
-	{
+	public PeakInvestigatorSaaS(String server) throws JSchException {
 		// without this we get exception in getInputStream
 		System.setProperty("java.net.preferIPv4Stack", "true");
 		if (server.startsWith("https://")) {
@@ -107,9 +107,21 @@ public class PeakInvestigatorSaaS
 		} else {
 			this.server = server;
 		}
-		
-		log        = Logger.getLogger(this.getClass().getName());
+
+		log = Logger.getLogger(this.getClass().getName());
 		log.info(this.getClass().getName());
+
+		setupHostKeyRepository();
+	}
+
+	protected void setupHostKeyRepository() throws JSchException {
+		InputStream stream = getClass().getResourceAsStream(
+				"/com/veritomyx/sftp-servers.txt");
+		if (stream == null) {
+			throw new JSchException("Unable to locate hosts file.");
+		}
+
+		jsch.setKnownHosts(stream);
 	}
 
 	private void error(String message) {
@@ -202,7 +214,7 @@ public class PeakInvestigatorSaaS
 	public void putFile(SftpAction action, File file) throws JSchException,
 			SftpException, FileNotFoundException, SftpTransferException {
 
-		Session session = temp.getSession(action.getSftpUsername(),
+		Session session = jsch.getSession(action.getSftpUsername(),
 				action.getHost(), action.getPort());
 		session.connect();
 
@@ -250,7 +262,7 @@ public class PeakInvestigatorSaaS
 		log.info("Retrieve " + action.getSftpUsername() + "@"
 				+ action.getHost() + ":" + remoteFilename);
 
-		Session session = temp.getSession(action.getSftpUsername(),
+		Session session = jsch.getSession(action.getSftpUsername(),
 				action.getHost(), action.getPort());
 		session.setPassword(action.getSftpPassword());
 		session.connect();

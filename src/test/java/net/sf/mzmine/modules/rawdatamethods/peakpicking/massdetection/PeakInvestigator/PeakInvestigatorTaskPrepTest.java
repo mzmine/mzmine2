@@ -13,6 +13,7 @@ import net.sf.mzmine.project.impl.RawDataFileImpl;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.jcraft.jsch.JSchException;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.BaseAction;
@@ -25,7 +26,7 @@ public class PeakInvestigatorTaskPrepTest {
 
 	@Test
 	public void testCheckPrepAnalysisAnalyzing() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultTask(PrepAction.EXAMPLE_RESPONSE_1);
 		task.checkPrepAnalysis("test.tar");
@@ -36,7 +37,7 @@ public class PeakInvestigatorTaskPrepTest {
 
 	@Test
 	public void testCheckPrepAnalysisReady() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultTask(PrepAction.EXAMPLE_RESPONSE_2);
 		task.checkPrepAnalysis("test.tar");
@@ -50,7 +51,7 @@ public class PeakInvestigatorTaskPrepTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.checkPrepAnalysis("test.tar");
@@ -63,7 +64,7 @@ public class PeakInvestigatorTaskPrepTest {
 	 */
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException {
+			ResponseFormatException, ResponseErrorException, JSchException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "PREP");
@@ -78,7 +79,7 @@ public class PeakInvestigatorTaskPrepTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultTask(String response) {
+	private PeakInvestigatorTask createDefaultTask(String response) throws JSchException {
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(actionCaptor.capture())).thenReturn(response);
 
