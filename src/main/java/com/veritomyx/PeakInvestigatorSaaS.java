@@ -190,21 +190,27 @@ public class PeakInvestigatorSaaS
 	/**
 	 * Open a SFTP session on remote server.
 	 * 
-	 * @param SftpAction
+	 * @param action
 	 *            Action object containing host, port, username, password, and
 	 *            directory to upload files.
+	 * @param diretory
+	 *            Starting directory for the session, can be null or empty to
+	 *            use default home directory.
 	 * @return The SftpSession
 	 * @throws SftpException
 	 *             When unable to connect via password or cannot enter the
 	 *             directory, even after trying to make it.
 	 */
-	protected SftpSession openSession(SftpAction action) throws SftpException {
+	protected SftpSession openSession(SftpAction action, String directory) throws SftpException {
 		SftpSession session = sftp.connectByPasswdAuth(action.getHost(),
 				action.getPort(), action.getSftpUsername(),
 				action.getSftpPassword(),
 				SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
 
-		String directory = action.getDirectory();
+		if (directory == null || directory.isEmpty()) {
+			return session;
+		}
+
 		SftpResult result = sftp.cd(session, directory);
 		if (!result.getSuccessFlag()) {
 			result = sftp.mkdir(session, directory);
@@ -244,7 +250,7 @@ public class PeakInvestigatorSaaS
 				+ action.getSftpPassword() + ":" + action.getDirectory() + "/"
 				+ filename);
 
-		SftpSession session = openSession(action);
+		SftpSession session = openSession(action, action.getDirectory());
 
 		sftp.cd(session, action.getDirectory());
 		sftp.rm(session, filename);
@@ -279,7 +285,7 @@ public class PeakInvestigatorSaaS
 			throws SftpException {
 		log.info("Retrieve " + action.getSftpUsername() + "@"
 				+ action.getHost() + ":" + remoteFilename);
-		SftpSession session = openSession(action);
+		SftpSession session = openSession(action, null);
 
 		SftpResult result = sftp.get(session, remoteFilename,
 				localFile.toString());
