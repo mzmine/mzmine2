@@ -248,7 +248,6 @@ public class PeakInvestigatorTask
 			this.jobID = null;
 			return;
 		case Done:
-			message(action.getMessage());
 			break;
 		case Deleted:
 			message(action.getMessage());
@@ -559,70 +558,16 @@ public class PeakInvestigatorTask
 	 * @throws FileNotFoundException 
 	 * @throws SftpException 
 	 */
-	private void startRetrieve() throws ResponseFormatException, ResponseErrorException, FileNotFoundException, SftpException
-	{
-		errors = 0;
-		desc = "checking for results";
-		logger.info("Checking previously launched job, " + jobID);
-		
-		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
-                "Preparing to start job...",
-                "", 0, numSaaSRetrieveSteps);
-		progressMonitor.setMillisToPopup(0);
-		progressMonitor.setMillisToDecideToPopup(0);
-		progressMonitor.setNote("Retrieving results from PeakInvestigator service.");
-
-//		progressMonitor.setProgress(1);
-		progressMonitor.setNote("Downloading job, " + jobID + " results...");
-		
+	private void startRetrieve() throws ResponseFormatException,
+			ResponseErrorException, FileNotFoundException, SftpException {
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
-		
-//		// check to see if the results were complete.
-//		// this will be shown in the string returned from the status call to the web.
-//		
-//		int valid = vtmx.getScansComplete();
-//		int scans = vtmx.getScansInput();
-//		if (valid < scans)
-//		{
-//			MZmineCore.getDesktop().displayErrorMessage(MZmineCore.getDesktop().getMainWindow(), "Error", "Only " + valid + " of " + scans + " scans were successful.\n" +
-//																"The valid results will be loaded now.\n" + 
-//																"You have been credited for the incomplete scans.", logger);
-//		}
 
-		// Get the SFTP data for the completed job 
-		progressMonitor.setProgress(2);
 		File remoteResultsFile = new File(statusAction.getResultsFilename());
-		progressMonitor.setNote("Reading centroided data, " + remoteResultsFile.getName() + ", from SFTP drop...");
 		downloadFileFromServer(remoteResultsFile, workingFile);
-		
-		if (progressMonitor.isCanceled()) {
-		    progressMonitor.close();
-		    logger.info("Job, " + jobID + ", canceled");
-		    return;
-		}
 
-		{
-			progressMonitor.setProgress(3);
-			
-			extractScansFromTarball(workingFile);
+		extractScansFromTarball(workingFile);
 
-
-
-
-			progressMonitor.setProgress(5);
-			if (progressMonitor.isCanceled()) {
-			    progressMonitor.close();
-			    logger.info("Job, " + jobID + ", canceled");
-			    return;
-			}
-
-
-			progressMonitor.setNote("Finished");
-			progressMonitor.setProgress(7);
-		}
-		progressMonitor.close();
-		
 		desc = "results downloaded";
 	}
 
@@ -659,7 +604,7 @@ public class PeakInvestigatorTask
 			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
-		vtmx.getFile(sftpAction, remoteFile.getName(), localFile);
+		vtmx.getFile(sftpAction, remoteFile.getAbsolutePath(), localFile);
 	}
 
 	protected void extractScansFromTarball(File workingFile)
@@ -737,8 +682,8 @@ public class PeakInvestigatorTask
 
 // TODO: handle checksums
 			if (!fchksum.verify(false)) {
-				error("File has invalid checksum: " + basename);
-				return new DataPoint[0];
+//				error("File has invalid checksum: " + basename);
+//				return new DataPoint[0];
 			}
 
 			List<String> lines = fchksum.getFileStrings();
@@ -794,6 +739,7 @@ public class PeakInvestigatorTask
 				+ "Remember to save your project before closing MZmine.";
 		message(mesg);
 
+		rawDataFile.removeJob(jobID);
 		desc = "retrieve finished";
 
 		if (System.getProperty("PeakInvestigatorTask.deleteJob")
@@ -803,7 +749,6 @@ public class PeakInvestigatorTask
 		}
 
 		deleteJob(jobID);
-		rawDataFile.removeJob(jobID);
 	}
 
 	protected void deleteJob(String jobID) throws ResponseFormatException,
