@@ -64,14 +64,17 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
-import net.sf.opensftp.SftpException;
 
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarInputStream;
 import org.xeustechnologies.jtar.TarOutputStream;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.DeleteAction;
 import com.veritomyx.actions.InitAction;
@@ -291,7 +294,8 @@ public class PeakInvestigatorTask
 	public String getName() { return jobID; }
 
 	public void start() throws FileNotFoundException, ResponseFormatException,
-			ResponseErrorException, IOException, SftpException {
+			ResponseErrorException, IOException, SftpException, JSchException,
+			SftpTransferException {
 
 		logger.finest("PeakInvestigatorTask - start");
 		if (launch) {
@@ -332,28 +336,28 @@ public class PeakInvestigatorTask
 			} catch (IllegalStateException illegalStateException) {
 				error(illegalStateException.getMessage());
 				illegalStateException.printStackTrace();
-			} catch (ResponseFormatException responseFormatException) {
-				error(responseFormatException.getMessage());
-				responseFormatException.printStackTrace();
-			} catch (ResponseErrorException responseError) {
-				error(responseError.getMessage());
-				responseError.printStackTrace();
-			} catch (SftpException sftpException) {
+			} catch (ResponseFormatException | ResponseErrorException responseException) {
+				error(responseException.getMessage());
+				responseException.printStackTrace();
+			} catch (JSchException | SftpException | SftpTransferException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
+			} catch (FileNotFoundException fileNotFoundException) {
+				error(fileNotFoundException.getMessage());
+				fileNotFoundException.printStackTrace();
 			}
 		} else
 			try {
 				finishRetrieve();
-			} catch (ResponseFormatException responseFormatException) {
-				error(responseFormatException.getMessage());
-				responseFormatException.printStackTrace();
-			} catch (ResponseErrorException responseErrorException) {
-				error(responseErrorException.getMessage());
-				responseErrorException.printStackTrace();
-			} catch (SftpException sftpException) {
+			} catch (ResponseFormatException | ResponseErrorException responseException) {
+				error(responseException.getMessage());
+				responseException.printStackTrace();
+			} catch (JSchException | SftpException | SftpTransferException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
+			} catch (FileNotFoundException fileNotFoundException) {
+				error(fileNotFoundException.getMessage());
+				fileNotFoundException.printStackTrace();
 			}
 	}
 
@@ -405,7 +409,7 @@ public class PeakInvestigatorTask
 	}
 
 	protected void uploadFileToServer(File file)
-			throws ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException {
+			throws ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException, FileNotFoundException, JSchException, com.jcraft.jsch.SftpException, SftpTransferException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -471,9 +475,13 @@ public class PeakInvestigatorTask
 	/**
 	 * Finish the job launch process and send job to VTMX SaaS server
 	 * @throws SftpException 
+	 * @throws SftpTransferException 
+	 * @throws JSchException 
+	 * @throws FileNotFoundException 
 	 */
-	private void finishLaunch() throws InterruptedException, ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException
-	{
+	private void finishLaunch() throws InterruptedException,
+			ResponseFormatException, IllegalStateException,
+			ResponseErrorException, SftpException, FileNotFoundException, JSchException, SftpTransferException	{
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
                 "Peak Investigator SaaS transmission",
@@ -557,9 +565,11 @@ public class PeakInvestigatorTask
 	 * @throws ResponseFormatException 
 	 * @throws FileNotFoundException 
 	 * @throws SftpException 
+	 * @throws SftpTransferException 
+	 * @throws JSchException 
 	 */
 	private void startRetrieve() throws ResponseFormatException,
-			ResponseErrorException, FileNotFoundException, SftpException {
+			ResponseErrorException, FileNotFoundException, SftpException, JSchException, SftpTransferException {
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
 
@@ -584,9 +594,14 @@ public class PeakInvestigatorTask
 	 * @throws ResponseFormatException
 	 * @throws ResponseErrorException
 	 * @throws SftpException 
+	 * @throws SftpTransferException 
+	 * @throws JSchException 
+	 * @throws FileNotFoundException 
 	 */
 	protected void downloadFileFromServer(File remoteFile, File localFile)
-			throws ResponseFormatException, ResponseErrorException, SftpException {
+			throws ResponseFormatException, ResponseErrorException,
+			SftpException, FileNotFoundException, JSchException,
+			SftpTransferException {
 
 		logger.info("Receive file, " + remoteFile.getName()
 				+ ", from SFTP server...");
@@ -721,8 +736,11 @@ public class PeakInvestigatorTask
 	 * @throws ResponseErrorException 
 	 * @throws ResponseFormatException 
 	 * @throws SftpException 
+	 * @throws SftpTransferException 
+	 * @throws JSchException 
+	 * @throws FileNotFoundException 
 	 */
-	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException, SftpException
+	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException, SftpException, FileNotFoundException, JSchException, SftpTransferException
 	{
 		if (errors > 0)
 			return;

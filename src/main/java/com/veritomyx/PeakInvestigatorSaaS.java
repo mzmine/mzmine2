@@ -21,22 +21,27 @@ package com.veritomyx;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import net.sf.opensftp.SftpException;
-import net.sf.opensftp.SftpResult;
-import net.sf.opensftp.SftpSession;
-import net.sf.opensftp.SftpUtil;
-import net.sf.opensftp.SftpUtilFactory;
-
 import org.apache.log4j.Logger;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.Session;
 import com.veritomyx.actions.*;
 
 /**
@@ -52,6 +57,7 @@ public class PeakInvestigatorSaaS
 	private static final String PAGE_ENCODING = "UTF-8";
 
 	private String server = null;
+	JSch temp = new JSch();
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -86,8 +92,6 @@ public class PeakInvestigatorSaaS
 
 	private Logger log;
 
-	private SftpUtil  sftp;
-
 	/**
 	 * Constructor
 	 * 
@@ -106,8 +110,6 @@ public class PeakInvestigatorSaaS
 		
 		log        = Logger.getLogger(this.getClass().getName());
 		log.info(this.getClass().getName());
-
-		sftp       = SftpUtilFactory.getSftpUtil();
 	}
 
 	private void error(String message) {
@@ -188,90 +190,48 @@ public class PeakInvestigatorSaaS
 	}
 
 	/**
-	 * Open a SFTP session on remote server.
-	 * 
-	 * @param action
-	 *            Action object containing host, port, username, password, and
-	 *            directory to upload files.
-	 * @param diretory
-	 *            Starting directory for the session, can be null or empty to
-	 *            use default home directory.
-	 * @return The SftpSession
-	 * @throws SftpException
-	 *             When unable to connect via password or cannot enter the
-	 *             directory, even after trying to make it.
-	 */
-	protected SftpSession openSession(SftpAction action, String directory) throws SftpException {
-		SftpSession session = sftp.connectByPasswdAuth(action.getHost(),
-				action.getPort(), action.getSftpUsername(),
-				action.getSftpPassword(),
-				SftpUtil.STRICT_HOST_KEY_CHECKING_OPTION_NO, 6000);
-
-		if (directory == null || directory.isEmpty()) {
-			return session;
-		}
-
-		SftpResult result = sftp.cd(session, directory);
-		if (!result.getSuccessFlag()) {
-			result = sftp.mkdir(session, directory);
-			if (!result.getSuccessFlag()) {
-				throw new SftpException(
-						"Unable to enter remote SFTP directory: " + directory);
-			}
-			sftp.chmod(session, 0770, directory);
-			result = sftp.cd(session, directory);
-		}
-
-		return session;
-	}
-
-	/**
-	 * Close the SFTP session
-	 * Call this when we are closing the instance
-	 */
-	private void closeSession(SftpSession session)
-	{
-		if ((sftp != null) && (session != null))
-			sftp.disconnect(session);
-	}
-
-	/**
 	 * Transfer the given file to SFTP drop
 	 * 
 	 * @param fname
 	 * @throws SftpException 
+	 * @throws JSchException 
+	 * @throws com.jcraft.jsch.SftpException 
+	 * @throws FileNotFoundException 
+	 * @throws SftpTransferException 
 	 */
-	public void putFile(SftpAction action, File file) throws SftpException
-	{
-		String filename = file.getName();
-		String tempFilename = filename + ".filepart";
+	public void putFile(SftpAction action, File file) throws JSchException,
+			SftpException, FileNotFoundException, SftpTransferException {
 
-		log.info("Transmit " + action.getSftpUsername() + "@"
-				+ action.getSftpPassword() + ":" + action.getDirectory() + "/"
-				+ filename);
+		Session session = temp.getSession(action.getSftpUsername(),
+				action.getHost(), action.getPort());
+		session.connect();
 
-		SftpSession session = openSession(action, action.getDirectory());
+		ChannelSftp channel = (ChannelSftp) session.openChannel("SFTP");
+		channel.connect();
+		channel.cd(action.getDirectory());
 
-		sftp.cd(session, action.getDirectory());
-		sftp.rm(session, filename);
-		sftp.rm(session, tempFilename);
-		SftpResult result = sftp.put(session, file.toString(), tempFilename);
+		FileInputStream inputStream = new FileInputStream(file);
+		OutputStream remote = channel.put(file.getName());
 
-		if (!result.getSuccessFlag())
-		{
-			closeSession(session);
-			throw new SftpException("Unable to upload file: " + file.toString());
-		}
-		else
-		{
-			result = sftp.rename(session, tempFilename, filename); //rename a remote file
-			if (!result.getSuccessFlag())
-			{
-				closeSession(session);
-				throw new SftpException("Unable to rename temporary file: " + tempFilename);
+		try {
+			byte[] buffer = new byte[2048];
+			int size;
+
+			while ((size = inputStream.read(buffer, 0, buffer.length)) > -1) {
+				remote.write(buffer, 0, size);
 			}
+
+			inputStream.close();
+			remote.close();
+		} catch (IOException e) {
+			channel.disconnect();
+			session.disconnect();
+			throw new SftpTransferException("Problem writing to remote file: "
+					+ file.getName());
 		}
-		closeSession(session);
+
+		channel.disconnect();
+		session.disconnect();
 
 	}
 
@@ -280,22 +240,54 @@ public class PeakInvestigatorSaaS
 	 * 
 	 * @param fname
 	 * @throws SftpException 
+	 * @throws FileNotFoundException
+	 * @throws SftpTransferException 
 	 */
 	public void getFile(SftpAction action, String remoteFilename, File localFile)
-			throws SftpException {
+			throws JSchException, SftpException, FileNotFoundException,
+			SftpTransferException {
+
 		log.info("Retrieve " + action.getSftpUsername() + "@"
 				+ action.getHost() + ":" + remoteFilename);
-		SftpSession session = openSession(action, null);
 
-		SftpResult result = sftp.get(session, remoteFilename,
-				localFile.toString());
-		if (!result.getSuccessFlag()) {
-			closeSession(session);
-			throw new SftpException("Unable to download remote file: "
-					+ remoteFilename);
+		Session session = temp.getSession(action.getSftpUsername(),
+				action.getHost(), action.getPort());
+		session.setPassword(action.getSftpPassword());
+		session.connect();
+
+		ChannelSftp channel = (ChannelSftp) session.openChannel("SFTP");
+		channel.connect();
+
+		FileOutputStream outputStream = new FileOutputStream(localFile);
+		InputStream remote = channel.get(remoteFilename);
+
+		try {
+			byte[] buffer = new byte[2048];
+			int size;
+
+			while ((size = remote.read(buffer, 0, buffer.length)) > -1) {
+				outputStream.write(buffer, 0, size);
+			}
+
+			outputStream.close();
+			remote.close();
+		} catch (IOException e) {
+			channel.disconnect();
+			session.disconnect();
+			throw new SftpTransferException(
+					"Problem reading from remote file: " + remoteFilename);
 		}
 
-		closeSession(session);
+		channel.disconnect();
+		session.disconnect();
 	}
 
+	public class SftpTransferException extends Exception {
+
+		private static final long serialVersionUID = 1L;
+
+		SftpTransferException(String message) {
+			super(message);
+		}
+	}
 }

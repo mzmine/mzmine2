@@ -25,6 +25,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+
+import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.PiVersionsAction;
@@ -38,7 +42,6 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.parameters.ParameterSet;
-import net.sf.opensftp.SftpException;
 
 public class PeakInvestigatorDetector implements MassDetector
 {
@@ -154,7 +157,11 @@ public class PeakInvestigatorDetector implements MassDetector
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
-		} catch (IOException | SftpException e) {
+		} catch (JSchException | SftpException | SftpTransferException sftpException) {
+			error(sftpException.getMessage());
+			sftpException.printStackTrace();
+			return null;
+		} catch (IOException e) {
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;

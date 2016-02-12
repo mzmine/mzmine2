@@ -6,19 +6,23 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorTask.ResponseErrorException;
 import net.sf.mzmine.project.impl.RawDataFileImpl;
-import net.sf.opensftp.SftpException;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+
 import com.veritomyx.PeakInvestigatorSaaS;
+import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.SftpAction;
@@ -30,7 +34,9 @@ public class PeakInvestigatorTaskSftpTest {
 
 	@Test
 	public void testUploadFileToServerOk() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, SftpException {
+			ResponseFormatException, ResponseErrorException,
+			FileNotFoundException, SftpException, JSchException,
+			SftpTransferException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -49,7 +55,9 @@ public class PeakInvestigatorTaskSftpTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, SftpException {
+			ResponseFormatException, ResponseErrorException,
+			FileNotFoundException, JSchException, SftpException,
+			SftpTransferException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
@@ -62,7 +70,9 @@ public class PeakInvestigatorTaskSftpTest {
 	 */
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, SftpException {
+			ResponseFormatException, ResponseErrorException,
+			FileNotFoundException, JSchException, SftpException,
+			SftpTransferException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");
@@ -77,7 +87,10 @@ public class PeakInvestigatorTaskSftpTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultTask(String response) throws SftpException {
+	private PeakInvestigatorTask createDefaultTask(String response)
+			throws FileNotFoundException, JSchException, SftpException,
+			SftpTransferException {
+
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 
 		doNothing().when(vtmx).putFile(actionCaptor.capture(), argThat(new IsFile()));
