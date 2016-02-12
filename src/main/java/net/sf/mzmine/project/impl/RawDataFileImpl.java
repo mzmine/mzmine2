@@ -447,7 +447,7 @@ public class RawDataFileImpl implements RawDataFile, RawDataFileWriter {
 
 	public RemoteJob getJob(String compoundName) {
 		for (RemoteJob job : jobs_info) {
-			if (job.getCompoundName() == compoundName) {
+			if (job.getCompoundName().equals(compoundName)) {
 				return job;
 			}
 		}
