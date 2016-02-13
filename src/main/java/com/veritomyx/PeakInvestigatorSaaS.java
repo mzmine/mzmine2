@@ -222,12 +222,51 @@ public class PeakInvestigatorSaaS
 		channel.connect(timeout);
 	}
 
+	private void disconnectSftpSession() {
+		if (channel != null && !channel.isConnected()) {
+			channel.disconnect();
+		}
+
+		if (session != null && !session.isConnected()) {
+			session.disconnect();
+		}
+	}
+
 	protected boolean isConnectedForSftp() {
 		if (session == null || channel == null) {
 			return false;
 		}
 
 		return session.isConnected() && channel.isConnected();
+	}
+
+	protected ChannelSftp getSftpChannel() {
+		return channel;
+	}
+
+	/**
+	 * Utility function to transfer data between an InputStream and
+	 * OutputStream. This function will close the streams at the end of the
+	 * function.
+	 * 
+	 * @param input
+	 *            Assumed to be open and ready.
+	 * @param output
+	 *            Assumed to be open and ready.
+	 * @throws IOException
+	 */
+	protected void transfer(InputStream input, OutputStream output)
+			throws IOException {
+
+		byte[] buffer = new byte[2048];
+		int size;
+
+		while ((size = input.read(buffer, 0, buffer.length)) > -1) {
+			output.write(buffer, 0, size);
+		}
+
+		input.close();
+		output.close();
 	}
 
 	/**
@@ -243,37 +282,22 @@ public class PeakInvestigatorSaaS
 	public void putFile(SftpAction action, File file) throws JSchException,
 			SftpException, FileNotFoundException, SftpTransferException {
 
-		Session session = jsch.getSession(action.getSftpUsername(),
-				action.getHost(), action.getPort());
-		session.connect();
-
-		ChannelSftp channel = (ChannelSftp) session.openChannel("SFTP");
-		channel.connect();
-		channel.cd(action.getDirectory());
+		initializeSftpSession(action.getHost(), action.getSftpUsername(),
+				action.getSftpPassword(), action.getPort());
 
 		FileInputStream inputStream = new FileInputStream(file);
+		channel.cd(action.getDirectory());
 		OutputStream remote = channel.put(file.getName());
 
 		try {
-			byte[] buffer = new byte[2048];
-			int size;
-
-			while ((size = inputStream.read(buffer, 0, buffer.length)) > -1) {
-				remote.write(buffer, 0, size);
-			}
-
-			inputStream.close();
-			remote.close();
+			transfer(inputStream, remote);
 		} catch (IOException e) {
-			channel.disconnect();
-			session.disconnect();
+			disconnectSftpSession();
 			throw new SftpTransferException("Problem writing to remote file: "
 					+ file.getName());
 		}
 
-		channel.disconnect();
-		session.disconnect();
-
+		disconnectSftpSession();
 	}
 
 	/**
@@ -291,36 +315,21 @@ public class PeakInvestigatorSaaS
 		log.info("Retrieve " + action.getSftpUsername() + "@"
 				+ action.getHost() + ":" + remoteFilename);
 
-		Session session = jsch.getSession(action.getSftpUsername(),
-				action.getHost(), action.getPort());
-		session.setPassword(action.getSftpPassword());
-		session.connect();
-
-		ChannelSftp channel = (ChannelSftp) session.openChannel("SFTP");
-		channel.connect();
+		initializeSftpSession(action.getHost(), action.getSftpUsername(),
+				action.getSftpPassword(), action.getPort());
 
 		FileOutputStream outputStream = new FileOutputStream(localFile);
 		InputStream remote = channel.get(remoteFilename);
 
 		try {
-			byte[] buffer = new byte[2048];
-			int size;
-
-			while ((size = remote.read(buffer, 0, buffer.length)) > -1) {
-				outputStream.write(buffer, 0, size);
-			}
-
-			outputStream.close();
-			remote.close();
+			transfer(remote, outputStream);
 		} catch (IOException e) {
-			channel.disconnect();
-			session.disconnect();
+			disconnectSftpSession();
 			throw new SftpTransferException(
 					"Problem reading from remote file: " + remoteFilename);
 		}
 
-		channel.disconnect();
-		session.disconnect();
+		disconnectSftpSession();
 	}
 
 	public class SftpTransferException extends Exception {
