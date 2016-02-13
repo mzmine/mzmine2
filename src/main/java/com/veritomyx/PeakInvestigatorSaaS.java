@@ -56,8 +56,11 @@ public class PeakInvestigatorSaaS
 	public static final String API_VERSION = "3.0";
 	private static final String PAGE_ENCODING = "UTF-8";
 
-	private String server = null;
 	JSch jsch = new JSch();
+	private String server = null;
+	Session session = null;
+	ChannelSftp channel = null;
+	private int timeout = 10000; //milliseconds
 
 	// return codes from web pages
 	public  static final int W_UNDEFINED =  0;
@@ -112,6 +115,11 @@ public class PeakInvestigatorSaaS
 		log.info(this.getClass().getName());
 
 		setupHostKeyRepository();
+	}
+
+	public PeakInvestigatorSaaS withTimeout(int timeout) {
+		this.timeout = timeout;
+		return this;
 	}
 
 	protected void setupHostKeyRepository() throws JSchException {
@@ -199,6 +207,27 @@ public class PeakInvestigatorSaaS
 		}
 		
 		return queryConnection(connection, action.buildQuery());
+	}
+
+	protected void initializeSftpSession(String server, String username,
+			String password, int port) throws JSchException {
+
+		log.info("Starting SFTP connection to " + server);
+
+		session = jsch.getSession(username, server, port);
+		session.setPassword(password);
+		session.connect(timeout);
+
+		channel = (ChannelSftp) session.openChannel("sftp");
+		channel.connect(timeout);
+	}
+
+	protected boolean isConnectedForSftp() {
+		if (session == null || channel == null) {
+			return false;
+		}
+
+		return session.isConnected() && channel.isConnected();
 	}
 
 	/**
