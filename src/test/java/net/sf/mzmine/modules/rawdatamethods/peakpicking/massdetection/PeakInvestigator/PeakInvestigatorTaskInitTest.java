@@ -168,10 +168,6 @@ public class PeakInvestigatorTaskInitTest {
 		StatusAction action = actionCaptor.getValue();
 		assertEquals(StatusAction.Status.Done, action.getStatus());
 		assertEquals("C1.10", task.getName());
-
-		HeadlessBasicDialog dialog = (HeadlessBasicDialog) ((HeadlessDialogFactory) factory)
-				.getDialog();
-		assertEquals(StatusAction.DONE_STRING, dialog.getInfoMessage());
 	}
 
 	@Test(expected = ResponseErrorException.class)

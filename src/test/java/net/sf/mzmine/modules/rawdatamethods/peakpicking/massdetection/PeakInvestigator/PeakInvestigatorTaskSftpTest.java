@@ -86,19 +86,18 @@ public class PeakInvestigatorTaskSftpTest {
 	private PeakInvestigatorTask createDefaultTask(String response)
 			throws FileNotFoundException, JSchException, SftpException {
 
+		// setup PI Task
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
-		SftpProgressMonitor monitor = mock(SftpProgressMonitor.class);
-
 		doNothing().when(vtmx).putFile(actionCaptor.capture(), anyString(),
-				anyString(), monitor);
+				anyString(), argThat(new IsMonitor()));
 		when(vtmx.executeAction(actionCaptor.capture())).thenReturn(response);
 
-		RawDataFile rawFile = mock(RawDataFileImpl.class);
 		Scan scan = mock(SimpleScan.class);
+		when(scan.getNumberOfDataPoints()).thenReturn(12345);
 
+		RawDataFile rawFile = mock(RawDataFileImpl.class);
 		when(rawFile.getScanNumbers()).thenReturn(new int[] { 0, 1 });
 		when(rawFile.getScan(anyInt())).thenReturn(scan);
-		when(scan.getNumberOfDataPoints()).thenReturn(12345);
 
 		PeakInvestigatorTask task = new PeakInvestigatorTask("test.com",
 				"user", "password", 0).withService(vtmx).withRawDataFile(
@@ -107,11 +106,11 @@ public class PeakInvestigatorTaskSftpTest {
 		return task;
 	}
 
-	private class IsFile extends ArgumentMatcher<File> {
+	private class IsMonitor extends ArgumentMatcher<SftpProgressMonitor> {
 
 		@Override
 		public boolean matches(Object argument) {
-			if (argument instanceof File) {
+			if (argument instanceof SftpProgressMonitor) {
 				return true;
 			}
 
