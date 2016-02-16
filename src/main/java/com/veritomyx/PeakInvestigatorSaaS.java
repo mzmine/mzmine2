@@ -20,14 +20,9 @@
 package com.veritomyx;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
 import java.io.UnsupportedEncodingException;
@@ -36,12 +31,12 @@ import java.net.URL;
 
 import org.apache.log4j.Logger;
 
-import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpProgressMonitor;
 import com.veritomyx.actions.*;
 
 /**
@@ -222,7 +217,7 @@ public class PeakInvestigatorSaaS
 		channel.connect(timeout);
 	}
 
-	private void disconnectSftpSession() {
+	protected void disconnectSftpSession() {
 		if (channel != null && !channel.isConnected()) {
 			channel.disconnect();
 		}
@@ -245,72 +240,55 @@ public class PeakInvestigatorSaaS
 	}
 
 	/**
-	 * Utility function to transfer data between an InputStream and
-	 * OutputStream. This function will close the streams at the end of the
-	 * function.
+	 * Transfer a file to the SFTP drop. Calls initializeSftpSession() so it
+	 * should work transparently.
 	 * 
-	 * @param input
-	 *            Assumed to be open and ready.
-	 * @param output
-	 *            Assumed to be open and ready.
-	 * @throws IOException
+	 * @param action
+	 *            An SFTP action that has valid response from PeakInvestigator
+	 *            SaaS.
+	 * @param localFilename
+	 *            The local filename of the file to be uploaded.
+	 * @param remoteFilename
+	 *            The name of the file, including the full path, once uploaded.
+	 * @param monitor
+	 *            An object implementing the SftpProgressMonitor interface.
+	 * @throws JSchException
+	 * @throws SftpException
 	 */
-	protected void transfer(InputStream input, OutputStream output)
-			throws IOException {
+	public void putFile(SftpAction action, String localFilename,
+			String remoteFilename, SftpProgressMonitor monitor)
+			throws JSchException, SftpException {
 
-		byte[] buffer = new byte[2048];
-		int size;
-
-		while ((size = input.read(buffer, 0, buffer.length)) > -1) {
-			output.write(buffer, 0, size);
-		}
-
-		input.close();
-		output.close();
-	}
-
-	/**
-	 * Transfer the given file to SFTP drop
-	 * 
-	 * @param fname
-	 * @throws SftpException 
-	 * @throws JSchException 
-	 * @throws com.jcraft.jsch.SftpException 
-	 * @throws FileNotFoundException 
-	 * @throws SftpTransferException 
-	 */
-	public void putFile(SftpAction action, File file) throws JSchException,
-			SftpException, FileNotFoundException, SftpTransferException {
+		log.info("Send " + action.getSftpUsername() + "@" + action.getHost()
+				+ ":" + remoteFilename);
 
 		initializeSftpSession(action.getHost(), action.getSftpUsername(),
 				action.getSftpPassword(), action.getPort());
 
-		FileInputStream inputStream = new FileInputStream(file);
-		channel.cd(action.getDirectory());
-		OutputStream remote = channel.put(file.getName());
-
-		try {
-			transfer(inputStream, remote);
-		} catch (IOException e) {
-			disconnectSftpSession();
-			throw new SftpTransferException("Problem writing to remote file: "
-					+ file.getName());
-		}
+		channel.put(localFilename, remoteFilename, monitor);
 
 		disconnectSftpSession();
 	}
 
 	/**
-	 * Transfer the given file from SFTP drop
+	 * Transfer a file from the SFTP drop. Calls initializeSftpSession() so it
+	 * should work transparently.
 	 * 
-	 * @param fname
-	 * @throws SftpException 
-	 * @throws FileNotFoundException
-	 * @throws SftpTransferException 
+	 * @param action
+	 *            An SFTP action that has valid response from PeakInvestigator
+	 *            SaaS.
+	 * @param remoteFilename
+	 *            The name of the file, including the full path, once uploaded.
+	 * @param localFilename
+	 *            The local filename of the file to be uploaded.
+	 * @param monitor
+	 *            An object implementing the SftpProgressMonitor interface.
+	 * @throws JSchException
+	 * @throws SftpException
 	 */
-	public void getFile(SftpAction action, String remoteFilename, File localFile)
-			throws JSchException, SftpException, FileNotFoundException,
-			SftpTransferException {
+	public void getFile(SftpAction action, String remoteFilename,
+			String localFilename, SftpProgressMonitor monitor)
+			throws JSchException, SftpException {
 
 		log.info("Retrieve " + action.getSftpUsername() + "@"
 				+ action.getHost() + ":" + remoteFilename);
@@ -318,26 +296,9 @@ public class PeakInvestigatorSaaS
 		initializeSftpSession(action.getHost(), action.getSftpUsername(),
 				action.getSftpPassword(), action.getPort());
 
-		FileOutputStream outputStream = new FileOutputStream(localFile);
-		InputStream remote = channel.get(remoteFilename);
-
-		try {
-			transfer(remote, outputStream);
-		} catch (IOException e) {
-			disconnectSftpSession();
-			throw new SftpTransferException(
-					"Problem reading from remote file: " + remoteFilename);
-		}
+		channel.get(remoteFilename, localFilename, monitor);
 
 		disconnectSftpSession();
 	}
 
-	public class SftpTransferException extends Exception {
-
-		private static final long serialVersionUID = 1L;
-
-		SftpTransferException(String message) {
-			super(message);
-		}
-	}
 }
