@@ -74,7 +74,6 @@ import com.jcraft.jsch.SftpException;
 
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
-import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.DeleteAction;
 import com.veritomyx.actions.InitAction;
@@ -294,8 +293,7 @@ public class PeakInvestigatorTask
 	public String getName() { return jobID; }
 
 	public void start() throws FileNotFoundException, ResponseFormatException,
-			ResponseErrorException, IOException, SftpException, JSchException,
-			SftpTransferException {
+			ResponseErrorException, IOException, SftpException, JSchException {
 
 		logger.finest("PeakInvestigatorTask - start");
 		if (launch) {
@@ -339,12 +337,9 @@ public class PeakInvestigatorTask
 			} catch (ResponseFormatException | ResponseErrorException responseException) {
 				error(responseException.getMessage());
 				responseException.printStackTrace();
-			} catch (JSchException | SftpException | SftpTransferException sftpException) {
+			} catch (JSchException | SftpException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
-			} catch (FileNotFoundException fileNotFoundException) {
-				error(fileNotFoundException.getMessage());
-				fileNotFoundException.printStackTrace();
 			}
 		} else
 			try {
@@ -352,12 +347,9 @@ public class PeakInvestigatorTask
 			} catch (ResponseFormatException | ResponseErrorException responseException) {
 				error(responseException.getMessage());
 				responseException.printStackTrace();
-			} catch (JSchException | SftpException | SftpTransferException sftpException) {
+			} catch (JSchException | SftpException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
-			} catch (FileNotFoundException fileNotFoundException) {
-				error(fileNotFoundException.getMessage());
-				fileNotFoundException.printStackTrace();
 			}
 	}
 
@@ -409,7 +401,8 @@ public class PeakInvestigatorTask
 	}
 
 	protected void uploadFileToServer(File file)
-			throws ResponseFormatException, IllegalStateException, ResponseErrorException, SftpException, FileNotFoundException, JSchException, com.jcraft.jsch.SftpException, SftpTransferException {
+			throws ResponseFormatException, IllegalStateException,
+			ResponseErrorException, SftpException, JSchException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -427,7 +420,10 @@ public class PeakInvestigatorTask
 			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
-		vtmx.putFile(sftpAction, file);
+		String remoteFilename = sftpAction.getDirectory() + File.separator
+				+ file.getName();
+		vtmx.putFile(sftpAction, file.getAbsolutePath(), remoteFilename,
+				dialogFactory.createSftpProgressMonitor());
 	}
 
 	protected PrepAction checkPrepAnalysis(String filename)
@@ -481,7 +477,7 @@ public class PeakInvestigatorTask
 	 */
 	private void finishLaunch() throws InterruptedException,
 			ResponseFormatException, IllegalStateException,
-			ResponseErrorException, SftpException, FileNotFoundException, JSchException, SftpTransferException	{
+			ResponseErrorException, JSchException, SftpException {
 		desc = "finishing launch";
 		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
                 "Peak Investigator SaaS transmission",
@@ -569,7 +565,9 @@ public class PeakInvestigatorTask
 	 * @throws JSchException 
 	 */
 	private void startRetrieve() throws ResponseFormatException,
-			ResponseErrorException, FileNotFoundException, SftpException, JSchException, SftpTransferException {
+			ResponseErrorException, FileNotFoundException, JSchException,
+			SftpException {
+
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
 
@@ -600,8 +598,7 @@ public class PeakInvestigatorTask
 	 */
 	protected void downloadFileFromServer(File remoteFile, File localFile)
 			throws ResponseFormatException, ResponseErrorException,
-			SftpException, FileNotFoundException, JSchException,
-			SftpTransferException {
+			JSchException, SftpException {
 
 		logger.info("Receive file, " + remoteFile.getName()
 				+ ", from SFTP server...");
@@ -619,7 +616,9 @@ public class PeakInvestigatorTask
 			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
-		vtmx.getFile(sftpAction, remoteFile.getAbsolutePath(), localFile);
+		vtmx.getFile(sftpAction, remoteFile.getAbsolutePath(),
+				localFile.getAbsolutePath(),
+				dialogFactory.createSftpProgressMonitor());
 	}
 
 	protected void extractScansFromTarball(File workingFile)
@@ -740,8 +739,8 @@ public class PeakInvestigatorTask
 	 * @throws JSchException 
 	 * @throws FileNotFoundException 
 	 */
-	private void finishRetrieve() throws ResponseFormatException, ResponseErrorException, SftpException, FileNotFoundException, JSchException, SftpTransferException
-	{
+	private void finishRetrieve() throws ResponseFormatException,
+			ResponseErrorException, JSchException, SftpException {
 		if (errors > 0)
 			return;
 

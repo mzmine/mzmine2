@@ -21,6 +21,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.*;
 
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpProgressMonitor;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.StatusAction;
@@ -222,6 +223,11 @@ public class PeakInvestigatorTaskInitTest {
 		public InitDialog createInitDialog(String version, InitAction action) {
 			return new EmptyOkInitDialog();
 		}
+
+		@Override
+		public SftpProgressMonitor createSftpProgressMonitor() {
+			return null;
+		}
 	}
 
 	/**
@@ -233,6 +239,11 @@ public class PeakInvestigatorTaskInitTest {
 		@Override
 		public InitDialog createInitDialog(String version, InitAction action) {
 			return new EmptyCancelInitDialog();
+		}
+
+		@Override
+		public SftpProgressMonitor createSftpProgressMonitor() {
+			return null;
 		}
 	}
 

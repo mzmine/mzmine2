@@ -20,9 +20,8 @@ import org.mockito.ArgumentMatcher;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
-
+import com.jcraft.jsch.SftpProgressMonitor;
 import com.veritomyx.PeakInvestigatorSaaS;
-import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.SftpAction;
@@ -35,8 +34,7 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testUploadFileToServerOk() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, SftpException, JSchException,
-			SftpTransferException {
+			FileNotFoundException, SftpException, JSchException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -56,8 +54,7 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException,
-			SftpTransferException {
+			FileNotFoundException, JSchException, SftpException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
@@ -71,8 +68,7 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException,
-			SftpTransferException {
+			FileNotFoundException, JSchException, SftpException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");
@@ -88,12 +84,13 @@ public class PeakInvestigatorTaskSftpTest {
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
 	private PeakInvestigatorTask createDefaultTask(String response)
-			throws FileNotFoundException, JSchException, SftpException,
-			SftpTransferException {
+			throws FileNotFoundException, JSchException, SftpException {
 
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
+		SftpProgressMonitor monitor = mock(SftpProgressMonitor.class);
 
-		doNothing().when(vtmx).putFile(actionCaptor.capture(), argThat(new IsFile()));
+		doNothing().when(vtmx).putFile(actionCaptor.capture(), anyString(),
+				anyString(), monitor);
 		when(vtmx.executeAction(actionCaptor.capture())).thenReturn(response);
 
 		RawDataFile rawFile = mock(RawDataFileImpl.class);

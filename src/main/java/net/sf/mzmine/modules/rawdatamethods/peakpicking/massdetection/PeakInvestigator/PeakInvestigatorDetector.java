@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 
-import com.veritomyx.PeakInvestigatorSaaS.SftpTransferException;
 import com.veritomyx.VeritomyxSettings;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.PiVersionsAction;
@@ -162,7 +161,7 @@ public class PeakInvestigatorDetector implements MassDetector
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
-		} catch (JSchException | SftpException | SftpTransferException sftpException) {
+		} catch (JSchException | SftpException sftpException) {
 			error(sftpException.getMessage());
 			sftpException.printStackTrace();
 			return null;
