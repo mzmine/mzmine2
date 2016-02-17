@@ -245,16 +245,14 @@ public class PeakInvestigatorTask
 
 		StatusAction.Status status = action.getStatus();
 		switch (status) {
+		case Preparing:
 		case Running:
+		case Deleted:
 			message(action.getMessage());
 			this.jobID = null;
 			return;
 		case Done:
 			break;
-		case Deleted:
-			message(action.getMessage());
-			this.jobID = null;
-			return;
 		default:
 			throw new IllegalStateException(
 					"Unknown status returned from server.");

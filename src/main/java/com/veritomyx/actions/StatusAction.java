@@ -10,6 +10,7 @@ public class StatusAction extends BaseAction {
 	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.5148\",\"Status\":\"Done\",\"Datetime\":\"2016-02-03 18:31:05\",\"ScansInput\":3,\"ScansComplete\":3,\"ActualCost\":0.36,\"JobLogFile\":\"\\/files\\/P-504.5148\\/P-504.5148.log.txt\",\"ResultsFile\":\"\\/files\\/P-504.5148\\/P-504.5148.mass_list.tar\"}";
 	public final static String EXAMPLE_RESPONSE_3 = "{\"Action\":\"STATUS\",\"Job\":\"P-504.1463\",\"Status\":\"Deleted\",\"Datetime\":\"2016-02-03 18:36:05\"}";
 
+	public final static String PREPARING_STRING = "Currently doing a pre-run sanity check. Please try again later.";
 	public final static String RUNNING_STRING = "Remote job not complete. Please try again later.";
 	public final static String DONE_STRING = "Remote job complete. Results will be downloaded and all data deleted from the servers.";
 	public final static String DELETED_STRING = "Remote job has been deleted.";
@@ -79,6 +80,8 @@ public class StatusAction extends BaseAction {
 
 	public String getMessage() {
 		switch (getStatus()) {
+		case Preparing:
+			return PREPARING_STRING;
 		case Running:
 			return RUNNING_STRING;
 		case Done:
@@ -103,5 +106,5 @@ public class StatusAction extends BaseAction {
 		return super.getErrorCode();
 	}
 
-	public enum Status { Running, Done, Deleted };
+	public enum Status { Preparing, Running, Done, Deleted };
 }
