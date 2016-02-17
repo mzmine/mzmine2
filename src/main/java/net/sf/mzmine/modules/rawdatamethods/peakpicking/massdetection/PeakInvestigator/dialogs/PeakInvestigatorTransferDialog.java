@@ -13,6 +13,7 @@ public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 	private ProgressMonitor monitor = null;
 	private long transferred = 0;
 	private long totalSize;
+	private boolean isCanceled = false;
 	
 	@Override
 	public void init(int direction, String src, String dest, long size) {
@@ -39,15 +40,20 @@ public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 
 	@Override
 	public boolean count(long size) {
+		if (monitor.isCanceled()) {
+			isCanceled = true;
+			return false;
+		}
+
 		transferred += size;
 
-		int progress = (int) (transferred / totalSize);
+		int progress = (int) (transferred * 100 / totalSize);
 		monitor.setProgress(progress);
 
 		String note = String.format("%d%% completed.", progress);
 		monitor.setNote(note);
 
-		return !monitor.isCanceled();
+		return true;
 	}
 
 	@Override
@@ -55,5 +61,9 @@ public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 		monitor.setProgress(100);
 		monitor.setNote("Finished.");
 		monitor.close();
+	}
+
+	public boolean isCanceled() {
+		return isCanceled;
 	}
 }

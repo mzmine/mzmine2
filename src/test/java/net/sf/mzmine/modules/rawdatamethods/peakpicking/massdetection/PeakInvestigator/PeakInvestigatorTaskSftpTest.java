@@ -34,7 +34,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testUploadFileToServerOk() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, SftpException, JSchException {
+			FileNotFoundException, SftpException, JSchException,
+			InterruptedException {
 
 		PeakInvestigatorTask task = createDefaultTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -54,7 +55,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException {
+			FileNotFoundException, JSchException, SftpException,
+			InterruptedException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.uploadFileToServer(new File("test.tar"));
@@ -68,7 +70,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException {
+			FileNotFoundException, JSchException, SftpException,
+			InterruptedException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "SFTP");

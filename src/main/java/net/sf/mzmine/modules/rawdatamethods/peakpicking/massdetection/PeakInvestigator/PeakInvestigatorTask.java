@@ -61,6 +61,7 @@ import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.InitDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorTransferDialog;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
@@ -71,7 +72,7 @@ import org.xeustechnologies.jtar.TarOutputStream;
 
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
-
+import com.jcraft.jsch.SftpProgressMonitor;
 import com.veritomyx.FileChecksum;
 import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
@@ -400,7 +401,8 @@ public class PeakInvestigatorTask
 
 	protected void uploadFileToServer(File file)
 			throws ResponseFormatException, IllegalStateException,
-			ResponseErrorException, SftpException, JSchException {
+			ResponseErrorException, SftpException, JSchException,
+			InterruptedException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -420,31 +422,17 @@ public class PeakInvestigatorTask
 
 		String remoteFilename = sftpAction.getDirectory() + File.separator
 				+ file.getName();
+
+		SftpProgressMonitor monitor = dialogFactory.createSftpProgressMonitor();
 		vtmx.putFile(sftpAction, file.getAbsolutePath(), remoteFilename,
-				dialogFactory.createSftpProgressMonitor());
-	}
+				monitor);
 
-	protected PrepAction checkPrepAnalysis(String filename)
-			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
-
-		logger.info("Waiting for PREP analysis to complete, "
-				+ filename + ", on SaaS server...Please be patient.");
-
-		PrepAction prepAction = new PrepAction(
-				PeakInvestigatorSaaS.API_VERSION, username, password,
-				projectID, filename);
-		String response = vtmx.executeAction(prepAction);
-		prepAction.processResponse(response);
-
-		if (!prepAction.isReady("PREP")) {
-			throw new IllegalStateException("Problem with PREP analysis.");
+		if (monitor instanceof PeakInvestigatorTransferDialog) {
+			PeakInvestigatorTransferDialog dialog = (PeakInvestigatorTransferDialog) monitor;
+			if (dialog.isCanceled()) {
+				throw new InterruptedException("Upload canceled.");
+			}
 		}
-
-		if (prepAction.hasError()) {
-			throw new ResponseErrorException(prepAction.getErrorMessage());
-		}
-
-		return prepAction;
 	}
 
 	protected void initiateRun(String filename, String selectedRTO)
@@ -476,13 +464,8 @@ public class PeakInvestigatorTask
 	private void finishLaunch() throws InterruptedException,
 			ResponseFormatException, IllegalStateException,
 			ResponseErrorException, JSchException, SftpException {
+
 		desc = "finishing launch";
-		ProgressMonitor progressMonitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
-                "Peak Investigator SaaS transmission",
-                "", 0, numSaaSStartSteps);
-		progressMonitor.setMillisToPopup(0);
-		progressMonitor.setMillisToDecideToPopup(0);
-		progressMonitor.setNote("Sending scans to PeakInvestigator service.");
 
 		try {
 			tarfile.close();
@@ -490,59 +473,10 @@ public class PeakInvestigatorTask
 			logger.finest(e.getMessage());
 			error("Cannot close scans bundle file.");
 		}
-		progressMonitor.setProgress(1);
 
 		uploadFileToServer(workingFile);
 
-		if (progressMonitor.isCanceled()) {
-		    progressMonitor.close();
-		    logger.info("Job, " + jobID + ", canceled");
-		    return;
-		}
-
-		progressMonitor.setProgress(2);
-
-		//####################################################################
-		// Prepare for remote job in a loop as it might take some time to analyze
-		logger.info("Awaiting PREP analysis, " + workingFile.getName()
-				+ ", on SaaS server...");
-		progressMonitor.setNote("Performing a pre-check analysis.");
-		
-
-		progressMonitor.setProgress(3);
-		progressMonitor.setProgress(4);
-
-		// timeWait is based on the loop count to keep this as short as possible.
-		long timeWait = minutesTimeoutPrep;
-		int count = 0;
-		PrepAction prepAction = checkPrepAnalysis(workingFile.getName());
-		while (prepAction.getStatus() == PrepAction.Status.Analyzing
-				&& timeWait > 0) {
-			Thread.sleep(minutesCheckPrep * 60000);
-			timeWait -= minutesCheckPrep;
-			if (progressMonitor.isCanceled()) {
-				progressMonitor.close();
-				logger.info("Job, " + jobID + ", canceled");
-				return;
-			}
-			prepAction = checkPrepAnalysis(workingFile.getName());
-			progressMonitor.setProgress(4 + count);
-			count++;
-		}
-
-		if(prepAction.getStatus() != PrepAction.Status.Ready) {
-			error("Failed to launch or complete PREP Phase for " + jobID);
-			return;
-		}
-		
-		progressMonitor.setProgress(15);
-		//####################################################################
-		// start for remote job
-		progressMonitor.setNote("Requesting job to be run...");
 		initiateRun(workingFile.getName(), selectedRTO);
-
-		progressMonitor.setNote("Finished");
-		progressMonitor.close();
 		
 		// job was started - record it
 		logger.info("Job, " + jobID + ", launched");
