@@ -72,16 +72,14 @@ public class IntensityPlotModule implements MZmineRunnableModule {
                 PeakListsSelectionType.SPECIFIC_PEAKLISTS,
                 new PeakList[] { peakList });
 
-        parameters.getParameter(IntensityPlotParameters.dataFiles).setChoices(
-                peakList.getRawDataFiles());
+        parameters.getParameter(IntensityPlotParameters.dataFiles)
+                .setChoices(peakList.getRawDataFiles());
 
-        parameters.getParameter(IntensityPlotParameters.dataFiles).setValue(
-                peakList.getRawDataFiles());
+        parameters.getParameter(IntensityPlotParameters.dataFiles)
+                .setValue(peakList.getRawDataFiles());
 
         parameters.getParameter(IntensityPlotParameters.selectedRows)
-                .setChoices(rows);
-        parameters.getParameter(IntensityPlotParameters.selectedRows).setValue(
-                rows);
+                .setValue(rows);
 
         UserParameter<?, ?> projectParams[] = project.getParameters();
         Object xAxisSources[] = new Object[projectParams.length + 1];
@@ -94,10 +92,18 @@ public class IntensityPlotModule implements MZmineRunnableModule {
         parameters.getParameter(IntensityPlotParameters.xAxisValueSource)
                 .setChoices(xAxisSources);
 
-        ExitCode exitCode = parameters.showSetupDialog(MZmineCore.getDesktop()
-                .getMainWindow(), true);
+        ExitCode exitCode = parameters.showSetupDialog(null, true);
 
         if (exitCode == ExitCode.OK) {
+            PeakListRow selectedRows[] = parameters
+                    .getParameter(IntensityPlotParameters.selectedRows)
+                    .getMatchingRows(peakList);
+            if (selectedRows.length == 0) {
+                MZmineCore.getDesktop().displayErrorMessage(null,
+                        "No rows selected");
+                return;
+            }
+
             IntensityPlotWindow newFrame = new IntensityPlotWindow(
                     parameters.cloneParameterSet());
             newFrame.setVisible(true);

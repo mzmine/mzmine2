@@ -40,9 +40,6 @@ import net.sf.mzmine.util.PeakMeasurementType;
 public class PCADataset extends AbstractXYDataset
         implements ProjectionPlotDataset {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
@@ -89,9 +86,9 @@ public class PCADataset extends AbstractXYDataset
                 .getParameter(ProjectionPlotParameters.coloringType).getValue();
 
         selectedRawDataFiles = parameters
-                .getParameter(ProjectionPlotParameters.dataFiles).getValue();
-        selectedRows = parameters.getParameter(ProjectionPlotParameters.rows)
-                .getValue();
+                .getParameter(ProjectionPlotParameters.dataFiles).getValue()
+                .getMatchingRawDataFiles();
+        selectedRows = peakList.getRows();
 
         datasetTitle = "Principal component analysis";
 
@@ -214,6 +211,17 @@ public class PCADataset extends AbstractXYDataset
         final boolean useArea = (parameters
                 .getParameter(ProjectionPlotParameters.peakMeasurementType)
                 .getValue() == PeakMeasurementType.AREA);
+
+        if (selectedRows.length == 0) {
+            this.status = TaskStatus.ERROR;
+            errorMessage = "No peaks selected for PCA plot";
+            return;
+        }
+        if (selectedRawDataFiles.length == 0) {
+            this.status = TaskStatus.ERROR;
+            errorMessage = "No raw data files selected for PCA plot";
+            return;
+        }
 
         double[][] rawData = new double[selectedRawDataFiles.length][selectedRows.length];
         for (int rowIndex = 0; rowIndex < selectedRows.length; rowIndex++) {

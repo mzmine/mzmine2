@@ -73,10 +73,9 @@ class MzTabImportTask extends AbstractTask {
     // underlying tasks for importing raw data
     private final List<Task> underlyingTasks = new ArrayList<Task>();
 
-    MzTabImportTask(MZmineProject project, ParameterSet parameters) {
+    MzTabImportTask(MZmineProject project, ParameterSet parameters, File inputFile) {
 	this.project = project;
-	this.inputFile = parameters.getParameter(MzTabImportParameters.file)
-		.getValue();
+	this.inputFile = inputFile;
 	this.importRawFiles = parameters.getParameter(
 		MzTabImportParameters.importrawfiles).getValue();
     }
@@ -204,6 +203,27 @@ class MzTabImportTask extends AbstractTask {
 
 		if (fileToImport.exists() && fileToImport.canRead())
 		    filesToImport.add(fileToImport);
+		else {
+		    // Check if the raw file exists in the same folder as the mzTab file
+		    File checkFile = new File(inputFile.getParentFile(), fileToImport.getName());
+		    if (checkFile.exists() && checkFile.canRead())
+	                    filesToImport.add(checkFile);
+		    else
+		    {
+		        //Append .gz & check again if file exists as a workaround to .gz not getting preserved when .mzML.gz importing
+		        checkFile = new File(inputFile.getParentFile(),fileToImport.getName()+".gz");
+		        if (checkFile.exists() && checkFile.canRead())
+                            filesToImport.add(checkFile);
+		        else
+	                    {
+	                        //One more level of checking, appending .zip & checking as a workaround
+	                        checkFile = new File(inputFile.getParentFile(),fileToImport.getName()+".zip");
+	                        if (checkFile.exists() && checkFile.canRead())
+	                            filesToImport.add(checkFile);
+	                    }
+		    }
+		    
+		}
 
 	    }
 

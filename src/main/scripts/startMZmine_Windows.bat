@@ -112,6 +112,10 @@ mkdir %TMP_FILE_DIRECTORY%
 set JAVA_PARAMETERS=-showversion -classpath lib\* -Djava.ext.dirs= -XX:+UseG1GC -Djava.io.tmpdir=%TMP_FILE_DIRECTORY% -Xms1024m -Xmx%HEAP_SIZE%m
 set MAIN_CLASS=net.sf.mzmine.main.MZmineCore
 
+:: Make sure we are in the correct directory
+set SCRIPTDIR=%~dp0
+cd %SCRIPTDIR%
+
 :: Starts the Java Virtual Machine
 %JAVA_COMMAND% %JAVA_PARAMETERS% %MAIN_CLASS% %*
 
@@ -128,16 +132,16 @@ setlocal disableDelayedExpansion
 
 :: Kill/clean-up remaining Rserve instances
 :: Load the file path "array"
-for /f "tokens=1* delims=:" %%A in ('dir /b %TMP_FILE_DIRECTORY%\rs_pid_*.pid^|findstr /n "^"') do (
+for /f "tokens=1* delims=:" %%A in ('dir /b %TMP_FILE_DIRECTORY%\rs_pid_*.pid 2^>nul ^|findstr /n "^"') do (
   set "file.%%A=%TMP_FILE_DIRECTORY%\%%B"
   set "file.count=%%A"
 )
 :: Access the values
 setlocal enableDelayedExpansion
 for /l %%N in (1 1 %file.count%) do (
-  echo !file.%%N!
+  echo Found pidfile: !file.%%N!
   set /P pid=<!file.%%N!
-  echo !pid!
+  echo Killing Rserve tree from main instance / pid: !pid!.
   del !file.%%N!
   taskkill /PID !pid! /F 2>nul
 )

@@ -19,26 +19,39 @@
 
 package net.sf.mzmine.modules.peaklistmethods.dataanalysis.clustering;
 
-import java.awt.Window;
+import java.util.Arrays;
 
-import net.sf.mzmine.datamodel.PeakList;
-import net.sf.mzmine.datamodel.PeakListRow;
-import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.modules.peaklistmethods.dataanalysis.clustering.em.EMClusterer;
 import net.sf.mzmine.modules.peaklistmethods.dataanalysis.clustering.farthestfirst.FarthestFirstClusterer;
 import net.sf.mzmine.modules.peaklistmethods.dataanalysis.clustering.hierarchical.HierarClusterer;
 import net.sf.mzmine.modules.peaklistmethods.dataanalysis.clustering.simplekmeans.SimpleKMeansClusterer;
-import net.sf.mzmine.modules.peaklistmethods.dataanalysis.projectionplots.ProjectionPlotParameters;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.ComboParameter;
 import net.sf.mzmine.parameters.parametertypes.ModuleComboParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.PeakListsParameter;
-import net.sf.mzmine.util.ExitCode;
+import net.sf.mzmine.parameters.parametertypes.selectors.PeakSelection;
+import net.sf.mzmine.parameters.parametertypes.selectors.PeakSelectionParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesSelection;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesSelectionType;
+import net.sf.mzmine.util.PeakMeasurementType;
 
 public class ClusteringParameters extends SimpleParameterSet {
 
     public static final PeakListsParameter peakLists = new PeakListsParameter();
+
+    public static final ComboParameter<PeakMeasurementType> peakMeasurementType = new ComboParameter<PeakMeasurementType>(
+            "Peak measurement type", "Measure peaks using",
+            PeakMeasurementType.values());
+
+    public static final RawDataFilesParameter dataFiles = new RawDataFilesParameter(
+            new RawDataFilesSelection(RawDataFilesSelectionType.ALL_FILES));
+
+    public static final PeakSelectionParameter rows = new PeakSelectionParameter(
+            "Peak list rows", "Peak list rows to include in calculation",
+            Arrays.asList(new PeakSelection[] {
+                    new PeakSelection(null, null, null, null) }));
 
     private static ClusteringAlgorithm algorithms[] = new ClusteringAlgorithm[] {
             new EMClusterer(), new FarthestFirstClusterer(),
@@ -54,38 +67,8 @@ public class ClusteringParameters extends SimpleParameterSet {
             ClusteringDataType.values());
 
     public ClusteringParameters() {
-        super(
-                new Parameter[] { peakLists,
-                        ProjectionPlotParameters.peakMeasurementType,
-                        ProjectionPlotParameters.dataFiles,
-                        ProjectionPlotParameters.rows, clusteringAlgorithm,
-                        typeOfData });
+        super(new Parameter[] { peakLists, peakMeasurementType, dataFiles, rows,
+                clusteringAlgorithm, typeOfData });
     }
 
-    @Override
-    public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {
-
-        PeakList selectedPeakList[] = getParameter(peakLists).getValue()
-                .getMatchingPeakLists();
-
-        RawDataFile dataFileChoices[];
-        if (selectedPeakList.length == 1) {
-            dataFileChoices = selectedPeakList[0].getRawDataFiles();
-        } else {
-            dataFileChoices = new RawDataFile[0];
-        }
-
-        PeakListRow rowChoices[];
-        if (selectedPeakList.length == 1) {
-            rowChoices = selectedPeakList[0].getRows();
-        } else {
-            rowChoices = new PeakListRow[0];
-        }
-
-        getParameter(ProjectionPlotParameters.dataFiles).setChoices(
-                dataFileChoices);
-        getParameter(ProjectionPlotParameters.rows).setChoices(rowChoices);
-
-        return super.showSetupDialog(parent, valueCheckRequired);
-    }
 }

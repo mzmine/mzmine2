@@ -339,6 +339,14 @@ public class PeakListTablePopupMenu extends JPopupMenu implements
                 for (final Feature peak : row.getPeaks()) {
                     if (mzRange == null) {
                         mzRange = peak.getRawDataPointsMZRange();
+                        double upper = mzRange.upperEndpoint();
+                        double lower = mzRange.lowerEndpoint();
+                        if ((upper - lower) < 0.000001) {
+                            //Workaround to make ultra narrow mzRanges (e.g. from imported mzTab peaklist), 
+                            //a more reasonable default for a HRAM instrument (~5ppm)
+                            double fiveppm = (upper*5E-6);
+                            mzRange = Range.closed(lower-fiveppm,upper+fiveppm);
+                        }       
                     } else {
                         mzRange = mzRange.span(peak.getRawDataPointsMZRange());
                     }

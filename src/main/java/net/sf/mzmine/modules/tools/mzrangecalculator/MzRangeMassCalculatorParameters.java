@@ -17,33 +17,21 @@
  * St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.parameters.parametertypes.ranges;
+package net.sf.mzmine.modules.tools.mzrangecalculator;
 
-public class MZRangeParameter extends DoubleRangeParameter {
+import net.sf.mzmine.parameters.Parameter;
+import net.sf.mzmine.parameters.impl.SimpleParameterSet;
+import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
+import net.sf.mzmine.parameters.parametertypes.tolerances.MZToleranceParameter;
 
-    public MZRangeParameter() {
-        super("m/z", "m/z range", null, true, null);
-    }
+public class MzRangeMassCalculatorParameters extends SimpleParameterSet {
 
-    public MZRangeParameter(boolean valueRequired) {
-        super("m/z", "m/z range", null, valueRequired, null);
-    }
+    static final DoubleParameter mz = new DoubleParameter("m/z", "m/z value");
 
-    public MZRangeParameter(String name, String description) {
-        super(name, description, null, true, null);
-    }
+    static final MZToleranceParameter mzTolerance = new MZToleranceParameter();
 
-    @Override
-    public MZRangeComponent createEditingComponent() {
-        return new MZRangeComponent();
-    }
-
-    @Override
-    public MZRangeParameter cloneParameter() {
-        MZRangeParameter copy = new MZRangeParameter(getName(),
-                getDescription());
-        copy.setValue(this.getValue());
-        return copy;
+    public MzRangeMassCalculatorParameters() {
+        super(new Parameter[] { mz, mzTolerance });
     }
 
 }

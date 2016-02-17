@@ -23,33 +23,37 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.filechooser.FileFilter;
 
-/**
- */
-public class FileNameComponent extends JPanel implements ActionListener {
+public class FileNamesComponent extends JPanel implements ActionListener {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
     public static final Font smallFont = new Font("SansSerif", Font.PLAIN, 10);
 
-    private JTextField txtFilename;
+    private JTextArea txtFilename;
 
-    public FileNameComponent(int textfieldcolumns) {
+    private FileFilter[] filters;
+
+    public FileNamesComponent(FileFilter[] filters) {
+
+        this.filters = filters;
 
         setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
 
-        txtFilename = new JTextField();
-        txtFilename.setColumns(textfieldcolumns);
+        txtFilename = new JTextArea();
+        txtFilename.setColumns(40);
+        txtFilename.setRows(6);
         txtFilename.setFont(smallFont);
-        add(txtFilename);
+        add(new JScrollPane(txtFilename));
 
         JButton btnFileBrowser = new JButton("...");
         btnFileBrowser.addActionListener(this);
@@ -57,34 +61,51 @@ public class FileNameComponent extends JPanel implements ActionListener {
 
     }
 
-    public File getValue() {
-        String fileName = txtFilename.getText();
-        File file = new File(fileName);
-        return file;
+    public File[] getValue() {
+        String fileNameStrings[] = txtFilename.getText().split("\n");
+        List<File> files = new ArrayList<>();
+        for (String fileName : fileNameStrings) {
+            if (fileName.trim().equals(""))
+                continue;
+            files.add(new File(fileName.trim()));
+        }
+        return files.toArray(new File[0]);
     }
 
-    public void setValue(File value) {
-        txtFilename.setText(value.getPath());
+    public void setValue(File[] value) {
+        if (value == null)
+            return;
+        StringBuilder b = new StringBuilder();
+        for (File file : value) {
+            b.append(file.getPath());
+            b.append("\n");
+        }
+        txtFilename.setText(b.toString());
     }
 
     public void actionPerformed(ActionEvent e) {
 
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setMultiSelectionEnabled(true);
+        if ((filters != null) && (filters.length > 0)) {
+            for (FileFilter f : filters)
+                fileChooser.addChoosableFileFilter(f);
+            fileChooser.setFileFilter(filters[0]);
 
-        String currentPath = txtFilename.getText();
-        if (currentPath.length() > 0) {
-            File currentFile = new File(currentPath);
+        }
+        String currentPaths[] = txtFilename.getText().split("\n");
+        if (currentPaths.length > 0) {
+            File currentFile = new File(currentPaths[0].trim());
             File currentDir = currentFile.getParentFile();
             if (currentDir != null && currentDir.exists())
                 fileChooser.setCurrentDirectory(currentDir);
         }
 
-        int returnVal = fileChooser.showDialog(null, "Select file");
+        int returnVal = fileChooser.showDialog(null, "Select files");
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            String selectedPath = fileChooser.getSelectedFile().getPath();
-            txtFilename.setText(selectedPath);
+            File selectedFiles[] = fileChooser.getSelectedFiles();
+            setValue(selectedFiles);
         }
     }
 
