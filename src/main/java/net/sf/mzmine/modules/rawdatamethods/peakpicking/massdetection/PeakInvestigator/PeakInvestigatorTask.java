@@ -61,6 +61,7 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDefaultDialogFactory;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorDialogFactory;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorTransferDialog;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorLogDialog;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
@@ -722,7 +723,8 @@ public class PeakInvestigatorTask
 	}
 
 	protected void displayJobLog(File localFile) throws IOException {
-		PeakInvestigatorLogDialog dialog = new PeakInvestigatorLogDialog(localFile);
+		PeakInvestigatorLogDialog dialog = new PeakInvestigatorLogDialog(
+				MZmineCore.getDesktop().getMainWindow(), localFile);
 		dialog.setVisible(true);
 	}
 
@@ -777,86 +779,6 @@ public class PeakInvestigatorTask
 
 		public ResponseErrorException(String message) {
 			super(message);
-		}
-	}
-
-	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
-
-		private static final long serialVersionUID = 1L;
-		private JButton closeButton;
-		private JButton saveButton;
-		private final File file;
-
-		PeakInvestigatorLogDialog(File file) throws IOException {
-			super(MZmineCore.getDesktop().getMainWindow(),
-					"PeakInvestigator Job Log",
-					Dialog.ModalityType.DOCUMENT_MODAL);
-
-			this.file = file;
-
-			Container verticalBox = Box.createVerticalBox();
-
-			JTextArea textArea = setupTextArea(file);
-			JScrollPane scrollPane = new JScrollPane(textArea);
-			verticalBox.add(scrollPane);
-
-			Container buttonBox = setupButtonBox();
-			verticalBox.add(buttonBox);
-
-			add(verticalBox);
-
-			setMinimumSize(new Dimension(400, 300));
-			setLocationRelativeTo(getParent());
-
-		}
-
-		private JTextArea setupTextArea(File file) throws IOException {
-			byte[] data = Files.readAllBytes(file.toPath());
-			JTextArea textArea = new JTextArea(new String(data));
-			textArea.setEditable(false);
-			return textArea;
-		}
-
-		private Container setupButtonBox() {
-			Container buttonBox = Box.createHorizontalBox();
-			closeButton = GUIUtils.addButton(buttonBox, "Close", null, this);
-			saveButton = GUIUtils
-					.addButton(buttonBox, "Save as...", null, this);
-			return buttonBox;
-		}
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			Object object = e.getSource();
-
-			if (object == closeButton) {
-				dispose();
-			} else if (object == saveButton) {
-				saveLogFile();
-			}
-		}
-
-		private void saveLogFile() {
-			FileDialog dialog = new FileDialog(this, "Save job log...",
-					FileDialog.SAVE);
-
-			dialog.setFile(file.getName());
-			dialog.setMultipleMode(false);
-			dialog.setVisible(true);
-
-			File[] files = dialog.getFiles();
-			if (files.length != 1) {
-				logger.info("Number of files specified in saveLogFile(): "
-						+ files.length);
-				return;
-			}
-
-			try {
-				Files.copy(file.toPath(), files[0].toPath(),
-						StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException e) {
-				error("Problem saving job log file.");
-			}
 		}
 	}
 
