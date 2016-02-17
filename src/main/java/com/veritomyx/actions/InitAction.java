@@ -11,9 +11,17 @@ import org.json.simple.JSONObject;
 public class InitAction extends BaseAction {
 	private static final String action = "INIT";
 
-	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"ProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
-	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6},\"Orbitrap\":{\"RTO-24\":0.85},\"Iontrap\":{\"RTO-24\":1.02}}}";
-	public final static String EXAMPLE_RESPONSE_3 = "{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":115.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":12.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}";
+	public final static String EXAMPLE_RESPONSE_1 = "{\"Action\":\"INIT\", \"Job\":\"V-504.1551\", \"ID\":504, \"Funds\":115.01, "
+			+ "\"EstimatedCost\":[{\"Instrument\":\"TOF\", \"RTO\":\"RTO-24\", \"Cost\":27.60}, "
+			+ "{\"Instrument\":\"Orbitrap\", \"RTO\":\"RTO-24\", \"Cost\":36.22}, "
+			+ "{\"Instrument\":\"IonTrap\", \"RTO\":\"RTO-24\", \"Cost\":32.59}]}";
+	public final static String EXAMPLE_RESPONSE_2 = "{\"Action\":\"INIT\", \"Job\":\"V-504.1551\", \"ID\":504, \"Funds\":115.01, "
+			+ "\"EstimatedCost\":[{\"Instrument\":\"TOF\", \"RTO\":\"RTO-24\", \"Cost\":27.60}, "
+			+ "{\"Instrument\":\"Orbitrap\", \"RTO\":\"RTO-24\", \"Cost\":36.22}, "
+			+ "{\"Instrument\":\"IonTrap\", \"RTO\":\"RTO-24\", \"Cost\":32.59}, "
+			+ "{\"Instrument\":\"TOF\", \"RTO\":\"RTO-0\", \"Cost\":270.60}, "
+			+ "{\"Instrument\":\"Orbitrap\", \"RTO\":\"RTO-0\", \"Cost\":360.22}, "
+			+ "{\"Instrument\":\"IonTrap\", \"RTO\":\"RTO-0\", \"Cost\":320.59}]}";
 
 	private int ID;
 	private String versionOfPi;
@@ -101,9 +109,9 @@ public class InitAction extends BaseAction {
 		return getStringAttribute("Job");
 	}
 
-	public long getProjectId() {
+	public long getId() {
 		preCheck();
-		return getLongAttribute("ProjectID");
+		return getLongAttribute("ID");
 	}
 
 	public double getFunds() {
@@ -119,15 +127,19 @@ public class InitAction extends BaseAction {
 		}
 
 		estimatedCosts = new HashMap<>();
-		JSONObject RTOs = (JSONObject) responseObject.get("EstimatedCost");
-		for (Object instrument : RTOs.keySet()) {
-			ResponseTimeCosts costs = new ResponseTimeCosts();
-			JSONObject costsJSON_Object = (JSONObject) RTOs.get(instrument);
-			for (Object RTO : costsJSON_Object.keySet()) {
-				String stringRTO = (String) RTO;
-				costs.put(stringRTO, (Double) costsJSON_Object.get(stringRTO));
-			}
-			estimatedCosts.put((String) instrument, costs);
+		JSONArray RTOs = (JSONArray) responseObject.get("EstimatedCost");
+		for (Object object : RTOs) {
+			JSONObject jsonObject = (JSONObject) object;
+
+			String instrument = (String) jsonObject.get("Instrument");
+			String RTO = (String) jsonObject.get("RTO");
+			Double cost = (Double) jsonObject.get("Cost");
+
+			ResponseTimeCosts costs = estimatedCosts.containsKey(instrument) ? estimatedCosts
+					.get(instrument) : new ResponseTimeCosts();
+			costs.put(RTO, cost);
+
+			estimatedCosts.put(instrument, costs);
 		}
 
 		return estimatedCosts;

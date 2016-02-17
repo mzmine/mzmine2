@@ -49,27 +49,30 @@ public class ActionsTest {
 		action.processResponse(InitAction.EXAMPLE_RESPONSE_1);
 
 		InitAction temp = (InitAction) action;
-		assertEquals("V-504.1461", temp.getJob());
-		assertEquals(504, temp.getProjectId());
+		assertEquals("V-504.1551", temp.getJob());
+		assertEquals(504, temp.getId());
 		assertEquals(115.01, temp.getFunds(), 0);
 
 		HashMap<String, ResponseTimeCosts> costs = temp.getEstimatedCosts();
-		assertEquals(0.6, costs.get("TOF").getCost("RTO-24"), 0);
-		assertEquals(0.85, costs.get("Orbitrap").getCost("RTO-24"), 0);
-		assertEquals(1.02, costs.get("Iontrap").getCost("RTO-24"), 0);
+		assertEquals(27.60, costs.get("TOF").getCost("RTO-24"), 0);
+		assertEquals(36.22, costs.get("Orbitrap").getCost("RTO-24"), 0);
+		assertEquals(32.59, costs.get("IonTrap").getCost("RTO-24"), 0);
 
 		action.reset();
 
-		action.processResponse(InitAction.EXAMPLE_RESPONSE_3);
-		temp = (InitAction) action;
+		action.processResponse(InitAction.EXAMPLE_RESPONSE_2);
+
+		assertEquals("V-504.1551", temp.getJob());
+		assertEquals(504, temp.getId());
+		assertEquals(115.01, temp.getFunds(), 0);
 
 		costs = temp.getEstimatedCosts();
-		assertEquals(0.6, costs.get("TOF").getCost("RTO-24"), 0);
-		assertEquals(12.00, costs.get("TOF").getCost("RTO-0"), 0);
-		assertEquals(0.85, costs.get("Orbitrap").getCost("RTO-24"), 0);
-		assertEquals(24.00, costs.get("Orbitrap").getCost("RTO-0"), 0);
-		assertEquals(1.02, costs.get("Iontrap").getCost("RTO-24"), 0);
-		assertEquals(26.00, costs.get("Iontrap").getCost("RTO-0"), 0);
+		assertEquals(27.60, costs.get("TOF").getCost("RTO-24"), 0);
+		assertEquals(36.22, costs.get("Orbitrap").getCost("RTO-24"), 0);
+		assertEquals(32.59, costs.get("IonTrap").getCost("RTO-24"), 0);
+		assertEquals(270.60, costs.get("TOF").getCost("RTO-0"), 0);
+		assertEquals(360.22, costs.get("Orbitrap").getCost("RTO-0"), 0);
+		assertEquals(320.59, costs.get("IonTrap").getCost("RTO-0"), 0);
 	}
 
 	@Test
