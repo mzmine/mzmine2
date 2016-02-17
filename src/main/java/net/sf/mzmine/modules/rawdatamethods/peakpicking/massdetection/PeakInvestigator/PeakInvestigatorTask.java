@@ -22,6 +22,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
@@ -45,12 +46,10 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.ProgressMonitor;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
@@ -78,7 +77,6 @@ import com.veritomyx.PeakInvestigatorSaaS;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.DeleteAction;
 import com.veritomyx.actions.InitAction;
-import com.veritomyx.actions.PrepAction;
 import com.veritomyx.actions.RunAction;
 import com.veritomyx.actions.SftpAction;
 import com.veritomyx.actions.StatusAction;
@@ -349,6 +347,9 @@ public class PeakInvestigatorTask
 			} catch (JSchException | SftpException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
+			} catch (IOException exception) {
+				error(exception.getMessage());
+				exception.printStackTrace();
 			}
 	}
 
@@ -669,12 +670,11 @@ public class PeakInvestigatorTask
 	 * @throws SftpException 
 	 * @throws SftpTransferException 
 	 * @throws JSchException 
+	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	private void finishRetrieve() throws ResponseFormatException,
-			ResponseErrorException, JSchException, SftpException {
-		if (errors > 0)
-			return;
+			ResponseErrorException, JSchException, SftpException, IOException {
 
 		desc = "finishing retrieve";
 		logger.info("Finishing retrieval of job " + jobID);
@@ -682,6 +682,8 @@ public class PeakInvestigatorTask
 		File remoteFile = new File(statusAction.getLogFilename());
 		File logFile = new File(getFilenameWithPath(remoteFile.getName()));
 		downloadFileFromServer(remoteFile, logFile);
+
+		displayJobLog(logFile);
 
 		String mesg = "PeakInvestigator results successfully downloaded.\n"
 				+ "All your job files will now be deleted from the Veritomyx servers.\n"
@@ -719,34 +721,9 @@ public class PeakInvestigatorTask
 		logger.info("Job " + jobID + " deleted from server");
 	}
 
-	protected void displayJobLog(File localFile) {
-		try (BufferedReader br = new BufferedReader(new FileReader(localFile))) {
-			StringBuilder sb = new StringBuilder();
-			String line = br.readLine();
-
-			while (line != null) {
-				sb.append(line);
-				sb.append(System.lineSeparator());
-				line = br.readLine();
-			}
-
-			String logInfo = sb.toString();
-			PeakInvestigatorLogDialog logDialog = new PeakInvestigatorLogDialog(
-					logInfo);
-			logDialog.setVisible(true);
-
-		} catch (FileNotFoundException e2) {
-			MZmineCore.getDesktop().displayErrorMessage(
-					MZmineCore.getDesktop().getMainWindow(), "Error",
-					"Log file not found", logger);
-		} catch (Exception e1) {
-			logger.finest(e1.getMessage());
-			MZmineCore.getDesktop().displayErrorMessage(
-					MZmineCore.getDesktop().getMainWindow(), "Error",
-					"Cannot parse log file", logger);
-			errors++;
-			e1.printStackTrace();
-		}
+	protected void displayJobLog(File localFile) throws IOException {
+		PeakInvestigatorLogDialog dialog = new PeakInvestigatorLogDialog(localFile);
+		dialog.setVisible(true);
 	}
 
 	/**
@@ -806,42 +783,79 @@ public class PeakInvestigatorTask
 	class PeakInvestigatorLogDialog extends JDialog implements ActionListener {
 
 		private static final long serialVersionUID = 1L;
+		private JButton closeButton;
+		private JButton saveButton;
+		private final File file;
 
-		PeakInvestigatorLogDialog(String contents) {
+		PeakInvestigatorLogDialog(File file) throws IOException {
 			super(MZmineCore.getDesktop().getMainWindow(),
 					"PeakInvestigator Job Log",
 					Dialog.ModalityType.DOCUMENT_MODAL);
 
+			this.file = file;
+
 			Container verticalBox = Box.createVerticalBox();
 
-			JTextArea textArea = new JTextArea(contents);
-			textArea.setEditable(false);
-
+			JTextArea textArea = setupTextArea(file);
 			JScrollPane scrollPane = new JScrollPane(textArea);
 			verticalBox.add(scrollPane);
 
-			Container buttonBox = Box.createHorizontalBox();
-
-			@SuppressWarnings("unused")
-			JButton closeButton = GUIUtils.addButton(buttonBox, "Close", null,
-					this);
-
+			Container buttonBox = setupButtonBox();
 			verticalBox.add(buttonBox);
 
 			add(verticalBox);
 
-			setLocationRelativeTo(getParent());
 			setMinimumSize(new Dimension(400, 300));
+			setLocationRelativeTo(getParent());
 
+		}
+
+		private JTextArea setupTextArea(File file) throws IOException {
+			byte[] data = Files.readAllBytes(file.toPath());
+			JTextArea textArea = new JTextArea(new String(data));
+			textArea.setEditable(false);
+			return textArea;
+		}
+
+		private Container setupButtonBox() {
+			Container buttonBox = Box.createHorizontalBox();
+			closeButton = GUIUtils.addButton(buttonBox, "Close", null, this);
+			saveButton = GUIUtils
+					.addButton(buttonBox, "Save as...", null, this);
+			return buttonBox;
 		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			Object object = e.getSource();
 
-			if (object instanceof JButton
-					&& ((JButton) object).getText() == "Close") {
+			if (object == closeButton) {
 				dispose();
+			} else if (object == saveButton) {
+				saveLogFile();
+			}
+		}
+
+		private void saveLogFile() {
+			FileDialog dialog = new FileDialog(this, "Save job log...",
+					FileDialog.SAVE);
+
+			dialog.setFile(file.getName());
+			dialog.setMultipleMode(false);
+			dialog.setVisible(true);
+
+			File[] files = dialog.getFiles();
+			if (files.length != 1) {
+				logger.info("Number of files specified in saveLogFile(): "
+						+ files.length);
+				return;
+			}
+
+			try {
+				Files.copy(file.toPath(), files[0].toPath(),
+						StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				error("Problem saving job log file.");
 			}
 		}
 	}
