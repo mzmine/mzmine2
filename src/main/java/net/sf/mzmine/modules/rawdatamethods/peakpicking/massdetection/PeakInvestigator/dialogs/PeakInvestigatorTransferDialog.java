@@ -8,7 +8,7 @@ import com.jcraft.jsch.SftpProgressMonitor;
 
 public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 
-	public static final int POPUP_TIME = 100;
+	public static final int POPUP_TIME = 500;
 
 	private ProgressMonitor monitor = null;
 	private long transferred = 0;
@@ -28,7 +28,7 @@ public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 			throw new IllegalArgumentException("Unknown Sftp direction.");
 		}
 
-		String note = "0% completed.";
+		String note = "Starting.";
 		monitor = new ProgressMonitor(MZmineCore.getDesktop().getMainWindow(),
 				builder.toString(), note, 0, 100);
 		totalSize = size;
@@ -47,11 +47,13 @@ public class PeakInvestigatorTransferDialog implements SftpProgressMonitor {
 		String note = String.format("%d%% completed.", progress);
 		monitor.setNote(note);
 
-		return monitor.isCanceled();
+		return !monitor.isCanceled();
 	}
 
 	@Override
 	public void end() {
+		monitor.setProgress(100);
+		monitor.setNote("Finished.");
 		monitor.close();
 	}
 }
