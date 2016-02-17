@@ -691,8 +691,8 @@ public class PeakInvestigatorTask
 		rawDataFile.removeJob("job-" + jobID);
 		desc = "retrieve finished";
 
-		if (System.getProperty("PeakInvestigatorTask.deleteJob")
-				.equals("false")) {
+		String shouldDelete = System.getProperty("PeakInvestigatorTask.deleteJob");
+		if (shouldDelete != null && shouldDelete.equals("false")) {
 			logger.info("Job " + jobID + " not being deleted as requested.");
 			return;
 		}
