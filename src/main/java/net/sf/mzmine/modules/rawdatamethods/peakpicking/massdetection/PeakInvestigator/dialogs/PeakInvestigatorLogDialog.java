@@ -1,11 +1,8 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs;
 
 import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,55 +11,30 @@ import java.util.logging.Logger;
 
 import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 
 import net.sf.mzmine.util.GUIUtils;
 
-public class PeakInvestigatorLogDialog extends JDialog implements
-		ActionListener {
+public class PeakInvestigatorLogDialog extends PeakInvestigatorTextDialog {
 
 	private static final long serialVersionUID = 1L;
 	private Logger logger;
 
-	private JButton closeButton;
 	private JButton saveButton;
 	private final File file;
 
 	public PeakInvestigatorLogDialog(JFrame parent, File file)
 			throws IOException {
 		super(parent, "PeakInvestigator Job Log",
-				Dialog.ModalityType.DOCUMENT_MODAL);
+				file);
 
 		this.logger = Logger.getLogger(this.getClass().getName());
 		this.file = file;
-
-		Container verticalBox = Box.createVerticalBox();
-
-		JTextArea textArea = setupTextArea(file);
-		JScrollPane scrollPane = new JScrollPane(textArea);
-		verticalBox.add(scrollPane);
-
-		Container buttonBox = setupButtonBox();
-		verticalBox.add(buttonBox);
-
-		add(verticalBox);
-
-		setMinimumSize(new Dimension(600, 400));
-		setLocationRelativeTo(getParent());
 	}
 
-	private JTextArea setupTextArea(File file) throws IOException {
-		byte[] data = Files.readAllBytes(file.toPath());
-		JTextArea textArea = new JTextArea(new String(data));
-		textArea.setEditable(false);
-		return textArea;
-	}
-
-	private Container setupButtonBox() {
+	@Override
+	Container setupButtonBox() {
 		Container buttonBox = Box.createHorizontalBox();
 		closeButton = GUIUtils.addButton(buttonBox, "Close", null, this);
 		saveButton = GUIUtils.addButton(buttonBox, "Save as...", null, this);
@@ -71,11 +43,11 @@ public class PeakInvestigatorLogDialog extends JDialog implements
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		super.actionPerformed(e);
+
 		Object object = e.getSource();
 
-		if (object == closeButton) {
-			dispose();
-		} else if (object == saveButton) {
+		if (object == saveButton) {
 			saveLogFile();
 		}
 	}
