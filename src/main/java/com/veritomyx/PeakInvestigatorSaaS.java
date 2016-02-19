@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 Veritomyx Inc.
+ * Copyright 2013-2016 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -40,16 +40,18 @@ import com.jcraft.jsch.SftpProgressMonitor;
 import com.veritomyx.actions.*;
 
 /**
- * This class is used to access the Veritomyx SaaS servers
+ * This is the main class to access the PeakInvestigator service. It has
+ * functions to execute API calls ("actions"), as well as manage SFTP transfers.
+ * See https://peakinvestigator.veritomyx.com/api/ for more information.
  * 
- * @author Dan Schmidt
+ * @author Dan Schmidt (original version)
  * @author Adam Tenderholt
  */
 public class PeakInvestigatorSaaS
 {
-	// Required CLI version (see https://secure.veritomyx.com/interface/API.php)
-	public static final String API_VERSION = "3.0";
+	public static final String API_VERSION = "3.3";
 	private static final String PAGE_ENCODING = "UTF-8";
+	private static final String HOST_FILE = "/com/veritomyx/sftp-servers.txt";
 
 	JSch jsch = new JSch();
 	private String server = null;
@@ -91,11 +93,22 @@ public class PeakInvestigatorSaaS
 	private Logger log;
 
 	/**
-	 * Constructor
+	 * Creates a new PeakInvestigatorSaaS object for the given server.
 	 * 
-	 * @param reqVersion
-	 * @param live
-	 * @throws JSchException 
+	 * <p>
+	 * Note that it strips any preceding 'https://' and executes API calls in
+	 * /api/. For example, if 'peakinvestigator.veritomyx.com' is specified as
+	 * the server, it will make API calls to
+	 * https://peakinvesitgator.veritomyx.com/api/.
+	 * </p>
+	 * 
+	 * <p>
+	 * This constructor also sets up the SSH Host Key repository.
+	 * </p>
+	 * 
+	 * @param server
+	 *            The server address represented as a String.
+	 * @throws JSchException
 	 */
 	public PeakInvestigatorSaaS(String server) throws JSchException {
 		// without this we get exception in getInputStream
@@ -109,17 +122,28 @@ public class PeakInvestigatorSaaS
 		log = Logger.getLogger(this.getClass().getName());
 		log.info(this.getClass().getName());
 
-		setupHostKeyRepository();
+		setupKnownHosts();
 	}
 
+	/**
+	 * Used to modify the default HTTPS timeout using a Fluent-style API.
+	 * 
+	 * @param timeout
+	 *            The desired timeout in milliseconds.
+	 */
 	public PeakInvestigatorSaaS withTimeout(int timeout) {
 		this.timeout = timeout;
 		return this;
 	}
 
-	protected void setupHostKeyRepository() throws JSchException {
+	/**
+	 * Sets the known hosts for SSH sessions.
+	 * 
+	 * @throws JSchException
+	 */
+	protected void setupKnownHosts() throws JSchException {
 		InputStream stream = getClass().getResourceAsStream(
-				"/com/veritomyx/sftp-servers.txt");
+				HOST_FILE);
 		if (stream == null) {
 			throw new JSchException("Unable to locate hosts file.");
 		}
@@ -131,6 +155,15 @@ public class PeakInvestigatorSaaS
 		System.err.println(message);
 	}
 
+	/**
+	 * Utility function to build a HTTPS connection with various required
+	 * settings.
+	 * 
+	 * @param url
+	 *            The URL of the desired connection.
+	 * @return A new HttpURLConnection instance
+	 * @throws IOException
+	 */
 	private HttpURLConnection buildConnection(URL url) throws IOException {
 
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -147,7 +180,17 @@ public class PeakInvestigatorSaaS
 
 		return connection;
 	}
-	
+
+	/**
+	 * Utility function to make a POST method against a HttpURLConnection with
+	 * the given query.
+	 * 
+	 * @param connection
+	 *            A valid HttpURLConnection (not currently connected).
+	 * @param query
+	 *            The desired query string
+	 * @return The response for the query.
+	 */
 	protected String queryConnection(HttpURLConnection connection, String query) {
 		connection.setRequestProperty("Content-Length",
 				"" + Integer.toString(query.getBytes().length));
@@ -189,6 +232,14 @@ public class PeakInvestigatorSaaS
 		return builder.toString();
 	}
 
+	/**
+	 * Execute an API call ("action") of the PeakInvestigator service.
+	 * 
+	 * @param action
+	 *            An instance of one of the subclasses of BaseAction that
+	 *            represent the API methods. It must be properly initialized.
+	 * @return The JSON response from the PeakInvestigator service.
+	 */
 	public String executeAction(BaseAction action) {
 		action.reset();
 		String page = "https://" + server + "/api/";
@@ -204,6 +255,25 @@ public class PeakInvestigatorSaaS
 		return queryConnection(connection, action.buildQuery());
 	}
 
+	/**
+	 * Utility function to initialize a SFTP session, which also initializes the
+	 * required SSH session.
+	 * 
+	 * <p>
+	 * This function modifies the state of the class via its session and channel
+	 * variables.
+	 * </p>
+	 * 
+	 * @param server
+	 *            The host name (or address) of the SFTP server.
+	 * @param username
+	 *            Self-explanatory.
+	 * @param password
+	 *            Self-explanatory.
+	 * @param port
+	 *            Self-explanatory.
+	 * @throws JSchException
+	 */
 	protected void initializeSftpSession(String server, String username,
 			String password, int port) throws JSchException {
 
