@@ -1,6 +1,7 @@
 Job Pricing:
 ============
 
+
 Before Job is Started
 ---------------------
 
@@ -18,6 +19,7 @@ When Job is Started
    phase, job execution may terminate (at no charge).
 
 4) MS type for scans submitted is determined, and job execution proceeds.
+
 
 After Job Completion
 --------------------

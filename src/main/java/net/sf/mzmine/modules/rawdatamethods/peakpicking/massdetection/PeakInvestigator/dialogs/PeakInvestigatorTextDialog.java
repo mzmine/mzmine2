@@ -3,6 +3,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -22,6 +23,9 @@ public class PeakInvestigatorTextDialog extends JDialog implements
 		ActionListener {
 
 	private static final long serialVersionUID = 1L;
+
+	private static final Font DEFAULT_FONT = new Font(Font.MONOSPACED,
+			Font.PLAIN, 12);
 
 	JButton closeButton;
 
@@ -55,6 +59,7 @@ public class PeakInvestigatorTextDialog extends JDialog implements
 		byte[] data = Files.readAllBytes(file.toPath());
 		JTextArea textArea = new JTextArea(new String(data));
 		textArea.setEditable(false);
+		textArea.setFont(DEFAULT_FONT);
 		return textArea;
 	}
 
