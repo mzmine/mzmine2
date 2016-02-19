@@ -42,12 +42,14 @@ import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
 
 import net.sf.mzmine.main.MZmineCore;
-//import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * This dialog is presented at the start of a PeakInvestigator run so the user
@@ -57,6 +59,9 @@ import java.util.Map;
 public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, ActionListener {
 
     private static final long serialVersionUID = 1L;
+    private Logger logger = Logger.getLogger(PeakInvestigatorInitDialog.class.getName());
+
+    private static final String PRICE_DETAILS_FILE = "/com/veritomyx/price-quote-details.txt";
 
     private static final Dimension SMALL_SIZE_XY = new Dimension(5, 5);
     private static final Dimension SMALL_SIZE_X = new Dimension(5, 0);
@@ -239,7 +244,21 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
 	}
 
 	private void handleDetailsButton() {
+		URL url = getClass().getResource(PRICE_DETAILS_FILE);
+		if (url == null) {
+			logger.info("Problem loading price quote details: file not found.");
+			return;
+		}
 
+		String filename = url.getFile();
+		try {
+			PeakInvestigatorTextDialog dialog = new PeakInvestigatorTextDialog(
+					null, "Price Quotation Details...", filename);
+			dialog.setVisible(true);
+		} catch (IOException e) {
+			logger.info("Problem loading price quote details.");
+			e.printStackTrace();
+		}
 	}
 
 	public void closeDialog(ExitCode exitCode) {
@@ -264,12 +283,12 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
 			throws UnsupportedOperationException, ParseException {
 		InitAction action = InitAction.create("3.0", "adam", "password");
 		try {
-			action.processResponse("{\"Action\":\"INIT\",\"Job\":\"V-504.1461\",\"SubProjectID\":504,\"Funds\":1150.01,\"EstimatedCost\":{\"TOF\":{\"RTO-24\":0.6,\"RTO-0\":1200.00},\"Orbitrap\":{\"RTO-24\":0.85, \"RTO-0\":24.00},\"Iontrap\":{\"RTO-24\":1.02,\"RTO-0\":26.00}}}");
+			action.processResponse(InitAction.EXAMPLE_RESPONSE_2);
 		} catch (ResponseFormatException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(-1);
 		}
+
 		PeakInvestigatorInitDialog dialog = new PeakInvestigatorInitDialog(
 				null, "1.2", action);
 		dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

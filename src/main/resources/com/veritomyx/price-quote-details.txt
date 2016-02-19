@@ -1,0 +1,27 @@
+Job Pricing:
+============
+
+Before Job is Started
+---------------------
+
+1) Maximum job price estimate is quoted for scans submitted (may vary by MS
+   type).
+
+
+When Job is Started
+-------------------
+
+2) Highest price estimate is deducted from account balance when Purchase is
+   selected. (MS type is unverified.)
+
+3) If actual job parameters disagree with initial estimates from quotation 
+   phase, job execution may terminate (at no charge).
+
+4) MS type for scans submitted is determined, and job execution proceeds.
+
+After Job Completion
+--------------------
+
+5) If job completes more efficiently than planned, a partial refund is credited
+   to customer account.
+
