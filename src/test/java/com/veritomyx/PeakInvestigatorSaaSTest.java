@@ -98,10 +98,7 @@ public class PeakInvestigatorSaaSTest {
 		assertFalse(service.isConnectedForSftp());
 	}
 
-	@Test
-	public void testPutFile() throws JSchException, SftpException {
-		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
-
+	private SftpAction mockSftpAction() {
 		SftpAction action = mock(SftpAction.class);
 		when(action.getHost()).thenReturn(server);
 		when(action.getSftpUsername()).thenReturn(username);
@@ -109,9 +106,17 @@ public class PeakInvestigatorSaaSTest {
 		when(action.getDirectory()).thenReturn("");
 		when(action.getPort()).thenReturn(port);
 
+		return action;
+	}
+
+	@Test
+	public void testPutFile() throws JSchException, SftpException {
+		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		SftpProgressMonitor sftpMonitor = new HeadlessProgressMonitor();
 		File localFile = new File(filename);
-		service.putFile(action, filename, localFile.getName(), sftpMonitor);
+
+		service.putFile(mockSftpAction(), filename, localFile.getName(),
+				sftpMonitor);
 
 		HeadlessProgressMonitor monitor = (HeadlessProgressMonitor) sftpMonitor;
 		assertEquals(localFile.length(), monitor.transferredSize);
@@ -122,17 +127,10 @@ public class PeakInvestigatorSaaSTest {
 	@Test
 	public void testGetFile() throws JSchException, SftpException {
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
-
-		SftpAction action = mock(SftpAction.class);
-		when(action.getHost()).thenReturn(server);
-		when(action.getSftpUsername()).thenReturn(username);
-		when(action.getSftpPassword()).thenReturn(password);
-		when(action.getDirectory()).thenReturn("");
-		when(action.getPort()).thenReturn(port);
-
 		SftpProgressMonitor sftpMonitor = new HeadlessProgressMonitor();
 		File localFile = new File(filename);
-		service.getFile(action, localFile.getName(), "temp.txt", sftpMonitor);
+
+		service.getFile(mockSftpAction(), localFile.getName(), "temp.txt", sftpMonitor);
 
 		HeadlessProgressMonitor monitor = (HeadlessProgressMonitor) sftpMonitor;
 		assertEquals(localFile.length(), monitor.transferredSize);
