@@ -6,7 +6,9 @@ import java.io.File;
 import java.util.ArrayList;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.mockito.Mockito.*;
 
@@ -22,6 +24,10 @@ public class PeakInvestigatorSaaSTest {
 	private String password = null;
 	private int port = 0;
 	private String filename = null;
+
+	private static int TIMEOUT = 500; // milliseconds
+
+	@Rule public ExpectedException thrown = ExpectedException.none();
 
 	@Before
 	public void setUp() {
@@ -40,35 +46,47 @@ public class PeakInvestigatorSaaSTest {
 		assertTrue(service.isConnectedForSftp());
 	}
 
-	@Test(expected = JSchException.class)
+	@Test
 	public void testInitializeSftpSession_BadUsername() throws JSchException {
+		thrown.expect(JSchException.class);
+		thrown.expectMessage("Auth fail");
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		service.initializeSftpSession(server, "joe", password, port);
 
 		fail("Should not reach here.");
 	}
 
-	@Test(expected = JSchException.class)
+	@Test
 	public void testInitializeSftpSession_BadPassword() throws JSchException {
+		thrown.expect(JSchException.class);
+		thrown.expectMessage("Auth fail");
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		service.initializeSftpSession(server, username, "code", port);
 
 		fail("Should not reach here.");
 	}
 
-	@Test(expected = JSchException.class)
+	@Test
 	public void testInitializeSftpSession_BadPort() throws JSchException {
+		thrown.expect(JSchException.class);
+		thrown.expectMessage("connection is closed");
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server)
-				.withTimeout(1);
+				.withTimeout(TIMEOUT);
 		service.initializeSftpSession(server, username, password, 80);
 
 		fail("Should not reach here.");
 	}
 
-	@Test(expected = JSchException.class)
+	@Test
 	public void testInitializeSftpSession_BadServer() throws JSchException {
+		thrown.expect(JSchException.class);
+		thrown.expectMessage("timeout");
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS("unknown.com")
-				.withTimeout(500);
+				.withTimeout(TIMEOUT);
 		service.initializeSftpSession("unknown.com", username, password, port);
 
 		fail("Should not reach here.");
