@@ -127,6 +127,8 @@ public abstract class BaseAction {
 	}
 
 	public class ResponseFormatException extends Exception {
+		private static final long serialVersionUID = 1L;
+
 		private BaseAction action = null;
 
 		public ResponseFormatException(String message, BaseAction action) {

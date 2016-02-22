@@ -2,7 +2,6 @@ package com.veritomyx.actions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.JSONArray;

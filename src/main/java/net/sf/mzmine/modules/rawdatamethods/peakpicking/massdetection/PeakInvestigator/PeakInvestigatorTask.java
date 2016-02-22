@@ -19,12 +19,6 @@
 
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
-import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FileDialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -41,15 +35,8 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.RawDataFile;
@@ -63,7 +50,6 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvest
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorTransferDialog;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.dialogs.PeakInvestigatorLogDialog;
 import net.sf.mzmine.util.ExitCode;
-import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.dialogs.interfaces.BasicDialog;
 
 import org.xeustechnologies.jtar.TarEntry;
@@ -120,14 +106,6 @@ public class PeakInvestigatorTask
 	private File workingDirectory;
 	private File workingFile;
 	private TarOutputStream tarfile = null;
-
-	private int             errors;
-	
-	private static final long minutesCheckPrep = 2;
-	private static final long minutesTimeoutPrep = 20;
-	
-	private static final int numSaaSStartSteps = 16;
-	private static final int numSaaSRetrieveSteps = 7;
 
 	public PeakInvestigatorTask(String server, String username,
 			String password, int projectID) throws JSchException {
