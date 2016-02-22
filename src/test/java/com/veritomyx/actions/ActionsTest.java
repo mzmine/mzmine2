@@ -32,8 +32,16 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_PiVersionsAction_Error() {
-		fail("not implemented");
+	public void test_PiVersionsAction_Error() throws ResponseFormatException {
+		BaseAction action = new PiVersionsAction("3.0", "user", "password");
+
+		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION",
+				"PI_VERSIONS");
+		action.processResponse(response);
+
+		assertEquals("Invalid username or password - can not validate",
+				action.getErrorMessage());
+		assertEquals(3, action.getErrorCode());
 	}
 
 	@Test
@@ -259,8 +267,15 @@ public class ActionsTest {
 	}
 
 	@Test
-	public void test_DeleteAction_Error() {
-		fail("not implemented");
+	public void test_DeleteAction_Error() throws ResponseFormatException {
+		BaseAction action = new DeleteAction("3.0", "user", "password",
+				"job-123");
+		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION",
+				"DELETE");
+		action.processResponse(response);
+
+		assertEquals("Invalid username or password - can not validate",
+				action.getErrorMessage());
 	}
 
 }
