@@ -288,21 +288,25 @@ public class PeakInvestigatorSaaS
 	}
 
 	protected void disconnectSftpSession() {
-		if (channel != null && !channel.isConnected()) {
+		if (channel != null && channel.isConnected()) {
 			channel.disconnect();
 		}
 
-		if (session != null && !session.isConnected()) {
+		if (session != null && session.isConnected()) {
 			session.disconnect();
 		}
 	}
 
 	protected boolean isConnectedForSftp() {
-		if (session == null || channel == null) {
+		if (session != null && channel != null) {
+			return session.isConnected() && channel.isConnected();
+		}
+
+		if (channel == null && session == null) {
 			return false;
 		}
 
-		return session.isConnected() && channel.isConnected();
+		throw new IllegalStateException("Inconsistent session & channel state.");
 	}
 
 	protected ChannelSftp getSftpChannel() {

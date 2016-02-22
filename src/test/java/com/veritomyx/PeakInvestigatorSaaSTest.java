@@ -3,12 +3,14 @@ package com.veritomyx;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 
 import static org.mockito.Mockito.*;
 
@@ -28,6 +30,7 @@ public class PeakInvestigatorSaaSTest {
 	private static int TIMEOUT = 500; // milliseconds
 
 	@Rule public ExpectedException thrown = ExpectedException.none();
+	@Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
 	@Before
 	public void setUp() {
@@ -122,20 +125,24 @@ public class PeakInvestigatorSaaSTest {
 		assertEquals(localFile.length(), monitor.transferredSize);
 		assertEquals(localFile.length(), monitor.max);
 		assertEquals(SftpProgressMonitor.PUT, monitor.direction);
+		assertFalse(service.isConnectedForSftp());
 	}
 
 	@Test
-	public void testGetFile() throws JSchException, SftpException {
+	public void testGetFile() throws JSchException, SftpException, IOException {
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		SftpProgressMonitor sftpMonitor = new HeadlessProgressMonitor();
 		File localFile = new File(filename);
+		File remoteFile = tempFolder.newFile(localFile.getName());
 
-		service.getFile(mockSftpAction(), localFile.getName(), "temp.txt", sftpMonitor);
+		service.getFile(mockSftpAction(), localFile.getName(),
+				remoteFile.getAbsolutePath(), sftpMonitor);
 
 		HeadlessProgressMonitor monitor = (HeadlessProgressMonitor) sftpMonitor;
 		assertEquals(localFile.length(), monitor.transferredSize);
 		assertEquals(localFile.length(), monitor.max);
 		assertEquals(SftpProgressMonitor.GET, monitor.direction);
+		assertFalse(service.isConnectedForSftp());
 	}
 
 	@SuppressWarnings("unused")
