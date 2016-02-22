@@ -20,6 +20,7 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import java.awt.Window;
+import java.io.IOException;
 import java.lang.Math;
 import java.util.Arrays;
 import java.util.List;
@@ -85,7 +86,7 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 		try {
 			action = performPiVersionsCall(MZmineCore.getConfiguration()
 					.getPreferences());
-		} catch (ResponseFormatException | JSchException e) {
+		} catch (ResponseFormatException | JSchException | IOException e) {
 			e.printStackTrace();
 			return ExitCode.ERROR;
 		}
@@ -198,9 +199,11 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 *         are wrong and not corrected by the user.
 	 * @throws ResponseFormatException
 	 * @throws JSchException 
+	 * @throws IOException 
 	 */
 	public static PiVersionsAction performPiVersionsCall(
-			MZminePreferences preferences) throws ResponseFormatException, JSchException {
+			MZminePreferences preferences) throws ResponseFormatException,
+			JSchException, IOException {
 
 		VeritomyxSettings settings = preferences.getVeritomyxSettings();
 		PeakInvestigatorSaaS webService = new PeakInvestigatorSaaS(
@@ -226,10 +229,11 @@ public class PeakInvestigatorParameters extends SimpleParameterSet
 	 * @return An object containing response from server, or null if credentials
 	 *         are wrong and not corrected by the user.
 	 * @throws ResponseFormatException
+	 * @throws IOException 
 	 */
 	protected static PiVersionsAction performPiVersionsCall(
 			MZminePreferences preferences, PeakInvestigatorSaaS webService,
-			Window window) throws ResponseFormatException {
+			Window window) throws ResponseFormatException, IOException {
 
 		VeritomyxSettings settings = preferences.getVeritomyxSettings();
 		PiVersionsAction action = new PiVersionsAction(

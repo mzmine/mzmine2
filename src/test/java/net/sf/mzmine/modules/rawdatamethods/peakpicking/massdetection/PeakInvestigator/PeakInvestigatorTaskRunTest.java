@@ -4,6 +4,9 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleScan;
@@ -26,7 +29,8 @@ public class PeakInvestigatorTaskRunTest {
 
 	@Test
 	public void testInitiateRunOk() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+			ResponseFormatException, ResponseErrorException, JSchException,
+			IOException {
 
 		PeakInvestigatorTask task = createDefaultTask(RunAction.EXAMPLE_RESPONSE_1);
 		task.initiateRun("test.tar", "RTO-24");
@@ -40,7 +44,8 @@ public class PeakInvestigatorTaskRunTest {
 	 */
 	@Test(expected = ResponseFormatException.class)
 	public void testInitializeResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+			ResponseFormatException, ResponseErrorException, JSchException,
+			IOException {
 
 		PeakInvestigatorTask task = createDefaultTask(BaseAction.API_SOURCE);
 		task.initiateRun("test.tar", "RTO-24");
@@ -53,7 +58,8 @@ public class PeakInvestigatorTaskRunTest {
 	 */
 	@Test(expected = ResponseErrorException.class)
 	public void testInitializeResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+			ResponseFormatException, ResponseErrorException, JSchException,
+			IOException {
 
 		String response = BaseAction.ERROR_CREDENTIALS
 				.replace("ACTION", "RUN");
@@ -68,7 +74,9 @@ public class PeakInvestigatorTaskRunTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultTask(String response) throws JSchException {
+	private PeakInvestigatorTask createDefaultTask(String response)
+			throws JSchException, IOException {
+
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 
 		when(vtmx.executeAction(actionCaptor.capture())).thenReturn(response);

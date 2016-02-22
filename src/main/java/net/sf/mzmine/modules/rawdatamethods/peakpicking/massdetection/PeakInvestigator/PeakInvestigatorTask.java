@@ -163,7 +163,7 @@ public class PeakInvestigatorTask
 
 	public void initializeSubmit(String versionOfPi, int scanCount, int[] massRange,
 			String target) throws ResponseFormatException,
-			ResponseErrorException, IllegalStateException {
+			ResponseErrorException, IllegalStateException, IOException {
 
 		this.launch = true;
 		this.targetName = target;
@@ -215,9 +215,10 @@ public class PeakInvestigatorTask
 	 * @param compoundJobName
 	 * @throws ResponseFormatException
 	 * @throws ResponseErrorException 
+	 * @throws IOException 
 	 */
 	public void initializeFetch(String compoundJobName, boolean displayLog)
-			throws ResponseFormatException, ResponseErrorException {
+			throws ResponseFormatException, ResponseErrorException, IOException {
 
 		this.statusAction = null;
 		this.job = rawDataFile.getJob(compoundJobName);
@@ -338,6 +339,9 @@ public class PeakInvestigatorTask
 			} catch (JSchException | SftpException sftpException) {
 				error(sftpException.getMessage());
 				sftpException.printStackTrace();
+			} catch (IOException exception) {
+				error(exception.getMessage());
+				exception.printStackTrace();
 			}
 		} else
 			try {
@@ -404,7 +408,7 @@ public class PeakInvestigatorTask
 	protected void uploadFileToServer(File file)
 			throws ResponseFormatException, IllegalStateException,
 			ResponseErrorException, SftpException, JSchException,
-			InterruptedException {
+			InterruptedException, IOException {
 
 		logger.info("Transmit scans bundle, " + file.getName()
 				+ ", to SFTP server...");
@@ -438,7 +442,8 @@ public class PeakInvestigatorTask
 	}
 
 	protected void initiateRun(String filename, String selectedRTO)
-			throws ResponseFormatException, IllegalStateException, ResponseErrorException {
+			throws ResponseFormatException, IllegalStateException,
+			ResponseErrorException, IOException {
 
 		logger.info("Launch job (RUN), " + jobID + ", on cloud server...");
 
@@ -461,11 +466,12 @@ public class PeakInvestigatorTask
 	 * @throws SftpException 
 	 * @throws SftpTransferException 
 	 * @throws JSchException 
+	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	private void finishLaunch() throws InterruptedException,
 			ResponseFormatException, IllegalStateException,
-			ResponseErrorException, JSchException, SftpException {
+			ResponseErrorException, JSchException, SftpException, IOException {
 
 		desc = "finishing launch";
 
@@ -493,14 +499,14 @@ public class PeakInvestigatorTask
 	 * Wait for job to finish in cloud and pickup the results
 	 * @throws ResponseErrorException 
 	 * @throws ResponseFormatException 
-	 * @throws FileNotFoundException 
 	 * @throws SftpException 
 	 * @throws SftpTransferException 
 	 * @throws JSchException 
+	 * @throws IOException 
 	 */
 	private void startRetrieve() throws ResponseFormatException,
-			ResponseErrorException, FileNotFoundException, JSchException,
-			SftpException {
+			ResponseErrorException, JSchException,
+			SftpException, IOException {
 
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
@@ -528,11 +534,12 @@ public class PeakInvestigatorTask
 	 * @throws SftpException 
 	 * @throws SftpTransferException 
 	 * @throws JSchException 
+	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
 	protected void downloadFileFromServer(File remoteFile, File localFile)
 			throws ResponseFormatException, ResponseErrorException,
-			JSchException, SftpException {
+			JSchException, SftpException, IOException {
 
 		logger.info("Receive file, " + remoteFile.getName()
 				+ ", from SFTP server...");
@@ -704,7 +711,7 @@ public class PeakInvestigatorTask
 	}
 
 	protected void deleteJob(String jobID) throws ResponseFormatException,
-			ResponseErrorException {
+			ResponseErrorException, IOException {
 
 		DeleteAction action = new DeleteAction(
 				PeakInvestigatorSaaS.API_VERSION, username, password, jobID);

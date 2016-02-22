@@ -1,6 +1,9 @@
 package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator;
 
 import static org.junit.Assert.*;
+
+import java.io.IOException;
+
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.RemoteJob;
@@ -40,7 +43,8 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitialize_SubmitOk() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+			ResponseFormatException, ResponseErrorException, JSchException,
+			IOException {
 
 		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
@@ -56,7 +60,8 @@ public class PeakInvestigatorTaskInitTest {
 	 */
 	@Test
 	public void testInitialize_SubmitCancel() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+			ResponseFormatException, ResponseErrorException, JSchException,
+			IOException {
 
 		PeakInvestigatorTask task = createDefaultSubmitTask(
 				InitAction.EXAMPLE_RESPONSE_1).usingDialogFactory(
@@ -72,7 +77,7 @@ public class PeakInvestigatorTaskInitTest {
 	@Test
 	public void testInitialize_SubmitResponseHTML()
 			throws IllegalStateException, ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		thrown.expect(ResponseFormatException.class);
 		thrown.expectMessage("Server response appears to be HTML/XML");
@@ -90,7 +95,7 @@ public class PeakInvestigatorTaskInitTest {
 	@Test
 	public void testInitialize_SubmitResponseError()
 			throws IllegalStateException, ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		thrown.expect(ResponseErrorException.class);
 		thrown.expectMessage("Invalid username or password");
@@ -110,7 +115,9 @@ public class PeakInvestigatorTaskInitTest {
 	 * Convenience function to build PeakInvestigatorTask that has setup with
 	 * PeakInvestigatorSaaS and RawDataFile mocks.
 	 */
-	private PeakInvestigatorTask createDefaultSubmitTask(String response) throws JSchException {
+	private PeakInvestigatorTask createDefaultSubmitTask(String response)
+			throws JSchException, IOException {
+
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(argThat(new IsBaseAction()))).thenReturn(
 				response);
@@ -129,7 +136,9 @@ public class PeakInvestigatorTaskInitTest {
 	}
 
 	private PeakInvestigatorTask createDefaultFetchTask(String response,
-			ArgumentCaptor<StatusAction> action) throws JSchException {
+			ArgumentCaptor<StatusAction> action) throws JSchException,
+			IOException {
+
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		when(vtmx.executeAction(action.capture())).thenReturn(response);
 
@@ -145,7 +154,7 @@ public class PeakInvestigatorTaskInitTest {
 
 	@Test
 	public void testInitialize_FetchRunning() throws ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
@@ -167,7 +176,7 @@ public class PeakInvestigatorTaskInitTest {
 
 	@Test
 	public void testInitialize_FetchDone() throws ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
@@ -185,7 +194,7 @@ public class PeakInvestigatorTaskInitTest {
 
 	@Test
 	public void testInitialize_FetchResponseError() throws ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		thrown.expect(ResponseErrorException.class);
 		thrown.expectMessage("Invalid username or password");
@@ -205,7 +214,7 @@ public class PeakInvestigatorTaskInitTest {
 
 	@Test
 	public void testInitialize_FetchResponseHTML() throws ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		thrown.expect(ResponseFormatException.class);
 		thrown.expectMessage("Server response appears to be HTML/XML");
@@ -224,7 +233,7 @@ public class PeakInvestigatorTaskInitTest {
 
 	@Test
 	public void testInitialize_FetchDeleted() throws ResponseFormatException,
-			ResponseErrorException, JSchException {
+			ResponseErrorException, JSchException, IOException {
 
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);

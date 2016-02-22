@@ -3,6 +3,7 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import static org.junit.Assert.*;
 
 import java.awt.Window;
+import java.io.IOException;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -75,7 +76,7 @@ public class PeakInvestigatorParametersTest {
 
 	@Test
 	public void testPerformPiVersionCall_OkOnFirstTry()
-			throws ResponseFormatException {
+			throws ResponseFormatException, IOException {
 
 		// mock preferences, returning a dummy settings
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
@@ -95,7 +96,7 @@ public class PeakInvestigatorParametersTest {
 
 	@Test
 	public void testPerformPiVersionCall_BadOnFirstTryThenCancel()
-			throws ResponseFormatException {
+			throws ResponseFormatException, IOException {
 
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
 				"password", 0);
@@ -124,7 +125,7 @@ public class PeakInvestigatorParametersTest {
 
 	@Test
 	public void testPerformPiVersionCall_BadOnFirstTryThenGood()
-			throws ResponseFormatException {
+			throws ResponseFormatException, IOException {
 
 		VeritomyxSettings settings = new VeritomyxSettings("test", "username",
 				"password", 0);

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
@@ -37,8 +38,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testUploadFileToServer_Ok() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, SftpException, JSchException,
-			InterruptedException {
+			SftpException, JSchException,
+			InterruptedException, IOException {
 
 		PeakInvestigatorTask task = createUploadTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -58,8 +59,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testUploadFileToServer_ResponseHTML() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException,
-			InterruptedException {
+			JSchException, SftpException,
+			InterruptedException, IOException {
 
 		thrown.expect(ResponseFormatException.class);
 		thrown.expectMessage("Server response appears to be HTML/XML");
@@ -76,8 +77,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testUploadFileToServer_ResponseError() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException,
-			InterruptedException {
+			JSchException, SftpException,
+			InterruptedException, IOException {
 
 		thrown.expect(ResponseErrorException.class);
 		thrown.expectMessage("Invalid username or password");
@@ -112,7 +113,7 @@ public class PeakInvestigatorTaskSftpTest {
 	}
 
 	private PeakInvestigatorTask createUploadTask(String response)
-			throws JSchException, SftpException, FileNotFoundException {
+			throws JSchException, SftpException, IOException {
 
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		doNothing().when(vtmx).putFile(actionCaptor.capture(), anyString(),
@@ -124,7 +125,7 @@ public class PeakInvestigatorTaskSftpTest {
 	}
 
 	private PeakInvestigatorTask createDownloadTask(String response)
-			throws JSchException, SftpException, FileNotFoundException {
+			throws JSchException, SftpException, IOException {
 
 		PeakInvestigatorSaaS vtmx = mock(PeakInvestigatorSaaS.class);
 		doNothing().when(vtmx).getFile(actionCaptor.capture(), anyString(),
@@ -138,8 +139,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testDownloadFileFromServer_Ok() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, SftpException, JSchException,
-			InterruptedException {
+			SftpException, JSchException,
+			InterruptedException, IOException {
 
 		PeakInvestigatorTask task = createDownloadTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
@@ -159,8 +160,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testDownloadFileFromServer_ResponseHTML()
 			throws IllegalStateException, ResponseFormatException,
-			ResponseErrorException, FileNotFoundException, JSchException,
-			SftpException, InterruptedException {
+			ResponseErrorException, JSchException,
+			SftpException, InterruptedException, IOException {
 
 		thrown.expect(ResponseFormatException.class);
 		thrown.expectMessage("Server response appears to be HTML/XML");
@@ -178,8 +179,8 @@ public class PeakInvestigatorTaskSftpTest {
 	@Test
 	public void testDownloadFileFromServer_ResponseError() throws IllegalStateException,
 			ResponseFormatException, ResponseErrorException,
-			FileNotFoundException, JSchException, SftpException,
-			InterruptedException {
+			JSchException, SftpException,
+			InterruptedException, IOException {
 
 		thrown.expect(ResponseErrorException.class);
 		thrown.expectMessage("Invalid username or password");

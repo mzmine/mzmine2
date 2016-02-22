@@ -145,6 +145,9 @@ public class PeakInvestigatorDetector implements MassDetector
 			error(e.getMessage());
 			e.printStackTrace();
 			return null;
+		} catch (IOException e) {
+			error(e.getMessage());
+			e.printStackTrace();
 		}
 
 		String job_name = job.getName();
@@ -178,7 +181,7 @@ public class PeakInvestigatorDetector implements MassDetector
 
 	public String selectPiVersion(PeakInvestigatorParameters parameters,
 			MZminePreferences preferences) throws ResponseFormatException,
-			JSchException {
+			JSchException, IOException {
 
 		String selectedPiVersion = parameters.getPiVersion();
 

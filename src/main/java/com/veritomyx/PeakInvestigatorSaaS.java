@@ -190,43 +190,29 @@ public class PeakInvestigatorSaaS
 	 * @param query
 	 *            The desired query string
 	 * @return The response for the query.
+	 * @throws IOException
 	 */
-	protected String queryConnection(HttpURLConnection connection, String query) {
+	protected String queryConnection(HttpURLConnection connection, String query)
+			throws IOException {
+
 		connection.setRequestProperty("Content-Length",
 				"" + Integer.toString(query.getBytes().length));
 
 		// Send request
-		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				connection.getOutputStream(), PAGE_ENCODING))) {
-			writer.write(query);
-			writer.flush();
-		} catch (UnsupportedEncodingException encodingException) {
-			error("Unsupported encoding: " + PAGE_ENCODING);
-			encodingException.printStackTrace();
-		} catch (IOException exception) {
-			error("Unable to write to connection.");
-			exception.printStackTrace();
-		}
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+				connection.getOutputStream(), PAGE_ENCODING));
+		writer.write(query);
+		writer.flush();
 
-		try {
-			connection.connect();
-		} catch (IOException exception) {
-			error("Problem connecting to server in queryConnection().");
-			exception.printStackTrace();
-			return new String();
-		}
+		connection.connect();
 
 		// Read the response from the HTTP server
 		StringBuilder builder = new StringBuilder();
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-				connection.getInputStream()))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				builder.append(line);
-			}
-		} catch (IOException e) {
-			error("Unable to read response from server.");
-			e.printStackTrace();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				connection.getInputStream()));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			builder.append(line);
 		}
 
 		return builder.toString();
@@ -240,18 +226,11 @@ public class PeakInvestigatorSaaS
 	 *            represent the API methods. It must be properly initialized.
 	 * @return The JSON response from the PeakInvestigator service.
 	 */
-	public String executeAction(BaseAction action) {
+	public String executeAction(BaseAction action) throws IOException {
 		action.reset();
 		String page = "https://" + server + "/api/";
 			
-		HttpURLConnection connection = null;
-		try {
-			connection = buildConnection(new URL(page));
-		} catch (IOException e) {
-			error("Unable to connect to " + page + ".");
-			e.printStackTrace();
-		}
-		
+		HttpURLConnection connection = buildConnection(new URL(page));		
 		return queryConnection(connection, action.buildQuery());
 	}
 
