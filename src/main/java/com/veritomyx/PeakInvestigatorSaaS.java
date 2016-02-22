@@ -173,8 +173,8 @@ public class PeakInvestigatorSaaS
 				"application/x-www-form-urlencoded");
 		connection.setRequestProperty("Content-Language", "en-US");
 
-		// give it 4 minutes to respond
-		connection.setReadTimeout(240 * 1000);
+		connection.setReadTimeout(timeout);
+		connection.setConnectTimeout(timeout);
 		connection.setDoInput(true);
 		connection.setDoOutput(true);
 
