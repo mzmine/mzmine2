@@ -13,7 +13,9 @@ import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.dialogs.HeadlessDialogFactory;
 import net.sf.mzmine.util.dialogs.HeadlessBasicDialog;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
@@ -30,6 +32,8 @@ import com.veritomyx.actions.InitAction;
 
 public class PeakInvestigatorTaskInitTest {
 
+	@Rule public ExpectedException thrown = ExpectedException.none();
+
 	/**
 	 * Test PeakInvestigatorTask.initialize() with real response and OK click on
 	 * dialog.
@@ -43,7 +47,7 @@ public class PeakInvestigatorTaskInitTest {
 				new EmptyOkDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
 
-		assertEquals("V-504.1461", task.getName());
+		assertEquals("V-504.1551", task.getName());
 	}
 
 	/**
@@ -65,9 +69,14 @@ public class PeakInvestigatorTaskInitTest {
 	/**
 	 * Test PeakInvestigatorTask.initialize() with HTML response.
 	 */
-	@Test(expected = ResponseFormatException.class)
-	public void testInitialize_SubmitResponseHTML() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+	@Test
+	public void testInitialize_SubmitResponseHTML()
+			throws IllegalStateException, ResponseFormatException,
+			ResponseErrorException, JSchException {
+
+		thrown.expect(ResponseFormatException.class);
+		thrown.expectMessage("Server response appears to be HTML/XML");
+
 		PeakInvestigatorTask task = createDefaultSubmitTask(BaseAction.API_SOURCE)
 				.usingDialogFactory(new EmptyOkDialogFactory());
 		task.initializeSubmit("1.2", 2, new int[] { 50, 500 }, "job-blah");
@@ -78,9 +87,13 @@ public class PeakInvestigatorTaskInitTest {
 	/**
 	 * Test PeakInvestigatorTask.initialize() with real ERROR response.
 	 */
-	@Test(expected = ResponseErrorException.class)
-	public void testInitialize_SubResponseError() throws IllegalStateException,
-			ResponseFormatException, ResponseErrorException, JSchException {
+	@Test
+	public void testInitialize_SubmitResponseError()
+			throws IllegalStateException, ResponseFormatException,
+			ResponseErrorException, JSchException {
+
+		thrown.expect(ResponseErrorException.class);
+		thrown.expectMessage("Invalid username or password");
 
 		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
 		String response = BaseAction.ERROR_CREDENTIALS
@@ -170,9 +183,12 @@ public class PeakInvestigatorTaskInitTest {
 		assertEquals("C1.10", task.getName());
 	}
 
-	@Test(expected = ResponseErrorException.class)
-	public void testInitialize_FetchError() throws ResponseFormatException,
+	@Test
+	public void testInitialize_FetchResponseError() throws ResponseFormatException,
 			ResponseErrorException, JSchException {
+
+		thrown.expect(ResponseErrorException.class);
+		thrown.expectMessage("Invalid username or password");
 
 		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
 				.forClass(StatusAction.class);
@@ -181,6 +197,25 @@ public class PeakInvestigatorTaskInitTest {
 		String response = BaseAction.ERROR_CREDENTIALS.replace("ACTION", "STATUS");
 		PeakInvestigatorTask task = createDefaultFetchTask(response,
 				actionCaptor);
+		task.usingDialogFactory(factory);
+		task.initializeFetch("|job-C1.10[PI]", true);
+
+		fail("Should not reach here.");
+	}
+
+	@Test
+	public void testInitialize_FetchResponseHTML() throws ResponseFormatException,
+			ResponseErrorException, JSchException {
+
+		thrown.expect(ResponseFormatException.class);
+		thrown.expectMessage("Server response appears to be HTML/XML");
+
+		ArgumentCaptor<StatusAction> actionCaptor = ArgumentCaptor
+				.forClass(StatusAction.class);
+		PeakInvestigatorDialogFactory factory = new EmptyOkDialogFactory();
+
+		PeakInvestigatorTask task = createDefaultFetchTask(
+				BaseAction.API_SOURCE, actionCaptor);
 		task.usingDialogFactory(factory);
 		task.initializeFetch("|job-C1.10[PI]", true);
 
