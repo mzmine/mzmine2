@@ -25,9 +25,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.BufferedWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import org.apache.log4j.Logger;
 
@@ -151,10 +152,6 @@ public class PeakInvestigatorSaaS
 		jsch.setKnownHosts(stream);
 	}
 
-	private void error(String message) {
-		System.err.println(message);
-	}
-
 	/**
 	 * Utility function to build a HTTPS connection with various required
 	 * settings.
@@ -230,8 +227,22 @@ public class PeakInvestigatorSaaS
 		action.reset();
 		String page = "https://" + server + "/api/";
 			
-		HttpURLConnection connection = buildConnection(new URL(page));		
-		return queryConnection(connection, action.buildQuery());
+		HttpURLConnection connection = buildConnection(new URL(page));
+		String response = "";
+		try {
+			response = queryConnection(connection, action.buildQuery());
+		} catch (SocketTimeoutException timeoutException) {
+			throw new SocketTimeoutException("Unable to connect to " + page
+					+ ": connection timed out.");
+		} catch (UnknownHostException hostException) {
+			throw new UnknownHostException("Unable to connect to " + page
+					+ ": unknown host.");
+		} catch (IOException exception) {
+			throw new IOException("Unable to connect to " + page + ": "
+					+ exception.getMessage());
+		}
+
+		return response;
 	}
 
 	/**

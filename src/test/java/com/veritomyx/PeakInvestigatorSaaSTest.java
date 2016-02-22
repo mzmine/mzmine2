@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import org.junit.Before;
@@ -17,6 +19,7 @@ import static org.mockito.Mockito.*;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.SftpProgressMonitor;
+import com.veritomyx.actions.BaseAction;
 import com.veritomyx.actions.SftpAction;
 
 public class PeakInvestigatorSaaSTest {
@@ -39,6 +42,40 @@ public class PeakInvestigatorSaaSTest {
 		password = System.getProperty("password");
 		port = Integer.parseInt(System.getProperty("port"));
 		filename = System.getProperty("filename");
+	}
+
+	@Test
+	public void testExecuteAction_BadServerTimeout() throws JSchException,
+			IOException {
+
+		thrown.expect(SocketTimeoutException.class);
+		thrown.expectMessage("timed out");
+
+		BaseAction action = mock(BaseAction.class);
+		when(action.buildQuery()).thenReturn("Bad string");
+
+		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(
+				"unknown.veritomyx.com").withTimeout(TIMEOUT);
+		service.executeAction(action);
+
+		fail("Should not reach here.");
+	}
+
+	@Test
+	public void testExecuteAction_BadServerName() throws JSchException,
+			IOException {
+
+		thrown.expect(UnknownHostException.class);
+		thrown.expectMessage("unknown host");
+
+		BaseAction action = mock(BaseAction.class);
+		when(action.buildQuery()).thenReturn("Bad string");
+
+		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(
+				"http://unknown.veritomyx.com").withTimeout(TIMEOUT);
+		service.executeAction(action);
+
+		fail("Should not reach here.");
 	}
 
 	@Test
@@ -88,7 +125,7 @@ public class PeakInvestigatorSaaSTest {
 		thrown.expect(JSchException.class);
 		thrown.expectMessage("timeout");
 
-		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS("unknown.com")
+		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS("unknown.veritomyx.com")
 				.withTimeout(TIMEOUT);
 		service.initializeSftpSession("unknown.com", username, password, port);
 
