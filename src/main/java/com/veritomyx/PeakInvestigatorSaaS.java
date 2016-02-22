@@ -335,9 +335,14 @@ public class PeakInvestigatorSaaS
 		initializeSftpSession(action.getHost(), action.getSftpUsername(),
 				action.getSftpPassword(), action.getPort());
 
-		channel.put(localFilename, remoteFilename, monitor);
+		try {
+			channel.put(localFilename, remoteFilename, monitor);
+		} catch (SftpException exception) {
+			throw exception;
+		} finally {
+			disconnectSftpSession();
+		}
 
-		disconnectSftpSession();
 	}
 
 	/**
@@ -366,9 +371,13 @@ public class PeakInvestigatorSaaS
 		initializeSftpSession(action.getHost(), action.getSftpUsername(),
 				action.getSftpPassword(), action.getPort());
 
-		channel.get(remoteFilename, localFilename, monitor);
-
-		disconnectSftpSession();
+		try {
+			channel.get(remoteFilename, localFilename, monitor);
+		} catch (SftpException exception) {
+			throw exception;
+		} finally {
+			disconnectSftpSession();
+		}
 	}
 
 }
