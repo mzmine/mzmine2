@@ -669,7 +669,9 @@ public class PeakInvestigatorTask
 		File logFile = new File(getFilenameWithPath(remoteFile.getName()));
 		downloadFileFromServer(remoteFile, logFile);
 
-		displayJobLog(logFile);
+		if (displayLog) {
+			displayJobLog(logFile);
+		}
 
 		String mesg = "PeakInvestigator results successfully downloaded.\n"
 				+ "All your job files will now be deleted from the Veritomyx servers.\n"
