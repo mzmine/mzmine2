@@ -116,7 +116,6 @@ public class PeakInvestigatorTask
 		this.projectID = projectID;
 
 		logger = Logger.getLogger(this.getClass().getName());
-		logger.setLevel(MZmineCore.VtmxLive ? Level.INFO : Level.FINEST);
 	}
 
 	public PeakInvestigatorTask withRawDataFile(RawDataFile raw) {

@@ -51,7 +51,6 @@ public class PeakInvestigatorDetector implements MassDetector
 	public PeakInvestigatorDetector()
 	{
 		logger = Logger.getLogger(this.getClass().getName());
-		logger.setLevel(MZmineCore.VtmxLive ? Level.INFO : Level.FINEST);
 		logger.info("Initializing Veritomyx " + this.getName());
 		jobs = new ArrayList<PeakInvestigatorTask>();
 	}

@@ -250,11 +250,12 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 
     }
 
-    public void updateTitle() {
-	String projectName = MZmineCore.getProjectManager().getCurrentProject()
-		.toString();
-	setTitle("MZmine " + MZmineCore.getMZmineVersion() + ": " + projectName);
-    }
+	public void updateTitle() {
+		String projectName = MZmineCore.getProjectManager().getCurrentProject()
+				.toString();
+		setTitle(MZmineCore.MZmineName + " " + MZmineCore.getMZmineVersion()
+				+ ": " + projectName);
+	}
 
     /**
      * @see net.sf.mzmine.desktop.Desktop#getMainFrame()
