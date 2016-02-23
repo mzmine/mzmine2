@@ -20,16 +20,15 @@
 package net.sf.mzmine.main;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.logging.Level;
@@ -64,9 +63,9 @@ import net.sf.mzmine.util.ExitCode;
  */
 public final class MZmineCore {
 
-	public static String MZmineName = null;
-	public static String MZmineVersion = null;
-	public static String MZmineDate = null;
+	public static String MZmineName = "MZmine";
+	public static String MZmineVersion = "0.0";
+	public static String MZmineDate = (new Date()).toString();
 
     private static Logger logger = Logger.getLogger(MZmineCore.class.getName());
 
@@ -106,6 +105,7 @@ public final class MZmineCore {
 		Attributes attributes = manifest.getMainAttributes();
 	    MZmineName = attributes.getValue("Implementation-Title");
 	    MZmineDate = attributes.getValue("Implementation-Build");
+	    MZmineVersion = attributes.getValue("Implementation-Version");
 	}
 
 	logger.info("Starting " + MZmineName + " " + getMZmineVersion() + " built " + MZmineDate);
@@ -317,29 +317,7 @@ public final class MZmineCore {
 
 	@Nonnull
 	public static String getMZmineVersion() {
-		if (MZmineVersion != null) {
-			return MZmineVersion;
-		}
-
-		try {
-			ClassLoader myClassLoader = MZmineCore.class.getClassLoader();
-			InputStream inStream = myClassLoader
-					.getResourceAsStream("META-INF/maven/io.github.mzmine/mzmine/pom.properties");
-			if (inStream == null) {
-				MZmineVersion = "0.0";
-				return MZmineVersion;
-			}
-
-			Properties properties = new Properties();
-			properties.load(inStream);
-			MZmineVersion = properties.getProperty("version");
-		} catch (Exception e) {
-			e.printStackTrace();
-			MZmineVersion = "0.0";
-		}
-
 		return MZmineVersion;
-
 	}
 
 	private static Manifest getMZmineManifest() {
