@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 Veritomyx Inc.
+ * Copyright 2013-2016 Veritomyx, Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -30,7 +30,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;

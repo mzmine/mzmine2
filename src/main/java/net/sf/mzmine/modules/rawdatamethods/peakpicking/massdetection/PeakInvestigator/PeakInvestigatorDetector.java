@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2014 Veritomyx Inc.
+ * Copyright 2013-2016 Veritomyx Inc.
  * 
  * This file is part of MZmine 2.
  * 
@@ -22,7 +22,6 @@ package net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInves
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.jcraft.jsch.JSchException;
