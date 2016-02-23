@@ -37,6 +37,7 @@ import javax.swing.BorderFactory;
 import org.apache.batik.ext.swing.GridBagConstants;
 import org.json.simple.parser.ParseException;
 
+import com.google.common.io.ByteStreams;
 import com.veritomyx.actions.BaseAction.ResponseFormatException;
 import com.veritomyx.actions.InitAction;
 import com.veritomyx.actions.InitAction.ResponseTimeCosts;
@@ -46,8 +47,10 @@ import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -244,16 +247,18 @@ public class PeakInvestigatorInitDialog extends JDialog implements InitDialog, A
 	}
 
 	private void handleDetailsButton() {
-		URL url = getClass().getResource(PRICE_DETAILS_FILE);
-		if (url == null) {
-			logger.info("Problem loading price quote details: file not found.");
-			return;
-		}
-
-		String filename = url.getFile();
 		try {
+			InputStream inputStream = getClass().getResourceAsStream(PRICE_DETAILS_FILE);
+
+			File file = File.createTempFile("details-", "txt");
+			file.deleteOnExit();
+
+			FileOutputStream outputStream = new FileOutputStream(file);
+			ByteStreams.copy(inputStream, outputStream);
+			outputStream.close();
+
 			PeakInvestigatorTextDialog dialog = new PeakInvestigatorTextDialog(
-					null, "Price Quotation Details...", filename);
+					null, "Price Quotation Details...", file);
 			dialog.setVisible(true);
 		} catch (IOException e) {
 			logger.info("Problem loading price quote details.");

@@ -48,12 +48,6 @@ public class PeakInvestigatorTextDialog extends JDialog implements
 
 	JButton closeButton;
 
-	public PeakInvestigatorTextDialog(JFrame parent, String title,
-			String filename) throws IOException {
-
-		this(parent, title, new File(filename));
-	}
-
 	public PeakInvestigatorTextDialog(JFrame parent, String title, File file)
 			throws IOException {
 
