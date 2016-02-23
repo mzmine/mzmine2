@@ -1,6 +1,7 @@
 package com.veritomyx;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,8 +28,9 @@ public class PeakInvestigatorSaaSTest {
 	private String server = null;
 	private String username = null;
 	private String password = null;
-	private int port = 0;
+	private Integer port = null;
 	private String filename = null;
+	private boolean isInitialized = false;
 
 	private static int TIMEOUT = 500; // milliseconds
 
@@ -40,13 +42,23 @@ public class PeakInvestigatorSaaSTest {
 		server = System.getProperty("server");
 		username = System.getProperty("user");
 		password = System.getProperty("password");
-		port = Integer.parseInt(System.getProperty("port"));
+		try {
+			port = Integer.parseInt(System.getProperty("port"));
+		} catch (NumberFormatException e) {
+			// don't do anything;
+		}
+
 		filename = System.getProperty("filename");
+
+		isInitialized = server != null && username != null && password != null
+				&& port != null && filename != null;
 	}
 
 	@Test
 	public void testExecuteAction_BadServerTimeout() throws JSchException,
 			IOException {
+
+		assumeTrue(isInitialized);
 
 		thrown.expect(SocketTimeoutException.class);
 		thrown.expectMessage("timed out");
@@ -65,6 +77,8 @@ public class PeakInvestigatorSaaSTest {
 	public void testExecuteAction_BadServerName() throws JSchException,
 			IOException {
 
+		assumeTrue(isInitialized);
+
 		thrown.expect(UnknownHostException.class);
 		thrown.expectMessage("unknown host");
 
@@ -80,6 +94,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testInitializeSftpSession_OK() throws JSchException {
+		assumeTrue(isInitialized);
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		service.initializeSftpSession(server, username, password, port);
 
@@ -88,6 +104,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testInitializeSftpSession_BadUsername() throws JSchException {
+		assumeTrue(isInitialized);
+
 		thrown.expect(JSchException.class);
 		thrown.expectMessage("Auth fail");
 
@@ -99,6 +117,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testInitializeSftpSession_BadPassword() throws JSchException {
+		assumeTrue(isInitialized);
+
 		thrown.expect(JSchException.class);
 		thrown.expectMessage("Auth fail");
 
@@ -110,6 +130,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testInitializeSftpSession_BadPort() throws JSchException {
+		assumeTrue(isInitialized);
+
 		thrown.expect(JSchException.class);
 		thrown.expectMessage("connection is closed");
 
@@ -122,6 +144,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testInitializeSftpSession_BadServer() throws JSchException {
+		assumeTrue(isInitialized);
+
 		thrown.expect(JSchException.class);
 		thrown.expectMessage("timeout");
 
@@ -134,6 +158,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testIntializeSftpSession_NotStarted() throws JSchException {
+		assumeTrue(isInitialized);
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		assertFalse(service.isConnectedForSftp());
 	}
@@ -151,6 +177,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testPutFile() throws JSchException, SftpException {
+		assumeTrue(isInitialized);
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		SftpProgressMonitor sftpMonitor = new HeadlessProgressMonitor();
 		File localFile = new File(filename);
@@ -167,6 +195,8 @@ public class PeakInvestigatorSaaSTest {
 
 	@Test
 	public void testGetFile() throws JSchException, SftpException, IOException {
+		assumeTrue(isInitialized);
+
 		PeakInvestigatorSaaS service = new PeakInvestigatorSaaS(server);
 		SftpProgressMonitor sftpMonitor = new HeadlessProgressMonitor();
 		File localFile = new File(filename);
