@@ -402,7 +402,7 @@ public class PeakInvestigatorTask
 			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
-		String remoteFilename = sftpAction.getDirectory() + File.separator
+		String remoteFilename = sftpAction.getDirectory() + "/"
 				+ file.getName();
 
 		SftpProgressMonitor monitor = dialogFactory.createSftpProgressMonitor();
