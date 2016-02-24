@@ -487,8 +487,7 @@ public class PeakInvestigatorTask
 		desc = "downloading results";
 		logger.info("Downloading job, " + jobID + ", results...");
 
-		File remoteResultsFile = new File(statusAction.getResultsFilename());
-		downloadFileFromServer(remoteResultsFile, workingFile);
+		downloadFileFromServer(statusAction.getResultsFilename(), workingFile);
 
 		extractScansFromTarball(workingFile);
 
@@ -499,9 +498,8 @@ public class PeakInvestigatorTask
 	 * Function to download file from Veritomyx servers. Calls the public API
 	 * for SFTP credentials.
 	 * 
-	 * @param remoteFile
-	 *            A file object representing the file to be downloaded from the
-	 *            remote server.
+	 * @param remoteFilename
+	 *            The name of the remote file to be downloaded.
 	 * @param localFile
 	 *            A file object representing the file once downloaded to local
 	 *            disk.
@@ -513,11 +511,11 @@ public class PeakInvestigatorTask
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	protected void downloadFileFromServer(File remoteFile, File localFile)
+	protected void downloadFileFromServer(String remoteFilename, File localFile)
 			throws ResponseFormatException, ResponseErrorException,
 			JSchException, SftpException, IOException {
 
-		logger.info("Receive file, " + remoteFile.getName()
+		logger.info("Receive file, " + remoteFilename
 				+ ", from SFTP server...");
 
 		SftpAction sftpAction = new SftpAction(
@@ -533,7 +531,7 @@ public class PeakInvestigatorTask
 			throw new ResponseErrorException(sftpAction.getErrorMessage());
 		}
 
-		vtmx.getFile(sftpAction, remoteFile.getAbsolutePath(),
+		vtmx.getFile(sftpAction, remoteFilename,
 				localFile.getAbsolutePath(),
 				dialogFactory.createSftpProgressMonitor());
 	}
@@ -665,7 +663,7 @@ public class PeakInvestigatorTask
 
 		File remoteFile = new File(statusAction.getLogFilename());
 		File logFile = new File(getFilenameWithPath(remoteFile.getName()));
-		downloadFileFromServer(remoteFile, logFile);
+		downloadFileFromServer(statusAction.getLogFilename(), logFile);
 
 		if (displayLog) {
 			displayJobLog(logFile);

@@ -144,7 +144,7 @@ public class PeakInvestigatorTaskSftpTest {
 
 		PeakInvestigatorTask task = createDownloadTask(
 				SftpAction.EXAMPLE_RESPONSE_1);
-		task.downloadFileFromServer(new File("test.tar"), new File("test_local.tar"));
+		task.downloadFileFromServer("test.tar", new File("test_local.tar"));
 
 		SftpAction action = actionCaptor.getValue();
 		assertEquals(action.getHost(), "peakinvestigator.veritomyx.com");
@@ -167,7 +167,7 @@ public class PeakInvestigatorTaskSftpTest {
 		thrown.expectMessage("Server response appears to be HTML/XML");
 
 		PeakInvestigatorTask task = createDownloadTask(BaseAction.API_SOURCE);
-		task.downloadFileFromServer(new File("test.tar"), new File(
+		task.downloadFileFromServer("test.tar", new File(
 				"test_local.tar"));
 
 		fail("Should not reach here.");
@@ -189,7 +189,7 @@ public class PeakInvestigatorTaskSftpTest {
 				.replace("ACTION", "SFTP");
 
 		PeakInvestigatorTask task = createDownloadTask(response);
-		task.downloadFileFromServer(new File("test.tar"), new File(
+		task.downloadFileFromServer("test.tar", new File(
 				"test_local.tar"));
 
 		fail("Should not reach here.");
