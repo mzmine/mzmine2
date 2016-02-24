@@ -2,15 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.veritomyx</groupId>
-	<artifactId>mzmine-pi</artifactId>
-	<version>2.19</version>
-	<name>MZmine PeakInvestigator™ Edition</name>
-	<description>MZmine is an open-source project delivering a software for mass spectrometry data processing, with the main focus on LC-MS data.
-
-This version has implemented the PeakInvestigator™ public API for peak (mass) detection. See http://veritomyx.com for more information.
-</description>
-	<url>http://veritomyx.com/info/MZmine-Investigator-Edition.php</url>
+	<groupId>io.github.mzmine</groupId>
+	<artifactId>mzmine</artifactId>
+	<version>2.20</version>
+	<name>MZmine</name>
+	<description>MZmine is an open-source project delivering a software for mass spectrometry data processing, with the main focus on LC-MS data.</description>
+	<url>https://mzmine.github.io</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,7 +73,7 @@ This version has implemented the PeakInvestigator™ public API for peak (mass) 
 					<descriptors>
 						<descriptor>src/main/assembly/assembly.xml</descriptor>
 					</descriptors>
-					<finalName>MZminePI-${project.version}</finalName>
+					<finalName>MZmine-${project.version}</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
 				</configuration>
 				<executions>

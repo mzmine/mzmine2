@@ -47,6 +47,8 @@ import net.sf.mzmine.util.TextUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 
+import io.github.msdk.datamodel.files.FileType;
+
 /**
  * This module binds spawns a separate process that dumps the native format's
  * data in a text+binary form into its standard output. This class then reads
@@ -232,6 +234,18 @@ public class NativeFileReadTask extends AbstractTask {
                     polarity = PolarityType.POSITIVE;
                 else
                     polarity = PolarityType.UNKNOWN;
+                
+                // For Thermo RAW files, the polarity is sometimes not recognized.
+                // In such case, we can parse it from the scan filter line (scanId).
+                if ((polarity == PolarityType.UNKNOWN)
+                        && (fileType == RawDataFileType.THERMO_RAW)
+                        && (!Strings.isNullOrEmpty(scanId))) {
+                    if (scanId.startsWith("-"))
+                        polarity = PolarityType.NEGATIVE;
+                    else if (scanId.startsWith("+"))
+                        polarity = PolarityType.POSITIVE;
+                }
+
             }
 
             if (line.startsWith("RETENTION TIME: ")) {
@@ -250,10 +264,13 @@ public class NativeFileReadTask extends AbstractTask {
                 // For Thermo RAW files, the MSFileReader library sometimes
                 // returns 0.0 for precursor m/z. In such case, we can parse
                 // the precursor m/z from the scan filter line (scanId).
+                // Examples:
+                // + c ESI SRM ms2 165.000 [118.600-119.600]
+                // FTMS + p ESI d Full ms2 279.16@hcd25.00 [50.00-305.00]
                 if (precursorMZ == 0.0 && fileType == RawDataFileType.THERMO_RAW
                         && (!Strings.isNullOrEmpty(scanId))) {
                     Pattern precursorPattern = Pattern
-                            .compile(".* (\\d+\\.\\d+)@");
+                            .compile(".* ms\\d+ (\\d+\\.\\d+)[@ ]");
                     Matcher m = precursorPattern.matcher(scanId);
                     if (m.find()) {
                         String precursorMzString = m.group(1);
