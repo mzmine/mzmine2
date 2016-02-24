@@ -30,7 +30,7 @@ import java.net.URL;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -314,6 +314,8 @@ public class PeakInvestigatorSaaS
 	 *            The local filename of the file to be uploaded.
 	 * @param remoteFilename
 	 *            The name of the file, including the full path, once uploaded.
+	 *            Note that the remote server uses Unix-style directory
+	 *            separators.
 	 * @param monitor
 	 *            An object implementing the SftpProgressMonitor interface.
 	 * @throws JSchException
@@ -332,6 +334,8 @@ public class PeakInvestigatorSaaS
 		try {
 			channel.put(localFilename, remoteFilename, monitor);
 		} catch (SftpException exception) {
+			log.severe(String.format("Problem uploading %s to %s.",
+					localFilename, remoteFilename));
 			throw exception;
 		} finally {
 			disconnectSftpSession();
@@ -348,6 +352,8 @@ public class PeakInvestigatorSaaS
 	 *            SaaS.
 	 * @param remoteFilename
 	 *            The name of the file, including the full path, once uploaded.
+	 *            Note that the remote server uses Unix-style directory
+	 *            separators.
 	 * @param localFilename
 	 *            The local filename of the file to be uploaded.
 	 * @param monitor
@@ -368,6 +374,8 @@ public class PeakInvestigatorSaaS
 		try {
 			channel.get(remoteFilename, localFilename, monitor);
 		} catch (SftpException exception) {
+			log.severe(String.format("Problem downloading %s to %s.",
+					remoteFilename, localFilename));
 			throw exception;
 		} finally {
 			disconnectSftpSession();
