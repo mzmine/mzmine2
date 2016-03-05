@@ -22,9 +22,13 @@ package net.sf.mzmine.desktop.impl;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
+import java.util.ArrayList;
+
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JInternalFrame;
+import javax.swing.JLayeredPane;
 
 import net.sf.mzmine.desktop.impl.projecttree.ProjectTree;
 
@@ -67,7 +71,55 @@ public class MainPanel extends JPanel {
 	add(taskTable, BorderLayout.SOUTH);
 
     }
+    
+	public void addInternalFrame(JInternalFrame newFrame) {
 
+		// Find optimal position for the new frame
+		int x = 0;
+		int y = 0;
+
+		JInternalFrame visibleFrames[] = getInternalFrames();
+
+		if (visibleFrames.length > 0) {
+
+			outer: while (true) {
+				for (JInternalFrame f : visibleFrames) {
+					if ((f.getLocation().x == x) && (f.getLocation().y == y)) {
+						x += 30;
+						y += 30;
+
+						if ((x + newFrame.getWidth()) > getWidth())
+							x = 0;
+
+						if ((y + newFrame.getHeight()) > getHeight())
+							y = 0;
+
+						if ((x == 0) && (y == 0)) {
+							break outer;
+						}
+
+						continue outer;
+					}
+				}
+				break outer;
+			}
+		}
+
+		add(newFrame, JLayeredPane.DEFAULT_LAYER);
+		newFrame.setLocation(x, y);
+		newFrame.setVisible(true);
+
+	}
+
+	public JInternalFrame[] getInternalFrames() {
+		ArrayList<JInternalFrame> visibleFrames = new ArrayList<JInternalFrame>();
+		for (JInternalFrame frame : getInternalFrames()) {
+			if (frame.isVisible())
+				visibleFrames.add(frame);
+		}
+		return visibleFrames.toArray(new JInternalFrame[0]);
+	}
+	
     public ProjectTree getRawDataTree() {
 	return rawDataTree;
     }

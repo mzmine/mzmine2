@@ -301,7 +301,7 @@ public class SimplePeakListRow implements PeakListRow {
      * Returns the highest peak in this row
      */
     public Feature getBestPeak() {
-	Feature peaks[] = getPeaks();
+    Feature peaks[] = getPeaks();
 	Arrays.sort(peaks, new PeakSorter(SortingProperty.Height,
 		SortingDirection.Descending));
 	if (peaks.length == 0)

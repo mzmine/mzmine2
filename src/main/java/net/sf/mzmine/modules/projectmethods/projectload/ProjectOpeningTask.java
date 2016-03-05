@@ -324,7 +324,7 @@ public class ProjectOpeningTask extends AbstractTask {
         // Check if project was saved with an old version
         if (projectMajorVersion == 1) {
             throw new IOException(
-                    "This project was saved with an old version (MZmine "
+                    "This project was saved with an old version (" + MZmineCore.MZmineName + " "
                             + projectVersionString
                             + ") and it cannot be opened in MZmine "
                             + mzmineVersionString);
@@ -349,9 +349,9 @@ public class ProjectOpeningTask extends AbstractTask {
         // Check if project was saved with a newer version
         if ((projectMajorVersion > mzmineMajorVersion)
                 || ((projectMajorVersion == mzmineMajorVersion) && (projectMinorVersion > mzmineMinorVersion))) {
-            String warning = "Warning: this project was saved with a newer version of MZmine ("
+            String warning = "Warning: this project was saved with a newer version of " + MZmineCore.MZmineName + " ("
                     + projectVersionString
-                    + "). Opening this project in MZmine "
+                    + "). Opening this project in " + MZmineCore.MZmineName + " "
                     + mzmineVersionString
                     + " may result in errors or loss of information.";
             MZmineCore.getDesktop().displayMessage(

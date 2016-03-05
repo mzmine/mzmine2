@@ -36,6 +36,7 @@ import javax.annotation.Nonnull;
 import javax.help.HelpBroker;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -89,6 +90,10 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 	return help;
     }
 
+    public void addInternalFrame(JInternalFrame frame) {
+    	mainPanel.addInternalFrame(frame);
+    }
+    
     /**
      * WindowListener interface implementation
      */
@@ -121,27 +126,37 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
     /**
      */
     public void displayMessage(Window window, String msg) {
-	displayMessage(window, "Message", msg, JOptionPane.INFORMATION_MESSAGE);
+	displayMessage(window, "Message", msg, JOptionPane.INFORMATION_MESSAGE, null);
     }
 
     /**
      */
     public void displayMessage(Window window, String title, String msg) {
-	displayMessage(window, title, msg, JOptionPane.INFORMATION_MESSAGE);
+	displayMessage(window, title, msg, JOptionPane.INFORMATION_MESSAGE, null);
     }
 
+    /**
+     */
+    public void displayMessage(Window window, String title, String msg, Logger log) {
+	displayMessage(window, title, msg, JOptionPane.INFORMATION_MESSAGE, log);
+    }
+    
     public void displayErrorMessage(Window window, String msg) {
 	displayMessage(window, "Error", msg);
     }
 
     public void displayErrorMessage(Window window, String title, String msg) {
-	displayMessage(window, title, msg, JOptionPane.ERROR_MESSAGE);
+	displayMessage(window, title, msg, JOptionPane.ERROR_MESSAGE, null);
     }
 
-    public void displayMessage(Window window, String title, String msg, int type) {
+    public void displayErrorMessage(Window window, String title, String msg, Logger log) {
+    displayMessage(window, title, msg, JOptionPane.ERROR_MESSAGE, log);
+    }
+    
+    public void displayMessage(Window window, String title, String msg, int type, Logger log) {
 
 	assert msg != null;
-
+	
 	// If the message does not contain newline characters, wrap it
 	// automatically
 	String wrappedMsg;
@@ -149,6 +164,14 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 	    wrappedMsg = msg;
 	else
 	    wrappedMsg = TextUtils.wrapText(msg, 80);
+	
+	if (log != null)
+	{
+		if (type == JOptionPane.ERROR_MESSAGE)
+			log.severe(title + ": " + wrappedMsg);
+		else
+			log.info(title + ": " + wrappedMsg);
+	}
 
 	JOptionPane.showMessageDialog(window, wrappedMsg, title, type);
     }
@@ -227,11 +250,12 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 
     }
 
-    public void updateTitle() {
-	String projectName = MZmineCore.getProjectManager().getCurrentProject()
-		.toString();
-	setTitle("MZmine " + MZmineCore.getMZmineVersion() + ": " + projectName);
-    }
+	public void updateTitle() {
+		String projectName = MZmineCore.getProjectManager().getCurrentProject()
+				.toString();
+		setTitle(MZmineCore.MZmineName + " " + MZmineCore.getMZmineVersion()
+				+ ": " + projectName);
+	}
 
     /**
      * @see net.sf.mzmine.desktop.Desktop#getMainFrame()
@@ -307,7 +331,7 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
     public @Nonnull ExitCode exitMZmine() {
 
 	int selectedValue = JOptionPane.showInternalConfirmDialog(
-		this.getContentPane(), "Are you sure you want to exit?",
+			this.getContentPane(), "Unsaved data, if any, will be lost.\n" + "Are you sure you want to exit?",
 		"Exiting...", JOptionPane.YES_NO_OPTION,
 		JOptionPane.WARNING_MESSAGE);
 
@@ -316,7 +340,7 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
 
 	this.dispose();
 
-	logger.info("Exiting MZmine");
+	logger.info("Exiting " + MZmineCore.MZmineName);
 
 	System.exit(0);
 
@@ -324,8 +348,8 @@ public class MainWindow extends JFrame implements MZmineModule, Desktop,
     }
 
     @Override
-    public @Nonnull String getName() {
-	return "MZmine main window";
+    public @Nonnull String getName() { 
+    	return MZmineCore.MZmineName + " main window"; 
     }
 
 }

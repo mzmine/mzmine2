@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.ParameterSet;
+import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.util.ExitCode;
 
@@ -173,5 +174,32 @@ public class SimpleParameterSet implements ParameterSet {
 	}
 	return allParametersOK;
     }
+    
+    @Override
+    public boolean checkUserParameterValues(Collection<String> errorMessages) {
+	boolean allParametersOK = true;
+	for (Parameter<?> p : parameters) {
+	    // Only check UserParameter instances, because other parameters
+	    // cannot be influenced by the dialog
+	    if (!(p instanceof UserParameter))
+		continue;
+	    boolean pOK = p.checkValue(errorMessages);
+	    if (!pOK)
+		allParametersOK = false;
+	}
+	return allParametersOK;
+    }
+
+    @Override
+    public boolean checkAllParameterValues(Collection<String> errorMessages) {
+	boolean allParametersOK = true;
+	for (Parameter<?> p : parameters) {
+	    boolean pOK = p.checkValue(errorMessages);
+	    if (!pOK)
+		allParametersOK = false;
+	}
+	return allParametersOK;
+    }
+
 
 }

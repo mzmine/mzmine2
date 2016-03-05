@@ -50,7 +50,7 @@ public class OptionalParameter<EmbeddedParameterType extends UserParameter<?, ?>
     }
 
     /**
-     * @see net.sf.mzmine.data.Parameter#getName()
+     * @see net.sf.mzmine.data.Parameter#getJobID()
      */
     @Override
     public String getName() {

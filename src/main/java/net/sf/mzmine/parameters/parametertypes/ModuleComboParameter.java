@@ -24,6 +24,7 @@ import java.util.Collection;
 import net.sf.mzmine.modules.MZmineModule;
 import net.sf.mzmine.modules.MZmineProcessingStep;
 import net.sf.mzmine.modules.impl.MZmineProcessingStepImpl;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.PeakInvestigator.PeakInvestigatorDetector;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.UserParameter;
@@ -76,7 +77,7 @@ public class ModuleComboParameter<ModuleType extends MZmineModule> implements
     }
 
     /**
-     * @see net.sf.mzmine.data.Parameter#getName()
+     * @see net.sf.mzmine.data.Parameter#getJobID()
      */
     @Override
     public String getName() {
@@ -139,6 +140,19 @@ public class ModuleComboParameter<ModuleType extends MZmineModule> implements
 	return copy;
     }
 
+    /**
+     * Set the module to Veritomyx's PeakInvestigator™
+     */
+    public void setValueToVeritomxy()
+    {
+    	for (int i = 0; i < modulesWithParams.length; i++)
+    	{
+    		ModuleType mod = modulesWithParams[i].getModule();
+    		if (mod.getClass() == PeakInvestigatorDetector.class)
+    			value = modulesWithParams[i];
+    	}
+    }
+    
     @Override
     public void setValueFromComponent(ModuleComboComponent component) {
 	int index = component.getSelectedIndex();

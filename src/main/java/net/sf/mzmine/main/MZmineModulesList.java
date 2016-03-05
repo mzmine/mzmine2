@@ -21,6 +21,7 @@ package net.sf.mzmine.main;
 
 import net.sf.mzmine.modules.batchmode.BatchModeModule;
 import net.sf.mzmine.modules.masslistmethods.chromatogrambuilder.ChromatogramBuilderModule;
+import net.sf.mzmine.modules.masslistmethods.listexport.ListExportModule;
 import net.sf.mzmine.modules.masslistmethods.shoulderpeaksfilter.ShoulderPeaksFilterModule;
 import net.sf.mzmine.modules.peaklistmethods.alignment.join.JoinAlignerModule;
 import net.sf.mzmine.modules.peaklistmethods.alignment.ransac.RansacAlignerModule;
@@ -118,7 +119,7 @@ public class MZmineModulesList {
             MsMsPeakPickerModule.class, ScanFiltersModule.class,
             CropFilterModule.class, BaselineCorrectionModule.class,
             AlignScansModule.class, ScanSmoothingModule.class,
-            OrderDataFilesModule.class,
+            OrderDataFilesModule.class, ListExportModule.class,
 
             // Alignment
             OrderPeakListsModule.class, JoinAlignerModule.class,

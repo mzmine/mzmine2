@@ -32,6 +32,7 @@ import net.sf.mzmine.datamodel.MZmineProject;
 import net.sf.mzmine.datamodel.MZmineProjectListener;
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.RawDataFile;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.desktop.impl.MainWindow;
 import net.sf.mzmine.desktop.impl.projecttree.PeakListTreeModel;
 import net.sf.mzmine.desktop.impl.projecttree.ProjectTree;
@@ -188,6 +189,40 @@ public class MZmineProjectImpl implements MZmineProject {
 
     }
 
+    public void addJob(final RemoteJob job)
+    {	
+    	Runnable swingCode = new Runnable() {
+    		public void run() {
+    			rawDataTreeModel.addObject(job);
+    		}
+    	};
+    	try {
+    		if (SwingUtilities.isEventDispatchThread())
+    			swingCode.run();
+    		else
+    			SwingUtilities.invokeAndWait(swingCode);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
+     
+    public void removeJob(final RemoteJob job)
+    {
+    	Runnable swingCode = new Runnable() {
+    		public void run() {
+    			rawDataTreeModel.removeObject(job);
+    		}
+    	};
+    	try {
+    		if (SwingUtilities.isEventDispatchThread())
+    			swingCode.run();
+    		else
+    			SwingUtilities.invokeAndWait(swingCode);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
+    
     public RawDataFile[] getDataFiles() {
         return rawDataTreeModel.getDataFiles();
     }

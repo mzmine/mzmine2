@@ -19,7 +19,11 @@
 
 package net.sf.mzmine.datamodel;
 
+import java.util.ArrayList;
+
 import javax.annotation.Nonnull;
+
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 
 import com.google.common.collect.Range;
 
@@ -102,6 +106,11 @@ public interface RawDataFile {
     public double getDataMaxBasePeakIntensity(int msLevel);
 
     public double getDataMaxTotalIonCurrent(int msLevel);
+    
+    public void addJob(String name, RawDataFile raw, String targetName);
+    public void removeJob(String name);
+    public ArrayList<RemoteJob> getJobs();
+    public RemoteJob getJob(String compoundName);
 
     /**
      * Close the file in case it is removed from the project

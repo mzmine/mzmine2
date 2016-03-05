@@ -55,6 +55,8 @@ public class SimpleScan implements Scan {
     private PolarityType polarity;
     private String scanDefinition;
     private Range<Double> scanMZRange;
+    
+	private boolean centroided;
 
     /**
      * Clone constructor
@@ -299,6 +301,13 @@ public class SimpleScan implements Scan {
     }
 
     /**
+	 * @see net.sf.mzmine.data.Scan#isCentroided()
+	 */
+	public boolean isCentroided() {
+		return centroided;
+	}
+	
+	/**
      * @see net.sf.mzmine.datamodel.Scan#getSpectrumType()
      */
     public MassSpectrumType getSpectrumType() {
@@ -313,7 +322,14 @@ public class SimpleScan implements Scan {
 	this.spectrumType = spectrumType;
     }
 
-    public double getTIC() {
+    /**
+	 * @see net.sf.mzmine.data.Scan#getBasePeakMZ()
+	 */
+	public DataPoint getBasePeak() {
+		return basePeak;
+	}
+	
+	public double getTIC() {
 	return totalIonCurrent;
     }
 
@@ -364,5 +380,17 @@ public class SimpleScan implements Scan {
 	if (scanMZRange == null)
 	    scanMZRange = getDataPointMZRange();
 	return scanMZRange;
+    }
+    
+    @Override
+    public String exportFilename(@Nonnull String massListName) {
+    // TODO Auto-generated method stub
+    return null;
+    }
+    
+    @Override
+    public int exportToFile(@Nonnull String massListName, @Nonnull String saveDirectory, @Nonnull String filename) {
+    // TODO Auto-generated method stub
+    	return 0;
     }
 }

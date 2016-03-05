@@ -128,8 +128,8 @@ public class MZToleranceParameter implements
 	    return false;
 	}
 	if ((value.getMzTolerance() <= 0.0) && (value.getPpmTolerance() <= 0.0)) {
-	    errorMessages.add(name + " must be greater than zero");
-	    return false;
+		errorMessages.add(name + " must be greater than zero");
+		return false;
 	}
 	return true;
     }

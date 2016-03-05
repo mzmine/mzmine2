@@ -26,6 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import net.sf.mzmine.main.MZmineCore;
+
 /**
  * Internet related utilities
  */
@@ -38,7 +40,7 @@ public class InetUtils {
     public static String retrieveData(URL url) throws IOException {
 
 	URLConnection connection = url.openConnection();
-	connection.setRequestProperty("User-agent", "MZmine 2");
+	connection.setRequestProperty ( "User-agent", MZmineCore.MZmineName);
 	InputStream is = connection.getInputStream();
 
 	if (is == null) {

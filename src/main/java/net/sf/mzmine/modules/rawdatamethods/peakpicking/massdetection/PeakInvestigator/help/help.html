@@ -1,0 +1,122 @@
+<html>
+	<head>
+		<title>Peak detection - Mass detection - PeakInvestigator Centroid</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<link rel="stylesheet" type="text/css" href="/net/sf/mzmine/desktop/impl/helpsystem/HelpStyles.css">
+	</head>
+
+<body>
+
+<h2>MZmine PeakInvestigator™ Edition 2.17.01</h2>
+<i>Updated: <!-- #BeginDate format:Am1 -->October 10, 2015<!-- #EndDate --></i>
+
+<h3>Addendum to the MZmine Manual</h3>
+<p>This Addendum explains how to access and utilize the PeakInvestigator™<sup>1</sup> features added to MZmine 2.17<sup>2</sup> in the MZmine PeakInvestigator Edition (“MZminePI”). PeakInvestigator is a software as a service (SaaS) offering of Veritomyx, Inc.<sup>3</sup> for the detection and deconvolution of nearly isobaric peaks while delivering precise centroiding of raw mass spectra. </p>
+<sup>1</sup> PeakInvestigator™ is a trademark of Veritomyx, Inc. <a href="http://www.veritomyx.com">www.veritomyx.com</a>.<br>
+<sup>2 </sup>MZmine 2.17 is an open-source project for mass spectrometry data processing, <a href="http://mzmine.sourceforge.net">mzmine.sourceforge.net</a><br>
+<sup>3</sup> Veritomyx, Inc., <a href="http://www.veritomyx.com/">www.veritomyx.com</a>
+
+<h3>1. Overview</h3>
+<p>The PeakInvestigator application programming interface has been built into MZminePI.  PeakInvestigator packages user-selected spectra and securely submits them as a Job under the User's identity to the Veritomyx servers, where the spectra are processed.  A centroided peak list is returned to the User via the same secure conduit.  All submitted files are stripped of header information and are encrypted during transfer for HIPAA<sup>4</sup> compliance.  The resulting PeakInvestigator mass lists may be displayed in MZmine and processed like any other MZmine mass list.  All files are deleted from the Veritomyx servers after the data is successfully retrieved.  PeakInvestigator utilizes advanced signal processing technology running on a high performance computing cluster.  PeakInvestigator jobs can take many hours to complete; therefore, there is an option to save the MZmine project with all the information necessary to retrieve the files when done.    Job status can be viewed at <a href="https://secure.veritomyx.com">secure.veritomyx.com</a>.  Completed jobs may be viewed with any version of MZmine.  Prior to job completion, the interim MZmine project version that contains the job retrieval information can only be opened with MZminePI.</p>
+<p><sup>4</sup> The Health Insurance Portability and Accountability Act of 1996.</p>
+<h3>2. Installation and System Requirements:</h3>
+<ol type="a">
+  <li>MZminePI is a java application and runs on all computing platforms supported by the Java<sup>5</sup> Run Time Environment 1.6 or later.</li>
+    <li>Download MZminePI from <a href="https://secure.veritomyx.com/download.php">secure.veritomyx.com</a>.</li>
+    <li>Establish a User Account with Veritomyx, Inc. at <a href="http://www.veritomyx.com">www.veritomyx.com</a></li>
+    <li>To install MZminePI, follow the setup instructions for MZmine-2.10.  Both versions can be run concurrently on the same computer from different folders.</li>
+</ol>
+<sup>5</sup> Java™ is a registered trademark of Oracle Corporation.
+
+<h3>3. MS Data Supported by PeakInvestigator</h3>
+<ol type="a">
+<li>Any MS data format that is supported by MZmine-2.17 is available to PeakInvestigator.</li>
+<li>PeakInvestigator&nbsp;is designed to work with continuum spectra.  It can not centroid already centroided data.  It will work with any level of MS data (e.g., MS1, MS2, etc.) that is provided as a continuum spectra.</li>
+<li>PeakInvestigator is designed to work automatically at the intrinsic precision level of the bin spacing in the mass spectra being analyzed.  It is essential that the raw data to be analyzed is supplied to PeakInvestigator with sufficient significant digits of decimal places (more is OK) to support PeakInvestigator’s analysis at this intrinsic precision level. <p>The minimum number of mass decimal places required in the raw data transmitted to PeakInvestigator for analysis can be determined from the minimum detector bin spacing at the lowest mass peak in your data set: 
+  <blockquote >
+    <p>Mass decimal places &gt;= Integer { -Log<sub>10</sub> [(m/z)<sub>2</sub> - (m/z)<sub>1</sub>] + 0.5}
+      <br>
+      where: (m/z)<sub>2</sub> and (m/z)<sub>1</sub>are adjacent m/z values within the lowest mass peak in your data set. </p>
+    <p style="color:red"><strong>Critical Step:  </strong>When you export spectral data from your mass spec in an MZmine-compatible data format, be sure to confirm that the data format provides at least the number of mass decimal places specified by the equation above.  This will preserve your ability to maximize the precision available from subsequent signal processing.</p>
+  </blockquote>
+  Higher numbers of significant digits will increase the file size for data transfers to the Veritomyx servers.  However, extra significant digits will only help to optimize the precision of the PeakInvestigator results.</li>
+<li>PeakInvestigator is currently designed to work for mass spectral data with peaks that are less than 0.2 Da peak width measured at half height.  Lower mass spectral resolutions (peaks wider than 0.2 Da at half height) are currently not suitable for processing by PeakInvestigator.</li>
+</ol>
+<h3>4. PeakInvestigator Login Information</h3>
+<p>The first time that you set up MZminePI, you will need to enter your Veritomyx user account information.  Subsequent use of PeakInvestigator features will then automatically be managed and billed to the Veritomyx user account that you provided.  If you need to change the desired Veritomyx user account, this information can be edited at any time.</p>
+<ol type="a">
+  <li>In MZminePI’s top menu bar, go to Project &gt;&gt; Set preferences.  </li>
+  <li>Enter your Veritomyx Username and Password in the spaces provided.  These should already have been established when you registered as a Veritomyx user (Section 2c above).
+    <p><img src="01_Preferences.png"></p></li>
+  <li><strong>Veritomyx Account Number:</strong>  This is an optional field for the user's internal accounting purposes.   The user may establish additional Account Numbers under their user account at <a href="https://secure.veritomyx.com">secure.veritomyx.com</a> to delineate sub-users or projects.  Using different account numbers makes it easier for users to track multiple projects submitted to the Veritomyx servers at the same time.   Alternatively, the same Account Number may be used for every job submitted by the user.  In that case, Projects may be distinguished by their submission date time stamps.  The user must establish new Account Numbers on the <a href="https://secure.veritomyx.com">secure.veritomyx.com</a> user portal before use.</li>
+  <li>The five input fields at the top of this “Please set the parameters” dialog box are described in the MZmine 2.10 manual and have no effect on the operation of PeakInvestigator.</li>
+  <li>Click the OK button to save your parameter settings.</li>
+</ol>
+<h3>5. Using PeakInvestigator</h3>
+<ol type="a">
+<li>
+  <p>Finding the PeakInvestigator Menu Option</p>
+  <p>The option for PeakInvestigator processing can be found under the Raw Data Methods &gt;&gt; Peak Detection &gt;&gt; Mass Detection menu.</p><img src="02_MenuSelection.png">
+  <p>Under the &quot;Please set the parameters&quot; dialog box that pops up, you can select the PeakInvestigator option from the “Mass detector” pull down menu.  The other listed options are the MZmine standard options for centroiding.</p>
+</li>
+<li>
+  <p>Selecting Scans for Processing</p>
+  <p>In the left window pane, select the scans that you wish to have centroided. Alternatively, select the parent project if all of the scans are to be centroided.  Each scan selected and submitted will consume some SaaS resources from the user’s Veritomyx account.  Any number of scans or a single scan may be selected and submitted for processing.  You may also select non-contiguous scans (as shown).</p>
+  <p><img src="03_SelectingScans.png"></p></li>
+<li><p>Running PeakInvestigator on Selected Scans</p><p>In MZminePI’s top menu bar, go to Raw data methods &gt;&gt; Peak detection &gt;&gt; Mass detection.  In the dialog box that appears, complete all of the information requested:</p>
+<p><img src="04_Running.png"></p>
+<p><strong>Mass detector</strong>:  Select “PeakInvestigator” from the drop-down menu.  </p>
+<p><strong>MS level</strong>:  Follow the standard instructions for MZmine 2.10 or latest MZmine version:  If the entire project is to be processed at once, set the MS level for the type of scan to be processed (e.g., MS1, MS2, etc.). Otherwise, this setting is ignored. </p>
+<p><strong>Mass list name</strong>:  The name specified here will be assigned to the mass lists returned from the Veritomyx servers.  If you specify a “Mass list name” that is already present in the open Project at the time the results are retrieved from the Veritomyx servers, <u>the old mass lists will be overwritten by the new ones</u>.</p>
+<p>Click the OK button to launch the PeakInvestigator job. </p>
+<p>A task window will appear to advise you on the status of the PeakInvestigator job being prepared and transmitted to Veritomyx for processing.  A progress bar on the right side provides the current status.</p>
+<p><img src="05_Save.png"></p>
+<p style="font:bold; color:red">DO NOT CLOSE MZminePI BEFORE TRANSMISSION TO THE VERITOMYX SERVERS IS COMPLETE!</p>
+<p>Once the Job has been successfully transmitted to the Veritomyx servers and launched, it will appear under the parent project in the left panel of MZminePI, to the right of a cloud icon (indicating that the job is in progress).  The job number is provided so that the user can check the submitted job status by logging into their account at <a href="https://secure.veritomyx.com">secure.veritomyx.com</a>.</p>
+<p><img src="06_Job.png"></p>
+</li>
+<li>
+  <p>Save Your Project</p>
+  <p style="font:bold; color:red; ">CRITICAL STEP:  SAVE YOUR PROJECT TO DISK</p>
+  <p>Once the cloud icon appears, indicating that the transmission of your job to the Veritomyx servers is complete, it is critically important to save the job tracking information, by saving your project.  This saves the information MZminePI needs to retrieve the PeakInvestigator mass lists later.  Follow the standard MZmine instructions for saving your project.  Once the project is saved, you can exit MZminePI safely.</p>
+<p>The algorithms that power PeakInvestigator are computationally intensive, and processing jobs will take some time.  It is therefore strongly recommended that users save their project to disk, and return at a later time to retrieve their results.</p>
+<p>Because of the additional PeakInvestigator-specific project information contained in this interim MZmine project, this project.mzmine file can <u>only</u> be opened by MZminePI.</p>
+  <p style="font:bold; color:red; "><center>Important Warning</center><span style="font:normal">If the project is not saved to disk before MZminePI is terminated, information connecting the PeakInvestigator™ job with the MZmine project will be lost, making it impossible to reconnect the job results to the MZmine project.   For client data security and HIPAA compliance, Veritomyx assigns a random job name and removes all file header information before sending the data to the Veritomyx server for processing.  The connection to this random name is only maintained on the user's computer, and cannot be reestablished, if lost.  In this event, the user’s only option will be to resubmit the lost job as a new job, and then remember to save the project for this new job.</span></p>
+</li>
+<li>
+  <p>Additional Jobs</p><p>You may select additional scans or re-run the entire project at any time.  These new jobs will appear as additional cloud icons in the MZminePI project menu.</p>
+</li>
+<li>
+<p>Retrieving Job Results in MZminePI</p>
+<p>Double-clicking on the cloud icon will initiate the download of a completed job.</p><p><strong>If the job is complete</strong>, a task window will appear with a status bar indicating that MZminePI is retrieving the data from the Veritomyx servers.  If the download is interrupted before completion, retrieval can be re-initiated.</p>
+<p><strong>If the job is not finished</strong>, a message will be displayed asking you to check back later.  Alternatively, you can log in to your account at the Veritomyx user portal (<a href="https://secure.veritomyx.com">secure.veritomyx.com</a>) to check the status of all submitted jobs.</p>
+<p><img src="07_Retreive.png"></p>
+<p>When the data retrieval from the Veritomyx servers is complete, the new PeakInvestigator mass lists will appear in the project list located in the left pane of the MZminePI window, titled with the “Mass list name” that you provided when setting up the job. </p>
+<p><img src="08_Results.png"></p>
+</li>
+<li>
+  <p>Save Your Retrieved Mass Lists</p>
+  <p>Follow the standard MZmine instructions for saving your project.</p>
+  <div align="center" style="color:red"><strong>IMPORTANT WARNING<br>
+    SAVE THE PROJECT WITH YOUR RETRIEVED DATA TO DISK</strong></div>
+	<div align="left" style="color:red">
+    If you do not save the MZmine project with your retrieved data to a local disk, the results will be lost.  Lost results are not retrievable and will require a fresh submission and your user account will be charged for analyzing the data again.  </div>
+  <p>As soon as your job has been successfully retrieved from the Veritomyx server, the job is removed from the drop-down menu, and your mass lists and raw data will be deleted from the Veritomyx servers.</p>
+</li>
+</ol>
+<h3>6. Exporting Mass Lists from MZminePI</h3>
+<p>This is a feature that Veritomyx has added to MZminePI, which is not in MZmine-2.17, for users that would like to process their mass lists in other bioinformatic pipelines.  MZminePI allows the user to export their mass lists as tab-delimited ASCII files.</p>
+<ol type="a">
+<li>Finding the Export Mass Lists Menu Option
+<p>Mass List Export can be found under Raw Data Methods &gt;&gt; Peak Detection &gt;&gt; Spectral peak list export.</p>
+<p><img src="09_Export.png"></p>
+</li>
+<li>
+  <p>Choose (or type in) the mass list(s) to export.  Place a check mark in the box “Export original scans” if you want to include the original scans (raw data) with the exported mass list(s). </p>
+<p><img src="10_ExportDialog.png"></p>
+</li>
+<li><p>Click OK to start the export. The mass list(s) are exported into the folder where your copy of MZminePI is located.</p>
+</li>
+</ol>
+</body>
+</html>

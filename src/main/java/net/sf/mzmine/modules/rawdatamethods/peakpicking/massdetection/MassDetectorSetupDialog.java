@@ -79,14 +79,16 @@ public class MassDetectorSetupDialog extends
 	if (!paramsOK)
 	    return;
 
-	DataPoint[] mzValues = massDetector.getMassValues(previewScan,
-		parameters);
+	DataPoint[] mzValues = massDetector.getMassValues(previewScan, "", parameters);
 
-	DataPointsDataSet peaksDataSet = new DataPointsDataSet(
-		"Detected peaks", mzValues);
+	if (mzValues != null)
+	{
+		DataPointsDataSet peaksDataSet = new DataPointsDataSet(
+				"Detected peaks", mzValues);
 
-	spectrumPlot.addDataSet(peaksDataSet,
-		SpectraVisualizerWindow.peaksColor, false);
+		spectrumPlot.addDataSet(peaksDataSet,
+				SpectraVisualizerWindow.peaksColor, false);
+	}
 
     }
 

@@ -28,6 +28,7 @@ import java.net.URL;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
@@ -41,7 +42,7 @@ import net.sf.mzmine.util.ExceptionUtils;
 import net.sf.mzmine.util.InetUtils;
 import net.sf.mzmine.util.components.MultiLineLabel;
 
-public class MolStructureViewer extends JFrame {
+public class MolStructureViewer extends JInternalFrame {
 
     /**
      * 

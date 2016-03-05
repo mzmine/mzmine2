@@ -22,11 +22,15 @@ package net.sf.mzmine.main;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -59,6 +63,10 @@ import net.sf.mzmine.util.ExitCode;
  */
 public final class MZmineCore {
 
+	public static String MZmineName = "MZmine";
+	public static String MZmineVersion = "0.0";
+	public static String MZmineDate = (new Date()).toString();
+
     private static Logger logger = Logger.getLogger(MZmineCore.class.getName());
 
     private static TaskControllerImpl taskController;
@@ -80,8 +88,9 @@ public final class MZmineCore {
 	Locale.setDefault(new Locale("en", "US"));
 
 	// Configure the logging properties before we start logging
+	ClassLoader cl = MZmineCore.class.getClassLoader();
+
 	try {
-	    ClassLoader cl = MZmineCore.class.getClassLoader();
 	    InputStream loggingProperties = cl
 		    .getResourceAsStream("logging.properties");
 	    LogManager logMan = LogManager.getLogManager();
@@ -91,7 +100,16 @@ public final class MZmineCore {
 	    e.printStackTrace();
 	}
 
-	logger.info("Starting MZmine " + getMZmineVersion());
+	Manifest manifest = getMZmineManifest();
+	if (manifest != null) {
+		Attributes attributes = manifest.getMainAttributes();
+	    MZmineName = attributes.getValue("Implementation-Title");
+	    MZmineDate = attributes.getValue("Implementation-Build");
+	    MZmineVersion = attributes.getValue("Implementation-Version");
+	}
+
+	logger.info("Starting " + MZmineName + " " + getMZmineVersion() + " built " + MZmineDate);
+	logger.info("CWD is " + new File(".").getAbsolutePath());
 
 	// Remove old temporary files, if we find any
 	TmpFileCleanup.removeOldTemporaryFiles();
@@ -214,7 +232,7 @@ public final class MZmineCore {
 	    desktop.getMainWindow().setVisible(true);
 
 	    // show the welcome message
-	    desktop.setStatusBarText("Welcome to MZmine 2!");
+	    desktop.setStatusBarText("Welcome to " + MZmineName + " " + MZmineVersion + " built " + MZmineDate);
 
 	    // Check for updated version
 	    NewVersionCheck NVC = new NewVersionCheck(CheckType.DESKTOP);
@@ -297,21 +315,31 @@ public final class MZmineCore {
 	return new RawDataFileImpl(name);
     }
 
-    @Nonnull
-    public static String getMZmineVersion() {
-	try {
-	    ClassLoader myClassLoader = MZmineCore.class.getClassLoader();
-	    InputStream inStream = myClassLoader
-		    .getResourceAsStream("META-INF/maven/io.github.mzmine/mzmine/pom.properties");
-	    if (inStream == null)
-		return "0.0";
-	    Properties properties = new Properties();
-	    properties.load(inStream);
-	    return properties.getProperty("version");
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    return "0.0";
+	@Nonnull
+	public static String getMZmineVersion() {
+		return MZmineVersion;
 	}
-    }
+
+	private static Manifest getMZmineManifest() {
+		try {
+			Enumeration<URL> resources = MZmineCore.class.getClassLoader()
+					.getResources("META-INF/MANIFEST.MF");
+			while (resources.hasMoreElements()) {
+				Manifest manifest = new Manifest(resources.nextElement()
+						.openStream());
+				Attributes attributes = manifest.getMainAttributes();
+				String title = attributes.getValue("Implementation-Title");
+				if (title != null && title.contains("MZmine")) {
+					return manifest;
+				}
+
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+
+	}
 
 }

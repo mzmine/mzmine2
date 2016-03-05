@@ -49,7 +49,7 @@ public class IntRangeParameter
     }
 
     /**
-     * @see net.sf.mzmine.data.Parameter#getName()
+     * @see net.sf.mzmine.data.Parameter#getJobID()
      */
     @Override
     public String getName() {

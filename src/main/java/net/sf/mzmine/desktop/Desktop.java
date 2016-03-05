@@ -21,9 +21,11 @@ package net.sf.mzmine.desktop;
 
 import java.awt.Color;
 import java.awt.Window;
+import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 import javax.swing.event.TreeModelListener;
 
 import net.sf.mzmine.datamodel.PeakList;
@@ -44,6 +46,13 @@ public interface Desktop extends MZmineModule {
      * @return Main window frame
      */
     public JFrame getMainWindow();
+
+    /**
+     * Adds a new internal frame (JInternalFrame) to the desktop pane
+     * 
+     * @param frame Internal frame to add
+     */
+    public void addInternalFrame(JInternalFrame frame);
 
     /**
      * Displays a given text on the application status bar in black color
@@ -78,14 +87,20 @@ public interface Desktop extends MZmineModule {
      *            Message box title
      * @param msg
      *            Text to show
+     * @param log 
+     * 			  if not null logger
      */
     public void displayMessage(Window window, String title, String msg);
+    
+    public void displayMessage(Window window, String title, String msg, Logger log);
 
     /**
      * Displays an error message box with a given text
      * 
      * @param msg
      *            Text to show
+     * @param log 
+     * 			  if not null logger
      */
     public void displayErrorMessage(Window window, String msg);
 
@@ -99,6 +114,8 @@ public interface Desktop extends MZmineModule {
      */
     public void displayErrorMessage(Window window, String title, String msg);
 
+    public void displayErrorMessage(Window window, String title, String msg, Logger log);
+    
     /**
      * Displays an error message
      *

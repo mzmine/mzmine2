@@ -56,6 +56,7 @@ public class PeptideScan implements Scan {
     private Range<Double> mzRange;
     private DataPoint basePeak;
     private double totalIonCurrent;
+	private boolean centroided;
 
     /**
      * This class represents the scan (collection of DataPoints) with MS level 2
@@ -254,6 +255,13 @@ public class PeptideScan implements Scan {
     }
 
     /**
+	 * @see net.sf.mzmine.data.Scan#getBasePeakMZ()
+	 */
+	public DataPoint getBasePeak() {
+		return basePeak;
+	}
+	
+	/**
      * @see net.sf.mzmine.datamodel.Scan#getBasePeakMZ()
      */
     public DataPoint getHighestDataPoint() {
@@ -306,6 +314,13 @@ public class PeptideScan implements Scan {
     }
 
     /**
+	 * @see net.sf.mzmine.data.Scan#isCentroided()
+	 */
+	public boolean isCentroided() {
+		return centroided;
+	}
+	
+	/**
      * @see net.sf.mzmine.datamodel.Scan#getSpectrumType()
      */
     public MassSpectrumType getSpectrumType() {
@@ -433,5 +448,16 @@ public class PeptideScan implements Scan {
 	// TODO Auto-generated method stub
 	return Range.all();
     }
+    @Override
 
+    public String exportFilename(@Nonnull String massListName) {
+    // TODO Auto-generated method stub
+    return null;
+    }
+
+    @Override
+    public int exportToFile(@Nonnull String massListName, @Nonnull String saveDirectory, @Nonnull String filename) {
+    // TODO Auto-generated method stub
+    return 0;
+    }
 }

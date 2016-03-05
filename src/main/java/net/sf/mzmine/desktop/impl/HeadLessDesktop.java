@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 import javax.swing.event.TreeModelListener;
 
 import net.sf.mzmine.datamodel.PeakList;
@@ -46,6 +47,11 @@ public class HeadLessDesktop implements Desktop {
     }
 
     @Override
+    public void addInternalFrame(JInternalFrame frame) {
+	throw new UnsupportedOperationException();
+    }
+    
+    @Override
     public void setStatusBarText(String text) {
 	throw new UnsupportedOperationException();
     }
@@ -60,6 +66,11 @@ public class HeadLessDesktop implements Desktop {
     }
 
     @Override
+    public void displayMessage(Window window, String title, String msg, Logger log) {
+    log.info(title + ": " + msg);
+    }
+    
+    @Override
     public void displayMessage(Window window, String title, String msg) {
 	logger.info(msg);
     }
@@ -73,7 +84,11 @@ public class HeadLessDesktop implements Desktop {
     public void displayErrorMessage(Window window, String title, String msg) {
 	logger.severe(msg);
     }
-
+    @Override
+    public void displayErrorMessage(Window window, String title, String msg, Logger log) {
+    log.severe(title + ": " + msg);
+    }
+    
     @Override
     public void displayException(Window window, Exception e) {
 	e.printStackTrace();

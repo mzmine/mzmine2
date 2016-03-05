@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import javax.annotation.Nonnull;
 
 import net.sf.mzmine.datamodel.DataPoint;
+import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetector;
 import net.sf.mzmine.parameters.ParameterSet;
@@ -33,61 +34,67 @@ import net.sf.mzmine.parameters.ParameterSet;
  */
 public class LocalMaxMassDetector implements MassDetector {
 
-    public DataPoint[] getMassValues(Scan scan, ParameterSet parameters) {
-
-	double noiseLevel = parameters.getParameter(
-		LocalMaxMassDetectorParameters.noiseLevel).getValue();
-
-	// List of found mz peaks
-	ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
-
-	DataPoint dataPoints[] = scan.getDataPoints();
-
-	// All data points of current m/z peak
-
-	// Top data point of current m/z peak
-	DataPoint currentMzPeakTop = null;
-
-	// True if we haven't reached the current local maximum yet
-	boolean ascending = true;
-
-	// Iterate through all data points
-	for (int i = 0; i < dataPoints.length - 1; i++) {
-
-	    boolean nextIsBigger = dataPoints[i + 1].getIntensity() > dataPoints[i]
-		    .getIntensity();
-	    boolean nextIsZero = dataPoints[i + 1].getIntensity() == 0;
-	    boolean currentIsZero = dataPoints[i].getIntensity() == 0;
-
-	    // Ignore zero intensity regions
-	    if (currentIsZero)
-		continue;
-
-	    // Check for local maximum
-	    if (ascending && (!nextIsBigger)) {
-		currentMzPeakTop = dataPoints[i];
-		ascending = false;
-		continue;
-	    }
-
-	    assert currentMzPeakTop != null;
-
-	    // Check for the end of the peak
-	    if ((!ascending) && (nextIsBigger || nextIsZero)) {
-
-		// Add the m/z peak if it is above the noise level
-		if (currentMzPeakTop.getIntensity() > noiseLevel) {
-		    mzPeaks.add(currentMzPeakTop);
+	public String getDescription(String job, String str) { return str;}
+	
+	public String filterTargetName(String name) { return name; }
+	public String startMassValuesJob(RawDataFile raw, String targetName, ParameterSet parameters, int scanCount) { return null; }
+	
+	public DataPoint[] getMassValues(Scan scan, String job, ParameterSet parameters) {
+	
+		double noiseLevel = parameters.getParameter(
+			LocalMaxMassDetectorParameters.noiseLevel).getValue();
+	
+		// List of found mz peaks
+		ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
+	
+		DataPoint dataPoints[] = scan.getDataPoints();
+	
+		// All data points of current m/z peak
+	
+		// Top data point of current m/z peak
+		DataPoint currentMzPeakTop = null;
+	
+		// True if we haven't reached the current local maximum yet
+		boolean ascending = true;
+	
+		// Iterate through all data points
+		for (int i = 0; i < dataPoints.length - 1; i++) {
+	
+		    boolean nextIsBigger = dataPoints[i + 1].getIntensity() > dataPoints[i]
+			    .getIntensity();
+		    boolean nextIsZero = dataPoints[i + 1].getIntensity() == 0;
+		    boolean currentIsZero = dataPoints[i].getIntensity() == 0;
+	
+		    // Ignore zero intensity regions
+		    if (currentIsZero)
+			continue;
+	
+		    // Check for local maximum
+		    if (ascending && (!nextIsBigger)) {
+			currentMzPeakTop = dataPoints[i];
+			ascending = false;
+			continue;
+		    }
+	
+		    assert currentMzPeakTop != null;
+	
+		    // Check for the end of the peak
+		    if ((!ascending) && (nextIsBigger || nextIsZero)) {
+	
+			// Add the m/z peak if it is above the noise level
+			if (currentMzPeakTop.getIntensity() > noiseLevel) {
+			    mzPeaks.add(currentMzPeakTop);
+			}
+	
+			// Reset and start with new peak
+			ascending = true;
+	
+		    }
+	
 		}
-
-		// Reset and start with new peak
-		ascending = true;
-
-	    }
-
-	}
-	return mzPeaks.toArray(new DataPoint[0]);
+		return mzPeaks.toArray(new DataPoint[0]);
     }
+
 
     @Override
     public @Nonnull String getName() {
@@ -98,5 +105,6 @@ public class LocalMaxMassDetector implements MassDetector {
     public @Nonnull Class<? extends ParameterSet> getParameterSetClass() {
 	return LocalMaxMassDetectorParameters.class;
     }
-
+    
+    public void finishMassValuesJob(String job) {}
 }

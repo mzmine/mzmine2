@@ -25,8 +25,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
@@ -36,11 +39,14 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.peaklistmethods.orderpeaklists.OrderPeakListsModule;
 import net.sf.mzmine.modules.peaklistmethods.orderpeaklists.OrderPeakListsParameters;
 import net.sf.mzmine.modules.rawdatamethods.orderdatafiles.OrderDataFilesModule;
 import net.sf.mzmine.modules.rawdatamethods.orderdatafiles.OrderDataFilesParameters;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectionModule;
+import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetectionParameters;
 import net.sf.mzmine.modules.visualization.ida.IDAVisualizerModule;
 import net.sf.mzmine.modules.visualization.infovisualizer.InfoVisualizerModule;
 import net.sf.mzmine.modules.visualization.peaklisttable.PeakListTableModule;
@@ -70,7 +76,8 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
 
     private ProjectTree tree;
     private JPopupMenu dataFilePopupMenu, peakListPopupMenu, scanPopupMenu,
-            massListPopupMenu, peakListRowPopupMenu;
+            massListPopupMenu, peakListRowPopupMenu, jobPopupMenu;
+    private Object rightClickObj;
 
     /**
      * Constructor
@@ -88,6 +95,8 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
                 "SHOW_2D");
         GUIUtils.addMenuItem(dataFilePopupMenu, "Show 3D visualizer", this,
                 "SHOW_3D");
+        GUIUtils.addMenuItem(dataFilePopupMenu, "Peak/mass detection", this,
+                "MASS_DETECTION");
         GUIUtils.addMenuItem(dataFilePopupMenu, "Show MS/MS visualizer", this,
                 "SHOW_IDA");
         GUIUtils.addMenuItem(dataFilePopupMenu, "Sort alphabetically", this,
@@ -95,6 +104,10 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         GUIUtils.addMenuItem(dataFilePopupMenu, "Remove file extension", this,
                 "REMOVE_EXTENSION");
         GUIUtils.addMenuItem(dataFilePopupMenu, "Remove", this, "REMOVE_FILE");
+
+        jobPopupMenu = new JPopupMenu();
+        GUIUtils.addMenuItem(jobPopupMenu, "Retrieve job results", this,
+                "RETRIEVE_JOB");
 
         scanPopupMenu = new JPopupMenu();
 
@@ -138,14 +151,12 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         // Actions for raw data files
 
         if (command.equals("SHOW_TIC")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             TICVisualizerModule.setupNewTICVisualizer(selectedFiles);
         }
 
         if (command.equals("SHOW_SPECTRUM")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             SpectraVisualizerModule module = MZmineCore
                     .getModuleInstance(SpectraVisualizerModule.class);
             ParameterSet parameters = MZmineCore.getConfiguration()
@@ -162,8 +173,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("SHOW_IDA")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             if (selectedFiles.length == 0)
                 return;
             IDAVisualizerModule.showIDAVisualizerSetupDialog(selectedFiles[0]);
@@ -171,26 +181,28 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("SHOW_2D")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             if (selectedFiles.length == 0)
                 return;
             TwoDVisualizerModule.show2DVisualizerSetupDialog(selectedFiles[0]);
         }
 
         if (command.equals("SHOW_3D")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             if (selectedFiles.length == 0)
                 return;
             ThreeDVisualizerModule.setupNew3DVisualizer(selectedFiles[0]);
         }
 
+        if (command.equals("MASS_DETECTION")) {
+            RawDataFile file = (RawDataFile) rightClickObj;
+            startJob(file, null);
+        }
+
         if (command.equals("SORT_FILES")) {
             // save current selection
             TreePath savedSelection[] = tree.getSelectionPaths();
-            RawDataFile selectedFiles[] = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile selectedFiles[] = getObjList(RawDataFile.class);
             OrderDataFilesModule module = MZmineCore
                     .getModuleInstance(OrderDataFilesModule.class);
             ParameterSet params = MZmineCore.getConfiguration()
@@ -203,8 +215,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("REMOVE_EXTENSION")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             for (RawDataFile file : selectedFiles) {
                 file.setName(FilenameUtils.removeExtension(file.toString()));
             }
@@ -212,8 +223,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("REMOVE_FILE")) {
-            RawDataFile[] selectedFiles = tree
-                    .getSelectedObjects(RawDataFile.class);
+            RawDataFile[] selectedFiles = getObjList(RawDataFile.class);
             PeakList allPeakLists[] = MZmineCore.getProjectManager()
                     .getCurrentProject().getPeakLists();
             for (RawDataFile file : selectedFiles) {
@@ -232,10 +242,15 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             }
         }
 
+        if (command.equals("RETRIEVE_JOB")) {
+            for (RemoteJob job : getObjList(RemoteJob.class))
+                startJob(job.getRawDataFile(), job);
+        }
+
         // Actions for scans
 
         if (command.equals("SHOW_SCAN")) {
-            Scan selectedScans[] = tree.getSelectedObjects(Scan.class);
+            Scan selectedScans[] = getObjList(Scan.class);
             for (Scan scan : selectedScans) {
                 SpectraVisualizerModule.showNewSpectrumWindow(
                         scan.getDataFile(), scan.getScanNumber());
@@ -243,8 +258,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("SHOW_MASSLIST")) {
-            MassList selectedMassLists[] = tree
-                    .getSelectedObjects(MassList.class);
+            MassList selectedMassLists[] = getObjList(MassList.class);
             for (MassList massList : selectedMassLists) {
                 Scan scan = massList.getScan();
                 SpectraVisualizerWindow window = SpectraVisualizerModule
@@ -265,8 +279,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("REMOVE_ALL_MASSLISTS")) {
-            MassList selectedMassLists[] = tree
-                    .getSelectedObjects(MassList.class);
+            MassList selectedMassLists[] = getObjList(MassList.class);
             for (MassList massList : selectedMassLists) {
                 String massListName = massList.getName();
                 RawDataFile dataFiles[] = MZmineCore.getProjectManager()
@@ -286,24 +299,21 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         // Actions for peak lists
 
         if (command.equals("SHOW_PEAKLIST_TABLES")) {
-            PeakList[] selectedPeakLists = tree
-                    .getSelectedObjects(PeakList.class);
+            PeakList[] selectedPeakLists = getObjList(PeakList.class);
             for (PeakList peakList : selectedPeakLists) {
                 PeakListTableModule.showNewPeakListVisualizerWindow(peakList);
             }
         }
 
         if (command.equals("SHOW_PEAKLIST_INFO")) {
-            PeakList[] selectedPeakLists = tree
-                    .getSelectedObjects(PeakList.class);
+            PeakList[] selectedPeakLists = getObjList(PeakList.class);
             for (PeakList peakList : selectedPeakLists) {
                 InfoVisualizerModule.showNewPeakListInfo(peakList);
             }
         }
 
         if (command.equals("SHOW_SCATTER_PLOT")) {
-            PeakList[] selectedPeakLists = tree
-                    .getSelectedObjects(PeakList.class);
+            PeakList[] selectedPeakLists = getObjList(PeakList.class);
             for (PeakList peakList : selectedPeakLists) {
                 ScatterPlotVisualizerModule.showNewScatterPlotWindow(peakList);
             }
@@ -312,8 +322,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         if (command.equals("SORT_PEAKLISTS")) {
             // save current selection
             TreePath savedSelection[] = tree.getSelectionPaths();
-            PeakList selectedPeakLists[] = tree
-                    .getSelectedObjects(PeakList.class);
+            PeakList selectedPeakLists[] = getObjList(PeakList.class);
             OrderPeakListsModule module = MZmineCore
                     .getModuleInstance(OrderPeakListsModule.class);
             ParameterSet params = MZmineCore.getConfiguration()
@@ -327,8 +336,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         }
 
         if (command.equals("REMOVE_PEAKLIST")) {
-            PeakList[] selectedPeakLists = tree
-                    .getSelectedObjects(PeakList.class);
+            PeakList[] selectedPeakLists = getObjList(PeakList.class);
             for (PeakList peakList : selectedPeakLists)
                 MZmineCore.getProjectManager().getCurrentProject()
                         .removePeakList(peakList);
@@ -337,8 +345,7 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
         // Actions for peak list rows
 
         if (command.equals("SHOW_PEAK_SUMMARY")) {
-            PeakListRow[] selectedRows = tree
-                    .getSelectedObjects(PeakListRow.class);
+            PeakListRow[] selectedRows = getObjList(PeakListRow.class);
             for (PeakListRow row : selectedRows) {
                 PeakSummaryVisualizerModule.showNewPeakSummaryWindow(row);
             }
@@ -346,34 +353,60 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
 
     }
 
-    public void mouseClicked(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
+        Object clickedObject = getClickedObject(e.getX(), e.getY());
 
-        if (e.isPopupTrigger())
-            handlePopupTriggerEvent(e);
+        if (e.isPopupTrigger() && SwingUtilities.isRightMouseButton(e)) {
+            rightClickObj = clickedObject; // save object in case nothing else
+                                           // is selected
+            handlePopupTriggerEvent(e, clickedObject);
+        } else if (e.isPopupTrigger())
+            handlePopupTriggerEvent(e, clickedObject);
 
-        if ((e.getClickCount() == 2) && (e.getButton() == MouseEvent.BUTTON1))
-            handleDoubleClickEvent(e);
+        else if ((e.getClickCount() == 2)
+                && (e.getButton() == MouseEvent.BUTTON1)) // left click
+            handleDoubleClickEvent(clickedObject);
 
     }
 
-    public void mousePressed(MouseEvent e) {
-        if (e.isPopupTrigger())
-            handlePopupTriggerEvent(e);
+    /**
+     * Get a list of all selected elements of a given class. If none are
+     * selected, assume the element that was last right clicked is selected.
+     * 
+     * @param objectClass
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    private <T> T[] getObjList(Class<T> objectClass) {
+        T[] list = tree.getSelectedObjects(objectClass);
+        if (list.length == 0) {
+            list = Arrays.copyOf(list, 1);
+            list[0] = (T) rightClickObj;
+        }
+        return list;
+    }
+
+    /**
+     * Get the tree node user object that was clicked on.
+     * 
+     * @param e
+     * @return
+     */
+    private Object getClickedObject(int x, int y) {
+        TreePath clickedPath = tree.getPathForLocation(x, y);
+        if (clickedPath == null)
+            return null;
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) clickedPath
+                .getLastPathComponent();
+        return node.getUserObject();
     }
 
     public void mouseReleased(MouseEvent e) {
         if (e.isPopupTrigger())
-            handlePopupTriggerEvent(e);
+            handlePopupTriggerEvent(e, getClickedObject(e.getX(), e.getY()));
     }
 
-    private void handlePopupTriggerEvent(MouseEvent e) {
-        TreePath clickedPath = tree.getPathForLocation(e.getX(), e.getY());
-        if (clickedPath == null)
-            return;
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) clickedPath
-                .getLastPathComponent();
-        Object clickedObject = node.getUserObject();
-
+    private void handlePopupTriggerEvent(MouseEvent e, Object clickedObject) {
         if (clickedObject instanceof RawDataFile)
             dataFilePopupMenu.show(e.getComponent(), e.getX(), e.getY());
         if (clickedObject instanceof Scan)
@@ -384,15 +417,11 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             peakListPopupMenu.show(e.getComponent(), e.getX(), e.getY());
         if (clickedObject instanceof PeakListRow)
             peakListRowPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+        if (clickedObject instanceof RemoteJob)
+            jobPopupMenu.show(e.getComponent(), e.getX(), e.getY());
     }
 
-    private void handleDoubleClickEvent(MouseEvent e) {
-        TreePath clickedPath = tree.getPathForLocation(e.getX(), e.getY());
-        if (clickedPath == null)
-            return;
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) clickedPath
-                .getLastPathComponent();
-        Object clickedObject = node.getUserObject();
+    private void handleDoubleClickEvent(Object clickedObject) {
 
         if (clickedObject instanceof RawDataFile) {
             RawDataFile clickedFile = (RawDataFile) clickedObject;
@@ -426,6 +455,36 @@ public class ProjectTreeMouseHandler extends MouseAdapter implements
             PeakSummaryVisualizerModule.showNewPeakSummaryWindow(clickedPeak);
         }
 
+        if (clickedObject instanceof RemoteJob) {
+            RemoteJob job = (RemoteJob) clickedObject;
+            startJob(job.getRawDataFile(), job);
+        }
+
+    }
+
+    /**
+     * Retrieve the given job from remote server
+     * 
+     * @param raw
+     * @param job
+     */
+    private void startJob(RawDataFile raw, RemoteJob job) {
+        MassDetectionModule module = MZmineCore
+                .getModuleInstance(MassDetectionModule.class);
+        MassDetectionParameters parameters = (MassDetectionParameters) MZmineCore
+                .getConfiguration().getModuleParameters(
+                        MassDetectionModule.class);
+        ExitCode exitCode = parameters.setJobParams(raw, job); // set params for
+                                                               // this job
+        if (exitCode == ExitCode.OK) {
+            ParameterSet parametersCopy = parameters.cloneParameterSet();
+            ArrayList<Task> tasks = new ArrayList<Task>();
+            module.runModule(
+                    MZmineCore.getProjectManager().getCurrentProject(),
+                    parametersCopy, tasks);
+            MZmineCore.getTaskController().addTasks(tasks.toArray(new Task[0]));
+            parameters.setName(""); // clear name field
+        }
     }
 
 }

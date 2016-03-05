@@ -19,6 +19,7 @@
 
 package net.sf.mzmine.desktop.impl.projecttree;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -32,6 +33,7 @@ import net.sf.mzmine.datamodel.MassList;
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 
 /**
  * Project tree model implementation
@@ -95,12 +97,28 @@ public class RawDataTreeModel extends DefaultTreeModel {
 		    treeObjects.put(massLists[j], mlNode);
 		    insertNodeInto(mlNode, scanNode, j);
 
-		}
-	    }
+                }
 
+            }
+
+            ArrayList<RemoteJob> jobs = dataFile.getJobs();
+            int i = 0;
+            for (RemoteJob job : jobs) {
+                DefaultMutableTreeNode jobNode = new DefaultMutableTreeNode(job);
+                treeObjects.put(job, jobNode);
+                insertNodeInto(jobNode, newNode, i++);
+            }
+
+        }
+
+        else if (object instanceof RemoteJob) {
+	    RemoteJob job = (RemoteJob) object;
+	    final DefaultMutableTreeNode rawNode = treeObjects.get(job.getRawDataFile());
+	    if (rawNode != null)
+                insertNodeInto(newNode, rawNode, 0);
 	}
 
-	if (object instanceof MassList) {
+	else if (object instanceof MassList) {
 	    Scan scan = ((MassList) object).getScan();
 
 	    final DefaultMutableTreeNode scNode = treeObjects.get(scan);

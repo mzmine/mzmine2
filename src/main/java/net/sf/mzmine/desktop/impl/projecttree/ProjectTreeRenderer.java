@@ -36,6 +36,7 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.RawDataFile;
 import net.sf.mzmine.datamodel.Scan;
+import net.sf.mzmine.datamodel.impl.RemoteJob;
 import net.sf.mzmine.util.RawDataFileUtils;
 
 class ProjectTreeRenderer extends DefaultTreeCellRenderer {
@@ -45,6 +46,7 @@ class ProjectTreeRenderer extends DefaultTreeCellRenderer {
     private static final Icon projectIcon = new ImageIcon(
 	    "icons/projecticon.png");
     private static final Icon dataFileIcon = new ImageIcon("icons/xicicon.png");
+    private static final Icon cloudIcon    = new ImageIcon("icons/cloud_work.png");
     private static final Icon spectrumIcon = new ImageIcon(
 	    "icons/spectrumicon.png");
     private static final Icon peakListsIcon = new ImageIcon(
@@ -97,13 +99,18 @@ class ProjectTreeRenderer extends DefaultTreeCellRenderer {
 	    label.setFont(smallerFont);
 
 	    boolean hasMassList = RawDataFileUtils
-		    .hasMassLists((RawDataFile) embeddedObject);
+		    .hasMassLists((RawDataFile) embeddedObject, 1);
 	    if (hasMassList)
 		label.setIcon(fileWithMassListIcon);
 	    else
 		label.setIcon(fileIcon);
 	}
 
+	if (embeddedObject instanceof RemoteJob) {
+		label.setFont(smallerFont);
+		label.setIcon(cloudIcon);
+	}
+	
 	if (embeddedObject instanceof Scan) {
 	    Scan s = (Scan) embeddedObject;
 	    label.setIcon(spectrumIcon);
