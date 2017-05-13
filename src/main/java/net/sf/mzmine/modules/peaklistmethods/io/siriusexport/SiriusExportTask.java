@@ -179,23 +179,26 @@ public class SiriusExportTask extends AbstractTask
             writer.write("END IONS" + newLine);
 
             writer.write(newLine);
+            Feature bestPeak =row.getBestPeak();
+            int msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
 
-
+            if (rowID != null){
             PeakListRow copyRow = copyPeakRow(row);
             // Best peak always exists, because peak list row has at least one peak
-            Feature bestPeak =copyRow.getBestPeak();
+            bestPeak =copyRow.getBestPeak();
 
             // Get the MS/MS scan number
             
-            int msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+             msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
            	if (msmsScanNumber <1) {
-           		if(copyRow.getAverageMZ()!=0){
-           			// row is not empty 
-           			copyRow.removePeak(bestPeak.getDataFile());
+           		copyRow.removePeak(bestPeak.getDataFile());
+           		if(copyRow.getPeaks().length !=0){
+           			// row is not empty  		
         		bestPeak = copyRow.getBestPeak();
         		msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
            		}
         	}
+            }
             if (msmsScanNumber >= 1) {
 	    	// MS/MS scan must exist, because msmsScanNumber was > 0
 	        Scan msmsScan = bestPeak.getDataFile().getScan(msmsScanNumber);
