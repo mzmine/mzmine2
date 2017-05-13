@@ -137,22 +137,28 @@ public class GNPSExportTask extends AbstractTask {
             
             String retTimeInSeconds = Double.toString(row.getAverageRT() * 60);
             
-        
-            PeakListRow copyRow = copyPeakRow(row);
-            // Best peak always exists, because peak list row has at least one peak
-            Feature bestPeak =copyRow.getBestPeak();
+  
 
             // Get the MS/MS scan number
-            
+            Feature bestPeak =row.getBestPeak();
             int msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
-           	if (msmsScanNumber <1) {
-           		if(copyRow.getAverageMZ()!=0){
-           			// row is not empty 
-           			copyRow.removePeak(bestPeak.getDataFile());
-        		bestPeak = copyRow.getBestPeak();
-        		msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
-           		}
-        	}
+            if (rowID != null){
+                PeakListRow copyRow = copyPeakRow(row);
+                // Best peak always exists, because peak list row has at least one peak
+                bestPeak =copyRow.getBestPeak();
+
+                // Get the MS/MS scan number
+                
+                 msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+               	if (msmsScanNumber <1) {
+               		copyRow.removePeak(bestPeak.getDataFile());
+               		if(copyRow.getPeaks().length !=0){
+               			// row is not empty  		
+            		bestPeak = copyRow.getBestPeak();
+            		msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+               		}
+            	}
+                }
         	if (msmsScanNumber >= 1) {            	             	
             	Scan msmsScan = bestPeak.getDataFile().getScan(msmsScanNumber);
 
