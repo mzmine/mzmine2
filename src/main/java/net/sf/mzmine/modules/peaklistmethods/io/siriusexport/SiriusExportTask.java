@@ -28,10 +28,13 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
+import net.sf.mzmine.datamodel.impl.SimpleFeature;
+import net.sf.mzmine.datamodel.impl.SimplePeakListRow;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.AbstractTask;
 import net.sf.mzmine.taskcontrol.TaskStatus;
+import net.sf.mzmine.util.PeakUtils;
 
 
 public class SiriusExportTask extends AbstractTask
@@ -178,11 +181,21 @@ public class SiriusExportTask extends AbstractTask
             writer.write(newLine);
 
 
+            PeakListRow copyRow = copyPeakRow(row);
             // Best peak always exists, because peak list row has at least one peak
-            Feature bestPeak = row.getBestPeak();
+            Feature bestPeak =copyRow.getBestPeak();
 
             // Get the MS/MS scan number
+            
             int msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+           	if (msmsScanNumber <1) {
+           		if(copyRow.getAverageMZ()!=0){
+           			// row is not empty 
+           			copyRow.removePeak(bestPeak.getDataFile());
+        		bestPeak = copyRow.getBestPeak();
+        		msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+           		}
+        	}
             if (msmsScanNumber >= 1) {
 	    	// MS/MS scan must exist, because msmsScanNumber was > 0
 	        Scan msmsScan = bestPeak.getDataFile().getScan(msmsScanNumber);
@@ -217,6 +230,27 @@ public class SiriusExportTask extends AbstractTask
 	        writer.write(newLine);
             }
         }
+    }
+    /**
+     * Create a copy of a peak list row.
+     */
+    private static PeakListRow copyPeakRow(final PeakListRow row) {
+
+        // Copy the peak list row.
+        final PeakListRow newRow = new SimplePeakListRow(row.getID());
+        PeakUtils.copyPeakListRowProperties(row, newRow);
+
+        // Copy the peaks.
+        for (final Feature peak : row.getPeaks()) {
+
+ 
+                final Feature newPeak = new SimpleFeature(peak);
+                PeakUtils.copyPeakProperties(peak, newPeak);
+                newRow.addPeak(peak.getDataFile(), newPeak);
+
+        }
+
+        return newRow;
     }
 
 //    private DataPoint[] integerDataPoints(final DataPoint[] dataPoints,
@@ -254,3 +288,4 @@ public class SiriusExportTask extends AbstractTask
 //    }
 
 }
+
