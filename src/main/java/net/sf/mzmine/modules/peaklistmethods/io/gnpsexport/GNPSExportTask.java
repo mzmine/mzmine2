@@ -1,5 +1,4 @@
-/*
- * This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang 
+* This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang 
  * at the Dorrestein Lab (University of California, San Diego). 
  * 
  * It is freely available under the GNU GPL licence of MZmine2.
@@ -129,8 +128,8 @@ public class GNPSExportTask extends AbstractTask {
         
     	for (PeakListRow row : peakList.getRows()) {
             
-    		IsotopePattern ip = row.getBestIsotopePattern();
-            if (ip == null) continue;
+    		//IsotopePattern ip = row.getBestIsotopePattern();
+            //if (ip == null) continue;
             
             
             String rowID = Integer.toString(row.getID());
