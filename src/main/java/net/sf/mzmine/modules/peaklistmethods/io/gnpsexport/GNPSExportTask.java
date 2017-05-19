@@ -176,7 +176,7 @@ public class GNPSExportTask extends AbstractTask {
                 
                 String mass = Double.toString(row.getAverageMZ());
                 if (mass != null) writer.write("PEPMASS=" + mass + newLine);                                                                      
-                writer.write("CHARGE=1"+newLine);
+                writer.write("CHARGE="+row.getRowCharge()+"+"+newLine);
                 if(rowID != null) {
                 	writer.write("SCANS=" + rowID + newLine);
                 	writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
