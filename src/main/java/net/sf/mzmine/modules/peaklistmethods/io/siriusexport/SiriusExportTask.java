@@ -208,7 +208,7 @@ public class SiriusExportTask extends AbstractTask {
 					writer.write("PEPMASS=" + mass + newLine);
 				if (rowID != null)
 					writer.write("FEATURE_ID=" + rowID + newLine);
-				writer.write("CHARGE=1" + newLine);
+				writer.write("CHARGE=" + row.getRowCharge()+"+"+ newLine);
 				if (rowID != null) {
 					writer.write("SCANS=" + rowID + newLine);
 					writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
