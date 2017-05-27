@@ -17,121 +17,60 @@
  * St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package net.sf.mzmine.parameters.parametertypes.tolerances;
+package net.sf.mzmine.modules.masslistmethods.chromatogrambuilder;
 
-import java.util.Collection;
+import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.parameters.Parameter;
+import net.sf.mzmine.parameters.impl.SimpleParameterSet;
+import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
+import net.sf.mzmine.parameters.parametertypes.MassListParameter;
+import net.sf.mzmine.parameters.parametertypes.OptionalParameter;
+import net.sf.mzmine.parameters.parametertypes.StringParameter;
+import net.sf.mzmine.parameters.parametertypes.ranges.RTRangeParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
+import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelection;
+import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelectionParameter;
+import net.sf.mzmine.parameters.parametertypes.tolerances.MZToleranceParameter;
 
-import net.sf.mzmine.parameters.UserParameter;
+public class ChromatogramBuilderParameters extends SimpleParameterSet {
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+    public static final RawDataFilesParameter dataFiles = new RawDataFilesParameter();
 
-public class MZToleranceParameter implements
-	UserParameter<MZTolerance, MZToleranceComponent> {
+    public static final ScanSelectionParameter scanSelection = new ScanSelectionParameter(
+            new ScanSelection(1));
 
-    private String name, description;
-    private MZTolerance value;
+    public static final MassListParameter massList = new MassListParameter();
 
-    public MZToleranceParameter() {
-	this(
-		"m/z tolerance",
-		"Maximum allowed difference between two m/z values to be considered same.\n"
-			+ "The value is specified both as absolute tolerance (in m/z) and relative tolerance (in ppm).\n"
-			+ "The tolerance range is calculated using maximum of the absolute and relative tolerances.");
-    }
+    public static final DoubleParameter minimumTimeSpan = new DoubleParameter(
+            "Min time span (min)",
+            "Minimum time span over which the same ion must be observed in order to be recognized as a chromatogram.\n"
+                    + "The optimal value depends on the chromatography system setup. The best way to set this parameter\n"
+                    + "is by studying the raw data and determining what is the typical time span of chromatographic peaks.",
+            MZmineCore.getConfiguration().getRTFormat());
 
-    public MZToleranceParameter(String name, String description) {
-	this.name = name;
-	this.description = description;
-    }
+    public static final DoubleParameter minimumHeight = new DoubleParameter(
+            "Min height",
+            "Minimum intensity of the highest data point in the chromatogram. If chromatogram height is below this level, it is discarded.",
+            MZmineCore.getConfiguration().getIntensityFormat());
 
-    @Override
-    public String getName() {
-	return name;
-    }
+    public static final MZToleranceParameter mzTolerance = new MZToleranceParameter();
+    public static final OptionalParameter<DoubleParameter> mzRangeMSMS = new OptionalParameter<>(new DoubleParameter(
+    		"m/z range for msms scan pairing",
+    		"Maximum allowed difference between two m/z values to be considered same.\n"
+    			+ "The value is specified both as absolute tolerance (in m/z) and relative tolerance (in ppm).\n"
+    			+ "The tolerance range is calculated using maximum of the absolute and relative tolerances."));
+    public static final OptionalParameter<DoubleParameter> RetentionTimeMSMS = new OptionalParameter<>(new DoubleParameter(
+    		"RT range for msms scan pairing",
+    		"Maximum allowed difference between two m/z values to be considered same.\n"
+    			+ "The value is specified both as absolute tolerance (in m/z) and relative tolerance (in ppm).\n"
+    			+ "The tolerance range is calculated using maximum of the absolute and relative tolerances."));
 
-    @Override
-    public String getDescription() {
-	return description;
-    }
+    public static final StringParameter suffix = new StringParameter("Suffix",
+            "This string is added to filename as suffix", "chromatograms");
 
-    @Override
-    public MZToleranceComponent createEditingComponent() {
-	return new MZToleranceComponent();
-    }
-
-    @Override
-    public MZToleranceParameter cloneParameter() {
-	MZToleranceParameter copy = new MZToleranceParameter(name, description);
-	copy.setValue(this.getValue());
-	return copy;
-    }
-
-    @Override
-    public void setValueFromComponent(MZToleranceComponent component) {
-	value = component.getValue();
-    }
-
-    @Override
-    public void setValueToComponent(MZToleranceComponent component,
-	    MZTolerance newValue) {
-	component.setValue(newValue);
-    }
-
-    @Override
-    public MZTolerance getValue() {
-	return value;
-    }
-
-    @Override
-    public void setValue(MZTolerance newValue) {
-	this.value = newValue;
-    }
-
-    @Override
-    public void loadValueFromXML(Element xmlElement) {
-	// Set some default values
-	double mzTolerance = 0.001;
-	double ppmTolerance = 5;
-	NodeList items = xmlElement.getElementsByTagName("absolutetolerance");
-	for (int i = 0; i < items.getLength(); i++) {
-	    String itemString = items.item(i).getTextContent();
-	    mzTolerance = Double.parseDouble(itemString);
-	}
-	items = xmlElement.getElementsByTagName("ppmtolerance");
-	for (int i = 0; i < items.getLength(); i++) {
-	    String itemString = items.item(i).getTextContent();
-	    ppmTolerance = Double.parseDouble(itemString);
-	}
-
-	this.value = new MZTolerance(mzTolerance, ppmTolerance);
-    }
-
-    @Override
-    public void saveValueToXML(Element xmlElement) {
-	if (value == null)
-	    return;
-	Document parentDocument = xmlElement.getOwnerDocument();
-	Element newElement = parentDocument.createElement("absolutetolerance");
-	newElement.setTextContent(String.valueOf(value.getMzTolerance()));
-	xmlElement.appendChild(newElement);
-	newElement = parentDocument.createElement("ppmtolerance");
-	newElement.setTextContent(String.valueOf(value.getPpmTolerance()));
-	xmlElement.appendChild(newElement);
-    }
-
-    @Override
-    public boolean checkValue(Collection<String> errorMessages) {
-	if (value == null) {
-	    errorMessages.add(name + " is not set properly");
-	    return false;
-	}
-	if ((value.getMzTolerance() <= 0.0) && (value.getPpmTolerance() <= 0.0)) {
-	    errorMessages.add(name + " must be greater than zero");
-	    return false;
-	}
-	return true;
+    public ChromatogramBuilderParameters() {
+        super(new Parameter[] { dataFiles, scanSelection, massList,
+                minimumTimeSpan, minimumHeight, mzTolerance, mzRangeMSMS,RetentionTimeMSMS,suffix });
     }
 
 }
