@@ -108,8 +108,10 @@ class MetaboAnalystExportTask extends AbstractTask {
             // Check the peak list for MetaboAnalyst requirements
             boolean checkResult = checkPeakList(peakList);
             if (checkResult == false) {
-                MZmineCore.getDesktop().displayErrorMessage(null, "Peak list " + peakList.getName()
+                setStatus(TaskStatus.ERROR);
+                setErrorMessage("Peak list " + peakList.getName()
                         + " does not conform to MetaboAnalyst requirement: at least 3 samples (raw data files) in each group");
+                return;
             }
 
             try {
