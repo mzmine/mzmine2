@@ -33,13 +33,13 @@ public class CentroidMassDetector implements MassDetector {
     public DataPoint[] getMassValues(Scan scan, ParameterSet parameters) {
 
 	double noiseLevel = parameters.getParameter(
-			CentroidMassDetectorParameters.noiseLevel).getValue();
+		CentroidMassDetectorParameters.noiseLevel).getValue();
 	
 	double noiseLevelMS2 = parameters.getParameter(
-			CentroidMassDetectorParameters.MS2noiseLevelOption).getEmbeddedParameter().getValue();
+		CentroidMassDetectorParameters.MS2noiseLevelOption).getEmbeddedParameter().getValue();
 	
 	boolean useMS2noise = parameters.getParameter(
-			CentroidMassDetectorParameters.MS2noiseLevelOption).getValue();
+		CentroidMassDetectorParameters.MS2noiseLevelOption).getValue();
 			
 	ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
 
