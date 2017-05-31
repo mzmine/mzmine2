@@ -42,6 +42,13 @@ public class ExactMassDetector implements MassDetector {
 	double noiseLevel = parameters.getParameter(
 		ExactMassDetectorParameters.noiseLevel).getValue();
 
+        boolean isDefectFilter = parameters.getParameter(
+                ExactMassDetectorParameters.massDefectFilter).getValue();
+        double massDefect = parameters.getParameter(
+		ExactMassDetectorParameters.massDefect).getValue();
+        double absError = parameters.getParameter(
+		ExactMassDetectorParameters.absoluteError).getValue();
+
 	// Create a tree set of detected mzPeaks sorted by MZ in ascending order
 	TreeSet<ExactMzDataPoint> mzPeaks = new TreeSet<ExactMzDataPoint>(
 		new DataPointSorter(SortingProperty.MZ,
@@ -52,9 +59,9 @@ public class ExactMassDetector implements MassDetector {
 	TreeSet<ExactMzDataPoint> candidatePeaks = new TreeSet<ExactMzDataPoint>(
 		new DataPointSorter(SortingProperty.Intensity,
 			SortingDirection.Descending));
-
+        
 	// First get all candidate peaks (local maximum)
-	getLocalMaxima(scan, candidatePeaks, noiseLevel);
+	getLocalMaxima(scan, candidatePeaks, noiseLevel, isDefectFilter, massDefect, absError);
 
 	// We calculate the exact mass for each peak,
 	// starting with biggest intensity peak and so on
@@ -79,17 +86,21 @@ public class ExactMassDetector implements MassDetector {
 	return mzPeaks.toArray(new ExactMzDataPoint[0]);
 
     }
-
+    
     /**
      * This method gets all possible MzPeaks using local maximum criteria from
      * the current scan and return a tree set of MzPeaks sorted by intensity in
      * descending order.
      * 
      * @param scan
+     * @param isDefectFilter
+     * @param massDefect
+     * @param absTolerance
      * @return
      */
     private void getLocalMaxima(Scan scan,
-	    TreeSet<ExactMzDataPoint> candidatePeaks, double noiseLevel) {
+	    TreeSet<ExactMzDataPoint> candidatePeaks, double noiseLevel,
+            boolean isDefectFilter, double massDefect, double absTolerance) {
 
 	DataPoint[] scanDataPoints = scan.getDataPoints();
 	if (scanDataPoints.length == 0)
@@ -127,11 +138,13 @@ public class ExactMassDetector implements MassDetector {
 
 		// Add the m/z peak if it is above the noise level
 		if (localMaximum.getIntensity() > noiseLevel) {
-
-		    DataPoint[] rawDataPoints = rangeDataPoints
-			    .toArray(new DataPoint[0]);
-		    candidatePeaks.add(new ExactMzDataPoint(localMaximum,
-			    rawDataPoints));
+                    // Add m/z peak if the defect filter is off or pass this filter.
+                    if(isDefectFilter(localMaximum, isDefectFilter, massDefect, absTolerance)) {
+                        DataPoint[] rawDataPoints = rangeDataPoints
+                                .toArray(new DataPoint[0]);
+                        candidatePeaks.add(new ExactMzDataPoint(localMaximum,
+                                rawDataPoints));
+                    }
 		}
 
 		// Reset and start with new peak
@@ -141,6 +154,26 @@ public class ExactMassDetector implements MassDetector {
 
 	}
 
+    }
+    
+    /**
+     * This method return flag necessity to add new MZPeak to Array.
+     * If there is no filter set then it return every time true, or
+     * looking for mass defect and if it places in necessary interval
+     * then also return true.
+     * @param localMaximum
+     * @param isDefectFilter
+     * @param massDefect
+     * @param absTolerance
+     * @return
+     */
+    private boolean isDefectFilter(DataPoint localMaximum, boolean isDefectFilter, double massDefect, double absTolerance) {
+        if(!isDefectFilter)
+            return true;
+        double defect = localMaximum.getMZ() - (double)Math.round(localMaximum.getMZ());
+        if(defect < 0)
+            return false;
+        return Math.abs(defect - massDefect) <= absTolerance;
     }
 
     /**
