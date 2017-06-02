@@ -26,26 +26,17 @@ import net.sf.mzmine.modules.rawdatamethods.peakpicking.massdetection.MassDetect
 import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
-import net.sf.mzmine.parameters.parametertypes.OptionalParameter;
 import net.sf.mzmine.util.ExitCode;
 
 public class CentroidMassDetectorParameters extends SimpleParameterSet {
 
     public static final DoubleParameter noiseLevel = new DoubleParameter(
-    	"Noise level MS1",
-    	"Intensities less than this value are interpreted as noise",
-    	MZmineCore.getConfiguration().getIntensityFormat());
-    
-    public static final DoubleParameter noiseLevelMS2 = new DoubleParameter(
-    	"Noise level MS2",
-    	"Intensities less than this value are interpreted as noise",
-    	MZmineCore.getConfiguration().getIntensityFormat());
-    
-    public static final OptionalParameter<DoubleParameter> MS2noiseLevelOption
-    	= new OptionalParameter <> (noiseLevelMS2);
+	    "Noise level",
+	    "Intensities less than this value are interpreted as noise",
+	    MZmineCore.getConfiguration().getIntensityFormat());
 
     public CentroidMassDetectorParameters() {
-	super(new UserParameter[] { noiseLevel, MS2noiseLevelOption });
+	super(new UserParameter[] { noiseLevel });
     }
 
     public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {
