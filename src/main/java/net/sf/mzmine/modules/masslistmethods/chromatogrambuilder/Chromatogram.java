@@ -1,5 +1,4 @@
-/*
- * Copyright 2006-2015 The MZmine 2 Development Team
+/* Copyright 2006-2015 The MZmine 2 Development Team
  * 
  * This file is part of MZmine 2.
  * 
@@ -83,6 +82,7 @@ public class Chromatogram implements Feature {
     private int mzN = 0;
 
     private final int scanNumbers[];
+    private double mzRangeMSMS,RTRangeMSMS;
 
     public void outputChromToFile(){
         System.out.println("does nothing");
@@ -99,6 +99,17 @@ public class Chromatogram implements Feature {
 
         dataPointsMap = new Hashtable<Integer, DataPoint>();
         buildingSegment = new Vector<Integer>(128);
+    }
+    public Chromatogram(RawDataFile dataFile, int scanNumbers[], double mzRangeMSMS,double RTRangeMSMS) {
+        this.dataFile = dataFile;
+        this.scanNumbers = scanNumbers;
+
+        rawDataPointsRTRange = dataFile.getDataRTRange(1);
+
+        dataPointsMap = new Hashtable<Integer, DataPoint>();
+        buildingSegment = new Vector<Integer>(128);
+        this.mzRangeMSMS = mzRangeMSMS;
+        this.RTRangeMSMS=RTRangeMSMS;
     }
 
     /**
@@ -234,6 +245,8 @@ public class Chromatogram implements Feature {
                         .span(Range.singleton(mzPeak.getMZ()));
             }
 
+
+
             if (height < mzPeak.getIntensity()) {
                 height = mzPeak.getIntensity();
                 rt = dataFile.getScan(allScanNumbers[i]).getRetentionTime();
@@ -258,16 +271,8 @@ public class Chromatogram implements Feature {
         }
 
         // Update fragment scan
-        fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
-                dataFile.getDataRTRange(1), rawDataPointsMZRange);
 
-        if (fragmentScan > 0) {
-            Scan fragmentScanObject = dataFile.getScan(fragmentScan);
-            int precursorCharge = fragmentScanObject.getPrecursorCharge();
-            if (precursorCharge > 0)
-                this.charge = precursorCharge;
-        }
-
+       
         rawDataPointsRTRange = null;
 
         for (int scanNum : allScanNumbers) {
@@ -283,6 +288,50 @@ public class Chromatogram implements Feature {
                 rawDataPointsRTRange = rawDataPointsRTRange
                         .span(Range.singleton(scanRt));
         }
+        
+        double lowerBound = rawDataPointsMZRange.lowerEndpoint();
+        double upperBound = rawDataPointsMZRange.upperEndpoint();
+        
+        double mid = (upperBound+lowerBound)/2;
+        lowerBound = mid - mzRangeMSMS/2;
+        upperBound = mid + mzRangeMSMS/2;
+        if(lowerBound <0){
+        	lowerBound =0;
+        }
+        
+        Range<Double> searchingRange = Range
+                .closed(lowerBound,upperBound);
+        double lowerBoundRT = rawDataPointsRTRange.lowerEndpoint();
+        double upperBoundRT = rawDataPointsRTRange.upperEndpoint();
+        double midRT = (upperBoundRT+lowerBoundRT)/2;
+        lowerBoundRT = midRT - RTRangeMSMS/2;
+        upperBoundRT = midRT + RTRangeMSMS/2;
+        if(lowerBound <0){
+        	lowerBound =0;
+        }
+        Range<Double> searchingRangeRT = Range
+                .closed(lowerBoundRT,upperBoundRT);
+        
+        if (mzRangeMSMS == 0)
+        	searchingRange = rawDataPointsMZRange;
+        if (RTRangeMSMS == 0)
+        	searchingRangeRT = dataFile.getDataRTRange(1);
+        System.out.println("old rt range" + dataFile.getDataRTRange(1).upperEndpoint()+"-"+dataFile.getDataRTRange(1).lowerEndpoint());
+        System.out.println("rt new range" + searchingRangeRT.upperEndpoint()+"+"+searchingRangeRT.lowerEndpoint());
+        System.out.println("RTRANGE"+ RTRangeMSMS);
+        
+        fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
+        		searchingRangeRT, searchingRange);
+        
+
+        if (fragmentScan > 0) {
+            Scan fragmentScanObject = dataFile.getScan(fragmentScan);
+            int precursorCharge = fragmentScanObject.getPrecursorCharge();
+            if (precursorCharge > 0)
+                this.charge = precursorCharge;
+        }
+
+
 
         // Discard the fields we don't need anymore
         buildingSegment = null;

@@ -59,8 +59,7 @@ public class ProjectSaveParameters extends SimpleParameterSet {
 	JFileChooser chooser = new JFileChooser();
 
 	for (FileFilter filter : filters)
-	    chooser.addChoosableFileFilter(filter);
-	chooser.setFileFilter(filters[0]);
+	    chooser.setFileFilter(filter);
 
 	chooser.setMultiSelectionEnabled(false);
 
