@@ -143,20 +143,10 @@ public class SiriusExportTask extends AbstractTask {
 				writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
 
 			if (rowID != null)
-				writer.write("SCANS=" + rowID + newLine);			
-			
-			int charge = row.getRowCharge();				
-			String polarity = row.getBestPeak().getDataFile().getScan(row.getBestPeak().getRepresentativeScanNumber())
-					.getPolarity().asSingleChar();
-			if(polarity.equals("0"))
-				polarity = "";
-			if(charge == 0) {
-				charge = 1;
-				polarity = "";
-			}
-			writer.write("CHARGE=" + charge + polarity + newLine);	
-			
+				writer.write("SCANS=" + rowID + newLine);
+
 			writer.write("MSLEVEL=1" + newLine);
+			writer.write("CHARGE=1+" + newLine);
 
 			if (ip != null) {
 				DataPoint[] dataPoints = ip.getDataPoints();
@@ -169,8 +159,6 @@ public class SiriusExportTask extends AbstractTask {
 					writer.write(line + newLine);
 				}
 			}
-			
-			
 
 			Feature bestPeak = row.getBestPeak();
 			if (ip == null) {
@@ -216,27 +204,15 @@ public class SiriusExportTask extends AbstractTask {
 
 				writer.write("BEGIN IONS" + newLine);
 
-				if (rowID != null)
-					writer.write("FEATURE_ID=" + rowID + newLine);	
 				if (mass != null)
 					writer.write("PEPMASS=" + mass + newLine);
-				
+				if (rowID != null)
+					writer.write("FEATURE_ID=" + rowID + newLine);
+				writer.write("CHARGE=" + row.getRowCharge()+"+"+ newLine);
 				if (rowID != null) {
 					writer.write("SCANS=" + rowID + newLine);
 					writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
 				}
-									
-				int msmsCharge = msmsScan.getPrecursorCharge();
-				String msmsPolarity = msmsScan.getPolarity().asSingleChar();								
-				if(msmsPolarity.equals("0"))
-					msmsPolarity = "";
-				if(msmsCharge == 0) {
-					msmsCharge = 1;
-					msmsPolarity = "";
-				}
-				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);
-				
-				
 				writer.write("MSLEVEL=2" + newLine);
 
 				DataPoint peaks[] = massList.getDataPoints();

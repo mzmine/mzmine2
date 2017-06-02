@@ -174,29 +174,13 @@ public class GNPSExportTask extends AbstractTask {
             	
             	writer.write("BEGIN IONS"+newLine);                		                		                                                
                 
-            	if (rowID != null)
-            		writer.write("FEATURE_ID=" + rowID + newLine);
-            	
                 String mass = Double.toString(row.getAverageMZ());
-                if (mass != null) 
-                	writer.write("PEPMASS=" + mass + newLine);
-                
+                if (mass != null) writer.write("PEPMASS=" + mass + newLine);                                                                      
+                writer.write("CHARGE="+row.getRowCharge()+"+"+newLine);
                 if(rowID != null) {
                 	writer.write("SCANS=" + rowID + newLine);
                 	writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
                 }
-                
-                int msmsCharge = msmsScan.getPrecursorCharge();
-				String msmsPolarity = msmsScan.getPolarity().asSingleChar();								
-				if(msmsPolarity.equals("0"))
-					msmsPolarity = "";
-				if(msmsCharge == 0) {
-					msmsCharge = 1;
-					msmsPolarity = "";
-				}
-				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);
-				
-               
                 writer.write("MSLEVEL=2" + newLine);                                                                                                
                 
             	DataPoint peaks[] = massList.getDataPoints();
