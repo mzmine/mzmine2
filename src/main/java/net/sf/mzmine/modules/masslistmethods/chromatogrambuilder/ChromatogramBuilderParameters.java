@@ -24,7 +24,9 @@ import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
 import net.sf.mzmine.parameters.parametertypes.MassListParameter;
+import net.sf.mzmine.parameters.parametertypes.OptionalParameter;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
+import net.sf.mzmine.parameters.parametertypes.ranges.RTRangeParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelection;
 import net.sf.mzmine.parameters.parametertypes.selectors.ScanSelectionParameter;
@@ -52,13 +54,23 @@ public class ChromatogramBuilderParameters extends SimpleParameterSet {
             MZmineCore.getConfiguration().getIntensityFormat());
 
     public static final MZToleranceParameter mzTolerance = new MZToleranceParameter();
+    public static final OptionalParameter<DoubleParameter> mzRangeMSMS = new OptionalParameter<>(new DoubleParameter(
+    		"m/z range for msms scan pairing",
+    		"Maximum allowed difference between two m/z values to be considered same.\n"
+    			+ "The value is specified both as absolute tolerance (in m/z) and relative tolerance (in ppm).\n"
+    			+ "The tolerance range is calculated using maximum of the absolute and relative tolerances."));
+    public static final OptionalParameter<DoubleParameter> RetentionTimeMSMS = new OptionalParameter<>(new DoubleParameter(
+    		"RT range for msms scan pairing",
+    		"Maximum allowed difference between two m/z values to be considered same.\n"
+    			+ "The value is specified both as absolute tolerance (in m/z) and relative tolerance (in ppm).\n"
+    			+ "The tolerance range is calculated using maximum of the absolute and relative tolerances."));
 
     public static final StringParameter suffix = new StringParameter("Suffix",
             "This string is added to filename as suffix", "chromatograms");
 
     public ChromatogramBuilderParameters() {
         super(new Parameter[] { dataFiles, scanSelection, massList,
-                minimumTimeSpan, minimumHeight, mzTolerance, suffix });
+                minimumTimeSpan, minimumHeight, mzTolerance, mzRangeMSMS,RetentionTimeMSMS,suffix });
     }
 
 }
