@@ -190,18 +190,12 @@ public class ResolvedPeak implements Feature {
         	searchingRange = rawDataPointsMZRange;
         if (RTRangeMSMS == 0)
         	searchingRangeRT = dataFile.getDataRTRange(1);
-        System.out.println("new mz lower Bound:" +  searchingRange.lowerEndpoint());
-        System.out.println("old mz lower Bound:" +  rawDataPointsMZRange.lowerEndpoint());
-        System.out.println("new rt upper Bound:" +  searchingRangeRT.upperEndpoint());
-        System.out.println("old rt upper Bound:" +  rawDataPointsRTRange.upperEndpoint());
         
+     // Update fragment scan
+
         fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
         		searchingRangeRT, searchingRange);
 
-        // Update fragment scan
-       /* fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
-                rawDataPointsRTRange, rawDataPointsMZRange);
-*/
         if (fragmentScan > 0) {
             Scan fragmentScanObject = dataFile.getScan(fragmentScan);
             int precursorCharge = fragmentScanObject.getPrecursorCharge();
