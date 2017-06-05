@@ -341,12 +341,14 @@ public class RowsFilterTask extends AbstractTask {
             // Check ms2 filter .
             if (filterByMS2) {
             	// iterates the peaks
-            	for (int i = 0; i<peakCount; i++ ) {
-            		if(row.getPeaks()[i].getMostIntenseFragmentScanNumber() <1) {
-            			 filterRowCriteriaFailed = true;
-            			 break;
+            	int counter =0;
+            	for (int i = 0; i<peakCount; i++ ) {    		
+            		if(row.getPeaks()[i].getMostIntenseFragmentScanNumber() > 0) {
+            			 counter ++;
             		}
-            	}     
+            	}    
+        		if (counter == 0)
+        			filterRowCriteriaFailed = true;
             }
 
              if (!filterRowCriteriaFailed && !removeRow){

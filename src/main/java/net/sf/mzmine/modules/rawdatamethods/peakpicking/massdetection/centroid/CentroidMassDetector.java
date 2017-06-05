@@ -34,19 +34,36 @@ public class CentroidMassDetector implements MassDetector {
 
 	double noiseLevel = parameters.getParameter(
 		CentroidMassDetectorParameters.noiseLevel).getValue();
-
+	
+	double noiseLevelMS2 = parameters.getParameter(
+		CentroidMassDetectorParameters.MS2noiseLevelOption).getEmbeddedParameter().getValue();
+	
+	boolean useMS2noise = parameters.getParameter(
+		CentroidMassDetectorParameters.MS2noiseLevelOption).getValue();
+			
 	ArrayList<DataPoint> mzPeaks = new ArrayList<DataPoint>();
 
 	DataPoint dataPoints[] = scan.getDataPoints();
-
-	// Find possible mzPeaks
-	for (int j = 0; j < dataPoints.length; j++) {
-
-	    // Is intensity above the noise level?
-	    if (dataPoints[j].getIntensity() >= noiseLevel) {
-		// Yes, then mark this index as mzPeak
-		mzPeaks.add(dataPoints[j]);
-	    }
+	if (useMS2noise) {
+		for (int i = 0; i < dataPoints.length; i++) {
+			
+		    // Is intensity above the noise level?
+		    if (dataPoints[i].getIntensity() >= noiseLevelMS2) {
+			// Yes, then mark this index as mzPeak
+			mzPeaks.add(dataPoints[i]);
+		    }
+		}
+	}
+	else {
+		// Find possible mzPeaks
+		for (int j = 0; j < dataPoints.length; j++) {
+	
+		    // Is intensity above the noise level?
+		    if (dataPoints[j].getIntensity() >= noiseLevel) {
+			// Yes, then mark this index as mzPeak
+			mzPeaks.add(dataPoints[j]);
+		    }
+		}
 	}
 	return mzPeaks.toArray(new DataPoint[0]);
     }
