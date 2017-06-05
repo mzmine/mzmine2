@@ -21,6 +21,7 @@ package net.sf.mzmine.main;
 
 import net.sf.mzmine.modules.batchmode.BatchModeModule;
 import net.sf.mzmine.modules.masslistmethods.chromatogrambuilder.ChromatogramBuilderModule;
+import net.sf.mzmine.modules.masslistmethods.dichromatogrambuilder.DIChromatogramBuilderModule;
 import net.sf.mzmine.modules.masslistmethods.ADAPchromatogrambuilder.ADAPChromatogramBuilderModule;
 import net.sf.mzmine.modules.masslistmethods.shoulderpeaksfilter.ShoulderPeaksFilterModule;
 import net.sf.mzmine.modules.peaklistmethods.alignment.join.JoinAlignerModule;
@@ -122,7 +123,7 @@ public class MZmineModulesList {
 
             // Raw data methods
             RawDataImportModule.class, MassDetectionModule.class,
-            ShoulderPeaksFilterModule.class, ChromatogramBuilderModule.class,
+            ShoulderPeaksFilterModule.class, ChromatogramBuilderModule.class,DIChromatogramBuilderModule.class,
             ADAPChromatogramBuilderModule.class,
 
 
