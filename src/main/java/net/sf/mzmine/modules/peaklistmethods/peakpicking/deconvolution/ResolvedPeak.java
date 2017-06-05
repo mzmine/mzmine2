@@ -160,11 +160,48 @@ public class ResolvedPeak implements Feature {
             area += (currentRT - previousRT) * (currentHeight + previousHeight)
                     / 2;
         }
+        double mzRangeMSMS = chromatogram.getMZrangeMSMS();
+        double RTRangeMSMS = chromatogram.getRTrangeMSMS();
+        
+        double lowerBound = rawDataPointsMZRange.lowerEndpoint();
+        double upperBound = rawDataPointsMZRange.upperEndpoint();
+        
+        double mid = (upperBound+lowerBound)/2;
+        lowerBound = mid - mzRangeMSMS/2;
+        upperBound = mid + mzRangeMSMS/2;
+        if(lowerBound <0){
+        	lowerBound =0;
+        }
+        
+        Range<Double> searchingRange = Range
+                .closed(lowerBound,upperBound);
+        double lowerBoundRT = rawDataPointsRTRange.lowerEndpoint();
+        double upperBoundRT = rawDataPointsRTRange.upperEndpoint();
+        double midRT = (upperBoundRT+lowerBoundRT)/2;
+        lowerBoundRT = midRT - RTRangeMSMS/2;
+        upperBoundRT = midRT + RTRangeMSMS/2;
+        if(lowerBound <0){
+        	lowerBound =0;
+        }
+        Range<Double> searchingRangeRT = Range
+                .closed(lowerBoundRT,upperBoundRT);
+        
+        if (mzRangeMSMS == 0)
+        	searchingRange = rawDataPointsMZRange;
+        if (RTRangeMSMS == 0)
+        	searchingRangeRT = dataFile.getDataRTRange(1);
+        System.out.println("new mz lower Bound:" +  searchingRange.lowerEndpoint());
+        System.out.println("old mz lower Bound:" +  rawDataPointsMZRange.lowerEndpoint());
+        System.out.println("new rt upper Bound:" +  searchingRangeRT.upperEndpoint());
+        System.out.println("old rt upper Bound:" +  rawDataPointsRTRange.upperEndpoint());
+        
+        fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
+        		searchingRangeRT, searchingRange);
 
         // Update fragment scan
-        fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
+       /* fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
                 rawDataPointsRTRange, rawDataPointsMZRange);
-
+*/
         if (fragmentScan > 0) {
             Scan fragmentScanObject = dataFile.getScan(fragmentScan);
             int precursorCharge = fragmentScanObject.getPrecursorCharge();
@@ -299,4 +336,11 @@ public class ResolvedPeak implements Feature {
         return peakInfo;
     }
     //End dulab Edit
+    // added for new update in feature interface
+    public double getMZrangeMSMS (){
+    	return 0;
+    }
+    public double getRTrangeMSMS (){
+    	return 0;
+    }
 }

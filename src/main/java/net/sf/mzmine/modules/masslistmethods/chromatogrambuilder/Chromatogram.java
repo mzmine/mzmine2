@@ -60,7 +60,7 @@ public class Chromatogram implements Feature {
 
     // Ranges of raw data points
     private Range<Double> rawDataPointsIntensityRange, rawDataPointsMZRange,
-            rawDataPointsRTRange;
+            rawDataPointsRTRange,searchingRangeRT, searchingRange;
 
     // A set of scan numbers of a segment which is currently being connected
     private Vector<Integer> buildingSegment;
@@ -299,8 +299,7 @@ public class Chromatogram implements Feature {
         	lowerBound =0;
         }
         
-        Range<Double> searchingRange = Range
-                .closed(lowerBound,upperBound);
+        Range<Double> searchingRange = Range.closed(lowerBound,upperBound);
         double lowerBoundRT = rawDataPointsRTRange.lowerEndpoint();
         double upperBoundRT = rawDataPointsRTRange.upperEndpoint();
         double midRT = (upperBoundRT+lowerBoundRT)/2;
@@ -309,16 +308,13 @@ public class Chromatogram implements Feature {
         if(lowerBound <0){
         	lowerBound =0;
         }
-        Range<Double> searchingRangeRT = Range
-                .closed(lowerBoundRT,upperBoundRT);
+        
+        Range<Double> searchingRangeRT = Range.closed(lowerBoundRT,upperBoundRT);
         
         if (mzRangeMSMS == 0)
         	searchingRange = rawDataPointsMZRange;
         if (RTRangeMSMS == 0)
         	searchingRangeRT = dataFile.getDataRTRange(1);
-        System.out.println("old rt range" + dataFile.getDataRTRange(1).upperEndpoint()+"-"+dataFile.getDataRTRange(1).lowerEndpoint());
-        System.out.println("rt new range" + searchingRangeRT.upperEndpoint()+"+"+searchingRangeRT.lowerEndpoint());
-        System.out.println("RTRANGE"+ RTRangeMSMS);
         
         fragmentScan = ScanUtils.findBestFragmentScan(dataFile,
         		searchingRangeRT, searchingRange);
@@ -406,6 +402,12 @@ public class Chromatogram implements Feature {
     }
     public SimplePeakInformation getPeakInformation(){
         return peakInfo;
+    }
+    public double getMZrangeMSMS () {
+    	return mzRangeMSMS;
+    }
+    public double getRTrangeMSMS () {
+    	return RTRangeMSMS;
     }
 
 }
