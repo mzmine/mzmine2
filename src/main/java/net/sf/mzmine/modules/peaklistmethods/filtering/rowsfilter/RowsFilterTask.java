@@ -341,6 +341,7 @@ public class RowsFilterTask extends AbstractTask {
             // Check ms2 filter .
             if (filterByMS2) {
             	// iterates the peaks
+<<<<<<< HEAD
             	int counter =0;
             	for (int i = 0; i<peakCount; i++ ) {    		
             		if(row.getPeaks()[i].getMostIntenseFragmentScanNumber() > 0) {
@@ -351,6 +352,15 @@ public class RowsFilterTask extends AbstractTask {
         			filterRowCriteriaFailed = true;
             }
             
+=======
+            	for (int i = 0; i<peakCount; i++ ) {
+            		if(row.getPeaks()[i].getMostIntenseFragmentScanNumber() <1) {
+            			 filterRowCriteriaFailed = true;
+            			 break;
+            		}
+            	}     
+            }
+>>>>>>> mzmine/master
 
              if (!filterRowCriteriaFailed && !removeRow){
                 // Only add the row if none of the criteria have failed.

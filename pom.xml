@@ -185,41 +185,89 @@
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-core</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-io</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-standard</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-silent</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-formula</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-sdg</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-renderbasic</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.openscience.cdk</groupId>
 			<artifactId>cdk-renderawt</artifactId>
 			<version>${cdk.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.vecmath</groupId>
+					<artifactId>vecmath</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- End of CDK dependencies -->
