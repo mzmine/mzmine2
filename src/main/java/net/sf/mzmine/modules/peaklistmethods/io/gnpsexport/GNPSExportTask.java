@@ -194,8 +194,8 @@ public class GNPSExportTask extends AbstractTask {
 					msmsCharge = 1;
 					msmsPolarity = "";
 				}
-				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);g
-                writer.write("MSLEVEL=2" + newLine);                                                                                                
+				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);
+                writer.write("MSLEVEL=2" + newLine);                                                                                               
                 
             	DataPoint peaks[] = massList.getDataPoints();
         	    for (DataPoint peak : peaks) {
