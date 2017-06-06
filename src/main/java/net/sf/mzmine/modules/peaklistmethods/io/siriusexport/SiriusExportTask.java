@@ -16,6 +16,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+<<<<<<< HEAD
+=======
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+>>>>>>> origin/chromatogram-pairing
 import java.util.regex.Pattern;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.Feature;
@@ -26,6 +32,10 @@ import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.datamodel.Scan;
 import net.sf.mzmine.datamodel.impl.SimpleFeature;
 import net.sf.mzmine.datamodel.impl.SimplePeakListRow;
+<<<<<<< HEAD
+=======
+import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
+>>>>>>> origin/chromatogram-pairing
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.taskcontrol.AbstractTask;
@@ -269,6 +279,7 @@ public class SiriusExportTask extends AbstractTask {
 
 		return newRow;
 	}
+<<<<<<< HEAD
 
 	// private DataPoint[] integerDataPoints(final DataPoint[] dataPoints,
 	// final String mode)
@@ -305,3 +316,6 @@ public class SiriusExportTask extends AbstractTask {
 	// }
 
 }
+=======
+}
+>>>>>>> origin/chromatogram-pairing

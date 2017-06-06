@@ -349,8 +349,7 @@ public class RowsFilterTask extends AbstractTask {
             	}    
         		if (counter == 0)
         			filterRowCriteriaFailed = true;
-            }
-            
+            }            
 
              if (!filterRowCriteriaFailed && !removeRow){
                 // Only add the row if none of the criteria have failed.

@@ -1,4 +1,5 @@
-/* This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang 
+/*
+ * This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang
  * at the Dorrestein Lab (University of California, San Diego). 
  * 
  * It is freely available under the GNU GPL licence of MZmine2.
@@ -127,16 +128,13 @@ public class GNPSExportTask extends AbstractTask {
 		final String newLine = System.lineSeparator();
         
     	for (PeakListRow row : peakList.getRows()) {
-            
-    		//IsotopePattern ip = row.getBestIsotopePattern();
-            //if (ip == null) continue;
-            
+
+    		IsotopePattern ip = row.getBestIsotopePattern();
+            if (ip == null) continue;
             
             String rowID = Integer.toString(row.getID());
             
-            String retTimeInSeconds = Double.toString(row.getAverageRT() * 60);
-            
-  
+            String retTimeInSeconds = Double.toString(row.getAverageRT() * 60);  
 
             // Get the MS/MS scan number
             Feature bestPeak =row.getBestPeak();
@@ -149,7 +147,8 @@ public class GNPSExportTask extends AbstractTask {
                 // Get the MS/MS scan number
                 
                  msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
-               	if (msmsScanNumber <1) {
+
+               	if (msmsScanNumber < 1) {
                		copyRow.removePeak(bestPeak.getDataFile());
                		if(copyRow.getPeaks().length !=0){
                			// row is not empty  		
@@ -157,8 +156,10 @@ public class GNPSExportTask extends AbstractTask {
             		msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
                		}
             	}
-                }
+            }
+        	
         	if (msmsScanNumber >= 1) {            	             	
+            	// MS/MS scan must exist, because msmsScanNumber was > 0
             	Scan msmsScan = bestPeak.getDataFile().getScan(msmsScanNumber);
 
             	MassList massList = msmsScan.getMassList(massListName);
@@ -173,14 +174,13 @@ public class GNPSExportTask extends AbstractTask {
             	}
             	
             	writer.write("BEGIN IONS"+newLine);                		                		                                                
-                
+
             	if (rowID != null)
             		writer.write("FEATURE_ID=" + rowID + newLine);
-            	
+
                 String mass = Double.toString(row.getAverageMZ());
-                if (mass != null) 
-                	writer.write("PEPMASS=" + mass + newLine);
-                
+                if (mass != null) writer.write("PEPMASS=" + mass + newLine);                                                                      
+               
                 if(rowID != null) {
                 	writer.write("SCANS=" + rowID + newLine);
                 	writer.write("RTINSECONDS=" + retTimeInSeconds + newLine);
@@ -194,15 +194,12 @@ public class GNPSExportTask extends AbstractTask {
 					msmsCharge = 1;
 					msmsPolarity = "";
 				}
-				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);
-				
-               
+				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);g
                 writer.write("MSLEVEL=2" + newLine);                                                                                                
                 
             	DataPoint peaks[] = massList.getDataPoints();
         	    for (DataPoint peak : peaks) {
-        		    writer.write(peak.getMZ() + " " + peak.getIntensity() + newLine);                		    
-        		    //out.println();
+        		    writer.write(peak.getMZ() + " " + peak.getIntensity() + newLine);
         	    }
 
         	    writer.write("END IONS"+newLine);
@@ -215,6 +212,7 @@ public class GNPSExportTask extends AbstractTask {
 		return "Exporting GNPS of peak list(s) " 
         + Arrays.toString(peakLists) + " to MGF file(s)";
 	}
+
     /**
      * Create a copy of a peak list row.
      */
@@ -236,5 +234,4 @@ public class GNPSExportTask extends AbstractTask {
 
         return newRow;
     }
-	
 }
