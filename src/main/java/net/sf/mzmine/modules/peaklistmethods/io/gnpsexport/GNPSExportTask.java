@@ -1,5 +1,5 @@
 /*
- * This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang 
+ * This module was prepared by Abi Sarvepalli, Christopher Jensen, and Zheng Zhang
  * at the Dorrestein Lab (University of California, San Diego). 
  * 
  * It is freely available under the GNU GPL licence of MZmine2.
@@ -128,14 +128,13 @@ public class GNPSExportTask extends AbstractTask {
 		final String newLine = System.lineSeparator();
         
     	for (PeakListRow row : peakList.getRows()) {
-            
+
     		IsotopePattern ip = row.getBestIsotopePattern();
             if (ip == null) continue;
             
             String rowID = Integer.toString(row.getID());
             
-            String retTimeInSeconds = Double.toString(row.getAverageRT() * 60);
-  
+            String retTimeInSeconds = Double.toString(row.getAverageRT() * 60);  
 
             // Get the MS/MS scan number
             Feature bestPeak =row.getBestPeak();
@@ -148,6 +147,7 @@ public class GNPSExportTask extends AbstractTask {
                 // Get the MS/MS scan number
                 
                  msmsScanNumber = bestPeak.getMostIntenseFragmentScanNumber();
+
                	if (msmsScanNumber < 1) {
                		copyRow.removePeak(bestPeak.getDataFile());
                		if(copyRow.getPeaks().length !=0){
@@ -194,8 +194,7 @@ public class GNPSExportTask extends AbstractTask {
 					msmsCharge = 1;
 					msmsPolarity = "";
 				}
-				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);
-
+				writer.write("CHARGE=" + msmsCharge + msmsPolarity + newLine);g
                 writer.write("MSLEVEL=2" + newLine);                                                                                                
                 
             	DataPoint peaks[] = massList.getDataPoints();
