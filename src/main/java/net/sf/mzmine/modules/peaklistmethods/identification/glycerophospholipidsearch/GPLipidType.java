@@ -24,7 +24,9 @@ public enum GPLipidType {
 	PC("Phosphatidylcholine", "PC", "C8H18NO6P", 2), //
 	PE("Phosphatidylethanolamine", "PE", "C5H12NO6P", 2), //
 	PI("Phosphatidylinositol", "PI", "C9H17O11P", 2), //
-	PS("Phosphatidylserine", "PS", "C6H12NO8P", 2);
+	PS("Phosphatidylserine", "PS", "C6H12NO8P", 2),
+	CL("Cardiolipine", "CL", "C9H16O13P2", 4),//
+	TAG("Triacyglycerol", "TAG", "C3H5O6", 3);//;
 	//MGDG("Monogalactosyldiacylglycerol", "MGDG", "C9H16O10");
 
 	private final String name, abbr, formula;

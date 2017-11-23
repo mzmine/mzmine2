@@ -5,7 +5,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Paint;
+import java.awt.Shape;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
@@ -14,6 +16,7 @@ import javax.swing.JMenuBar;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.axis.AxisCollection;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.CategoryAxis;
@@ -21,6 +24,8 @@ import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.labels.CategoryToolTipGenerator;
+import org.jfree.chart.labels.StandardXYSeriesLabelGenerator;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.Plot;
@@ -31,16 +36,19 @@ import org.jfree.chart.renderer.category.StatisticalLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYDotRenderer;
 import org.jfree.chart.renderer.xy.XYErrorRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.title.PaintScaleLegend;
 import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.util.ShapeUtils;
 import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.data.xy.XYZDataset;
 
+import figs.Chart;
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.desktop.impl.WindowsMenu;
 import net.sf.mzmine.main.MZmineCore;
@@ -87,30 +95,40 @@ public class KendrickMassPlotWindow  extends JFrame{
 
 			chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel,
 					dataset2D, PlotOrientation.VERTICAL, true, true, false);
+
 			XYPlot plot = (XYPlot) chart.getPlot();
 			plot.setBackgroundPaint(Color.WHITE);
 
 			// set renderer
-			final XYDotRenderer renderer = new XYDotRenderer();
-			renderer.setDotHeight(3);
-			renderer.setDotWidth(3);
+			XYBlockRenderer renderer = new XYBlockRenderer();
+			for (int i = 0; i < plot.getAnnotations().size(); i++) {
+				System.out.println(plot.getAnnotations().get(i));
+			}
+			renderer.setSeriesPaint(0, Color.GREEN);
+			renderer.setBlockWidth(1);
+			renderer.setBlockHeight(0.002);
+			StandardXYToolTipGenerator tooltipGenerator = new StandardXYToolTipGenerator();
+			renderer.setSeriesToolTipGenerator(0, tooltipGenerator);
 			plot.setRenderer(renderer);
 		}
 		//3D, if a third dimension was selected
 		else{
 			dataset3D = new KendrickMassPlotXYZDataset(parameters);
-			double min = dataset3D.getZValue(0, 0);
-			double max = dataset3D.getZValue(0, dataset3D.getItemCount(0)-1);
+			double[] copyZValues = new double[dataset3D.getItemCount(0)];
+			for (int i = 0; i < dataset3D.getItemCount(0); i++) {
+				copyZValues[i] = dataset3D.getZValue(0, i);
+			}
+			Arrays.sort(copyZValues);
+			double min = copyZValues[0];
+			double max = copyZValues[copyZValues.length-1];
 			logger.finest("Creating new chart instance");
 
 			chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel,
 					dataset3D, PlotOrientation.VERTICAL, true, true, false);
-
 			XYBlockRenderer renderer = new XYBlockRenderer();
-
 			Paint[] contourColors = null;
 			LookupPaintScale scale = null;
-			
+
 			contourColors = KendrickMassPlotPaintScales.getFullRainBowScale();
 			scale = new LookupPaintScale(min, max, Color.white);
 
@@ -126,6 +144,7 @@ public class KendrickMassPlotWindow  extends JFrame{
 			renderer.setPaintScale(scale);
 			renderer.setBlockWidth(1);
 			renderer.setBlockHeight(0.002);
+			renderer.setSeriesToolTipGenerator(0, new StandardXYToolTipGenerator());
 			XYPlot plot = chart.getXYPlot();
 			plot.setRenderer(renderer);
 			plot.setBackgroundPaint(Color.white);
