@@ -33,8 +33,8 @@ import net.sf.mzmine.util.ExitCode;
 
 public class GPLipidSearchModule implements MZmineProcessingModule {
 
-    private static final String MODULE_NAME = "Glycerophospholipid prediction";
-    private static final String MODULE_DESCRIPTION = "This method searches for peaks whose m/z value matches a predicted mass of glycerophospholipids.";
+    private static final String MODULE_NAME = "Lipid prediction";
+    private static final String MODULE_DESCRIPTION = "This method searches for peaks whose m/z value matches a predicted mass of lipids.";
 
     @Override
     public @Nonnull String getName() {
@@ -56,7 +56,7 @@ public class GPLipidSearchModule implements MZmineProcessingModule {
                 .getMatchingPeakLists();
 
         for (PeakList peakList : peakLists) {
-            Task newTask = new GPLipidSearchTask(parameters, peakList);
+            Task newTask = new GPLipidSearchTaskExactMass(parameters, peakList);
             tasks.add(newTask);
         }
 

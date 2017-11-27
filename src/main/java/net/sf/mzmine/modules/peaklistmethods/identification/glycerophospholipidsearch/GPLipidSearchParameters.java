@@ -37,17 +37,17 @@ public class GPLipidSearchParameters extends SimpleParameterSet {
 	    GPLipidType.values());
 
     public static final IntegerParameter minChainLength = new IntegerParameter(
-	    "Minimum fatty acid length",
-	    "Minimum length of the fatty acid chain");
+	    "Minimum number of Carbon in fatty acids",
+	    "Minimum number of Carbon in fatty acids");
 
     public static final IntegerParameter maxChainLength = new IntegerParameter(
-	    "Maximum fatty acid length",
-	    "Maximum length of the fatty acid chain");
+	    "maximum number of Carbon in fatty acids",
+	    "Maximum number of Carbon in fatty acids");
 
     public static final IntegerParameter maxDoubleBonds = new IntegerParameter(
 	    "Maximum number of double bonds",
-	    "Maximum number of double bonds in one fatty acid chain");
-
+	    "Maximum number of double bonds in all fatty acid chains");
+    
     public static final MZToleranceParameter mzTolerance = new MZToleranceParameter();
 
     public static final ComboParameter<IonizationType> ionizationMethod = new ComboParameter<IonizationType>(
