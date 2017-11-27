@@ -14,22 +14,21 @@ class KendrickMassPlotXYZDataset extends AbstractXYZDataset{
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private RawDataFile selectedFiles[];
 	private PeakListRow selectedRows[];
 	private String yAxisKMBase;
 	private String xAxisKMBase;
 	private String zAxis;
 	private double xAxisKMFactor = -1;
 	private double yAxisKMFactor = -1;
+	private double[] xValues;
+	private double[] yValues;
+	private double[] zValues;
 
 	public KendrickMassPlotXYZDataset(ParameterSet parameters) {
 
 		PeakList peakList = parameters
 				.getParameter(KendrickMassPlotParameters.peakList).getValue()
 				.getMatchingPeakLists()[0];
-
-		//this.selectedFiles = parameters
-		//		.getParameter(KendrickMassPlotParameters.dataFiles).getValue();
 
 		this.selectedRows = parameters
 				.getParameter(KendrickMassPlotParameters.selectedRows).getMatchingRows(peakList);
@@ -43,9 +42,63 @@ class KendrickMassPlotXYZDataset extends AbstractXYZDataset{
 		this.zAxis = parameters
 				.getParameter(KendrickMassPlotParameters.zAxisValues).getValue();
 
+		//Calc xValues
+		xValues = new double[selectedRows.length];
+		for (int i = 0; i < selectedRows.length; i++) {
+			//simply plot m/z values as x axis
+			if(xAxisKMBase.equals("m/z")) {
+				xValues[i] = selectedRows[i].getAverageMZ();
+			}
+			//plot Kendrick masses as x axis
+			else if(xAxisKMBase.equals("KM")) {
+				xValues[i] = selectedRows[i].getAverageMZ()*getxAxisKMFactor(xAxisKMBase);
+			}
+			//plot Kendrick mass defect (KMD) as x Axis to the base of CH2
+			else if(xAxisKMBase.equals("KMD (H)")) {
+				xValues[i] = (((int)selectedRows[i].getAverageMZ()*getxAxisKMFactor(xAxisKMBase)+1)-selectedRows[i].getAverageMZ()*getxAxisKMFactor(xAxisKMBase));
+			}
+			//plot Kendrick mass defect (KMD) as x Axis to the base of H
+			else if(xAxisKMBase.equals("KMD (CH2)")) {
+				xValues[i] = (((int)selectedRows[i].getAverageMZ()*getxAxisKMFactor(xAxisKMBase)+1)-selectedRows[i].getAverageMZ()*getxAxisKMFactor(xAxisKMBase));
+			}
+		}
 
+		//Calc yValues
+		yValues = new double[selectedRows.length];
+		for (int i = 0; i < selectedRows.length; i++) {
+			//plot Kendrick mass defect (KMD) as y Axis to the base of CH2
+			if(yAxisKMBase.equals("KMD (H)")) {
+				yValues[i] = ((int)(selectedRows[i].getAverageMZ()*getyAxisKMFactor(yAxisKMBase))+1)-selectedRows[i].getAverageMZ()*getyAxisKMFactor(yAxisKMBase);
+			}
+			//plot Kendrick mass defect (KMD) as y Axis to the base of H
+			else if(yAxisKMBase.equals("KMD (CH2)")) {
+				yValues[i] = ((int)(selectedRows[i].getAverageMZ()*getyAxisKMFactor(yAxisKMBase))+1)-selectedRows[i].getAverageMZ()*getyAxisKMFactor(yAxisKMBase);
+			}
+		}
+		
+		//Calc zValues
+		zValues = new double[selectedRows.length];
+		for (int i = 0; i < selectedRows.length; i++) {
+			if(zAxis.equals("Retention time")) {
+				zValues[i] = selectedRows[i].getAverageRT();
+			}
+			else if(zAxis.equals("Intensity")) {
+				zValues[i] = selectedRows[i].getAverageHeight();
+			}
+			else if(zAxis.equals("Area")) {
+				zValues[i] = selectedRows[i].getAverageArea();
+			}
+			else if(zAxis.equals("Tailing factor")) {
+				zValues[i] = selectedRows[i].getBestPeak().getTailingFactor();
+			}
+			else if(zAxis.equals("Asymmetry factor")) {
+				zValues[i] = selectedRows[i].getBestPeak().getAsymmetryFactor();
+			}
+			else if(zAxis.equals("FWHM")) {
+				zValues[i] = selectedRows[i].getBestPeak().getFWHM();
+			}
+		}
 	}
-
 	//Calculate xAxis Kendrick mass factor (KM factor)
 	private double getxAxisKMFactor(String xAxisKMBase) {
 		if(xAxisKMFactor==-1) {
@@ -53,7 +106,6 @@ class KendrickMassPlotXYZDataset extends AbstractXYZDataset{
 				xAxisKMFactor = (14.000000/14.01565006);
 			}
 			else if(xAxisKMBase.equals("KMD (H)")) {
-				System.out.println("True");
 				xAxisKMFactor = (1/1.007825037);
 			}
 			else {
@@ -86,53 +138,17 @@ class KendrickMassPlotXYZDataset extends AbstractXYZDataset{
 
 	@Override
 	public Number getX(int series, int item) {
-		double x = 0;
-		//simply plot m/z values as x axis
-		if(xAxisKMBase.equals("m/z")) {
-			x = selectedRows[item].getAverageMZ();
-		}
-		//plot Kendrick masses as x axis
-		else if(xAxisKMBase.equals("KM")) {
-			x = selectedRows[item].getAverageMZ()*getxAxisKMFactor(xAxisKMBase);
-		}
-		//plot Kendrick mass defect (KMD) as x Axis to the base of CH2
-		else if(xAxisKMBase.equals("KMD (H)")) {
-			x = (((int)selectedRows[item].getAverageMZ()*getxAxisKMFactor(xAxisKMBase)+1)-selectedRows[item].getAverageMZ()*getxAxisKMFactor(xAxisKMBase));
-		}
-		//plot Kendrick mass defect (KMD) as x Axis to the base of H
-		else if(xAxisKMBase.equals("KMD (CH2)")) {
-			x = (((int)selectedRows[item].getAverageMZ()*getxAxisKMFactor(xAxisKMBase)+1)-selectedRows[item].getAverageMZ()*getxAxisKMFactor(xAxisKMBase));
-		}
-		return x;
+		return xValues[item];
 	}
 
 	@Override
 	public Number getY(int series, int item) {
-		double y = 0;
-		//plot Kendrick mass defect (KMD) as y Axis to the base of CH2
-		if(yAxisKMBase.equals("KMD (H)")) {
-			y = ((int)(selectedRows[item].getAverageMZ()*getyAxisKMFactor(yAxisKMBase))+1)-selectedRows[item].getAverageMZ()*getyAxisKMFactor(yAxisKMBase);
-		}
-		//plot Kendrick mass defect (KMD) as y Axis to the base of H
-		else if(yAxisKMBase.equals("KMD (CH2)")) {
-			y = ((int)(selectedRows[item].getAverageMZ()*getyAxisKMFactor(yAxisKMBase))+1)-selectedRows[item].getAverageMZ()*getyAxisKMFactor(yAxisKMBase);
-		}
-		return y;
+		return yValues[item];
 	}
 
 	@Override
 	public Number getZ(int series, int item) {
-		double z = 0;
-		if(zAxis.equals("Retention time")) {
-			z = selectedRows[item].getAverageRT();
-		}
-		else if(zAxis.equals("Intensity")) {
-			z = selectedRows[item].getAverageHeight();
-		}
-		else if(zAxis.equals("Area")) {
-			z = selectedRows[item].getAverageArea();
-		}
-		return z;
+		return zValues[item];
 	}
 
 	@Override

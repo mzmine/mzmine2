@@ -36,11 +36,17 @@ public class KendrickMassPlotParameters extends SimpleParameterSet {
     
     public static final PeakSelectionParameter selectedRows = new PeakSelectionParameter();
     
-    public static final ComboParameter<String> yAxisValues = new ComboParameter<>("Y-Axis", "Select the kendrick mass defect base", new String[] {"KMD (CH2)", "KMD (H)"}); 
+    public static final ComboParameter<String> yAxisValues = new ComboParameter<>("Y-Axis", 
+    																				"Select the kendrick mass defect base", 
+    																				new String[] {"KMD (CH2)", "KMD (H)"}); 
     
-    public static final ComboParameter<String> xAxisValues = new ComboParameter<>("X-Axis", "Select a second kendrick mass defect base, kendrick masse (KM) or m/z", new String[] {"m/z", "KM", "KMD (CH2)", "KMD (H)"}); 
+    public static final ComboParameter<String> xAxisValues = new ComboParameter<>("X-Axis",
+    																				"Select a second kendrick mass defect base, kendrick masse (KM) or m/z",
+    																				new String[] {"m/z", "KM", "KMD (CH2)", "KMD (H)"}); 
     
-    public static final ComboParameter<String> zAxisValues = new ComboParameter<>("Z-Axis", "Select a parameter for a third dimension, displayed as a heatmap or select none", new String[] {"none", "Retention time", "Intensity","Area"});
+    public static final ComboParameter<String> zAxisValues = new ComboParameter<>("Z-Axis",
+    																				"Select a parameter for a third dimension, displayed as a heatmap or select none",
+    																				new String[] {"none", "Retention time", "Intensity","Area","Tailing factor","Asymmetry factor","FWHM"});
     /**
      * Windows size and position
      */

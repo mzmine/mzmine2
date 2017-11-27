@@ -1,12 +1,9 @@
 package kendrickMassPlots;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Paint;
-import java.awt.Shape;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -16,51 +13,34 @@ import javax.swing.JMenuBar;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.annotations.XYAnnotation;
-import org.jfree.chart.axis.AxisCollection;
 import org.jfree.chart.axis.AxisLocation;
-import org.jfree.chart.axis.CategoryAxis;
-import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.block.BlockBorder;
-import org.jfree.chart.labels.CategoryToolTipGenerator;
-import org.jfree.chart.labels.StandardXYSeriesLabelGenerator;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
-import org.jfree.chart.labels.XYToolTipGenerator;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.Plot;
+import org.jfree.chart.labels.StandardXYZToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.LookupPaintScale;
-import org.jfree.chart.renderer.category.StatisticalLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
-import org.jfree.chart.renderer.xy.XYDotRenderer;
-import org.jfree.chart.renderer.xy.XYErrorRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.title.PaintScaleLegend;
 import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.chart.util.ShapeUtils;
-import org.jfree.data.xy.DefaultTableXYDataset;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.data.xy.XYZDataset;
 
-import figs.Chart;
 import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.desktop.impl.WindowsMenu;
-import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.modules.visualization.scatterplot.scatterplotchart.ScatterPlotToolTipGenerator;
 import net.sf.mzmine.parameters.ParameterSet;
-import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
-import net.sf.mzmine.parameters.parametertypes.WindowSettingsParameter;
+import net.sf.mzmine.taskcontrol.AbstractTask;
+import net.sf.mzmine.taskcontrol.TaskStatus;
 
-public class KendrickMassPlotWindow  extends JFrame{
+public class KendrickMassPlotTask  extends AbstractTask{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
 	static final Font legendFont = new Font("SansSerif", Font.PLAIN, 10);
 	static final Font titleFont = new Font("SansSerif", Font.PLAIN, 11);
 
@@ -69,59 +49,96 @@ public class KendrickMassPlotWindow  extends JFrame{
 	private XYDataset dataset2D;
 	private XYZDataset dataset3D;
 	private JFreeChart chart;
+	private PeakList peakList;
+	private String title;
+	private String xAxisLabel;
+	private String yAxisLabel;
+	private String zAxisLabel;
+	private ParameterSet parameterSet;
+	private int totalSteps = 3, appliedSteps = 0;
 
-	public KendrickMassPlotWindow(ParameterSet parameters) {
 
-		PeakList peakList = parameters
+	public KendrickMassPlotTask(ParameterSet parameters) {
+		peakList = parameters
 				.getParameter(KendrickMassPlotParameters.peakList).getValue()
 				.getMatchingPeakLists()[0];
 
-		String title = "Kendrick mass plot [" + peakList + "]";
-		String xAxisLabel = parameters
+		title = "Kendrick mass plot [" + peakList + "]";
+		xAxisLabel = parameters
 				.getParameter(KendrickMassPlotParameters.xAxisValues)
 				.getValue();
-		String yAxisLabel = parameters
+		yAxisLabel = parameters
 				.getParameter(KendrickMassPlotParameters.yAxisValues)
 				.getValue();
-		String zAxisLabel = parameters
+		zAxisLabel = parameters
 				.getParameter(KendrickMassPlotParameters.zAxisValues)
 				.getValue();
 
+		parameterSet = parameters;
+	}
+
+	@Override
+	public String getTaskDescription() {
+		return "Create Kendrick mass plot for " + peakList;
+	}
+
+	@Override
+	public double getFinishedPercentage() {
+		return totalSteps == 0 ? 0 : (double) appliedSteps / totalSteps;
+	}
+
+	@Override
+	public void run() {
+		setStatus(TaskStatus.PROCESSING);
+		logger.info("Create Kendrick mass plot of " + peakList);
+		// Task canceled?
+		if (isCanceled())
+			return;
 		// create dataset
 		//2D, if no third dimension was selected
-		if(parameters.getParameter(KendrickMassPlotParameters.zAxisValues).getValue().equals("none")) {
-			dataset2D = new KendrickMassPlotXYDataset(parameters);
-			logger.finest("Creating new chart instance");
-
+		if(zAxisLabel.equals("none")) {
+			
+			logger.info("Creating new 2D chart instance");
+			appliedSteps++;
+			dataset2D = new KendrickMassPlotXYDataset(parameterSet);
 			chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel,
 					dataset2D, PlotOrientation.VERTICAL, true, true, false);
-
 			XYPlot plot = (XYPlot) chart.getPlot();
 			plot.setBackgroundPaint(Color.WHITE);
-
+			appliedSteps++;
 			// set renderer
 			XYBlockRenderer renderer = new XYBlockRenderer();
-			for (int i = 0; i < plot.getAnnotations().size(); i++) {
-				System.out.println(plot.getAnnotations().get(i));
+			// calc block sizes
+			double maxX = plot.getDomainAxis().getRange().getUpperBound();
+			double minX = plot.getDomainAxis().getRange().getLowerBound();
+			double maxY = plot.getRangeAxis().getRange().getUpperBound();
+			if(xAxisLabel.contains("KMD")) {
+				renderer.setBlockWidth(0.002);
+				renderer.setBlockHeight(0.002);
 			}
-			renderer.setSeriesPaint(0, Color.GREEN);
-			renderer.setBlockWidth(1);
-			renderer.setBlockHeight(0.002);
-			StandardXYToolTipGenerator tooltipGenerator = new StandardXYToolTipGenerator();
+			else {
+				renderer.setBlockWidth(0.9);
+				renderer.setBlockHeight(maxY/(maxX-minX));
+			}
+			
+			KendrickMassPlotXYZToolTipGenerator tooltipGenerator = new KendrickMassPlotXYZToolTipGenerator(xAxisLabel, yAxisLabel, zAxisLabel);
 			renderer.setSeriesToolTipGenerator(0, tooltipGenerator);
 			plot.setRenderer(renderer);
+			appliedSteps++;
 		}
 		//3D, if a third dimension was selected
 		else{
-			dataset3D = new KendrickMassPlotXYZDataset(parameters);
+			logger.info("Creating new 3D chart instance");
+			appliedSteps++;
+			dataset3D = new KendrickMassPlotXYZDataset(parameterSet);
 			double[] copyZValues = new double[dataset3D.getItemCount(0)];
 			for (int i = 0; i < dataset3D.getItemCount(0); i++) {
 				copyZValues[i] = dataset3D.getZValue(0, i);
 			}
+			
 			Arrays.sort(copyZValues);
 			double min = copyZValues[0];
 			double max = copyZValues[copyZValues.length-1];
-			logger.finest("Creating new chart instance");
 
 			chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel,
 					dataset3D, PlotOrientation.VERTICAL, true, true, false);
@@ -139,13 +156,24 @@ public class KendrickMassPlotWindow  extends JFrame{
 				scale.add(value, contourColors[i]);
 				scaleValues[i] = value;
 				value = value + delta;
-			}
 
-			renderer.setPaintScale(scale);
-			renderer.setBlockWidth(1);
-			renderer.setBlockHeight(0.002);
-			renderer.setSeriesToolTipGenerator(0, new StandardXYToolTipGenerator());
+			}
 			XYPlot plot = chart.getXYPlot();
+			appliedSteps++;
+			renderer.setPaintScale(scale);
+			double maxX = plot.getDomainAxis().getRange().getUpperBound();
+			double minX = plot.getDomainAxis().getRange().getLowerBound();
+			double maxY = plot.getRangeAxis().getRange().getUpperBound();
+			if(xAxisLabel.contains("KMD")) {
+				renderer.setBlockWidth(0.002);
+				renderer.setBlockHeight(0.002);
+			}
+			else {
+				renderer.setBlockWidth(0.9);
+				renderer.setBlockHeight(maxY/(maxX-minX));
+			}
+			KendrickMassPlotXYZToolTipGenerator tooltipGenerator = new KendrickMassPlotXYZToolTipGenerator(xAxisLabel, yAxisLabel, zAxisLabel);
+			renderer.setSeriesToolTipGenerator(0, tooltipGenerator);
 			plot.setRenderer(renderer);
 			plot.setBackgroundPaint(Color.white);
 			plot.setDomainGridlinesVisible(false);
@@ -167,18 +195,20 @@ public class KendrickMassPlotWindow  extends JFrame{
 			legend.setPadding(new RectangleInsets(10, 10, 10, 10));
 			legend.setStripWidth(10);
 			legend.setPosition(RectangleEdge.LEFT);
+			legend.getAxis().setLabelFont(legendFont);
+			legend.getAxis().setTickLabelFont(legendFont);
 			chart.addSubtitle(legend);
-
+			appliedSteps++;
 		}
-
+		
 		chart.setBackgroundPaint(Color.white);
 
+		//Create Frame
+		JFrame frame = new JFrame();
+		frame.setVisible(true);
 		// create chart JPanel
 		ChartPanel chartPanel = new ChartPanel(chart);
-		add(chartPanel, BorderLayout.CENTER);
-
-
-
+		frame.add(chartPanel, BorderLayout.CENTER);
 		// disable maximum size (we don't want scaling)
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
@@ -194,31 +224,18 @@ public class KendrickMassPlotWindow  extends JFrame{
 		legend.setVisible(false);
 
 
-		setTitle(title);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setBackground(Color.white);
-
+		frame.setTitle(title);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setBackground(Color.white);
 		// Add the Windows menu
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(new WindowsMenu());
-		setJMenuBar(menuBar);
-
-		pack();
-
-		// get the window settings parameter
-		ParameterSet paramSet = MZmineCore.getConfiguration()
-				.getModuleParameters(KendrickMassPlotModule.class);
-		WindowSettingsParameter settings = paramSet
-				.getParameter(KendrickMassPlotParameters.windowSettings);
-
-		// update the window and listen for changes
-		settings.applySettingsToWindow(this);
-		this.addComponentListener(settings);
+		frame.setJMenuBar(menuBar);
+		frame.pack();
+		setStatus(TaskStatus.FINISHED);
+		logger.info("Finished creating Kendrick mass plot of " + peakList);
 
 	}
 
-	JFreeChart getChart() {
-		return chart;
-	}
 
 }
