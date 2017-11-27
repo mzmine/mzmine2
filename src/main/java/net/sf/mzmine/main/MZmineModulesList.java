@@ -18,7 +18,7 @@
 
 package net.sf.mzmine.main;
 
-import kendrickMassPlots.KendrickMassPlotModule;
+import net.sf.mzmine.modules.visualization.kendrickMassPlot.KendrickMassPlotModule;
 import net.sf.mzmine.modules.batchmode.BatchModeModule;
 import net.sf.mzmine.modules.masslistmethods.ADAPchromatogrambuilder.ADAPChromatogramBuilderModule;
 import net.sf.mzmine.modules.masslistmethods.chromatogrambuilder.ChromatogramBuilderModule;
@@ -179,8 +179,7 @@ public class MZmineModulesList {
       ThreeDVisualizerModule.class, MsMsVisualizerModule.class, NeutralLossVisualizerModule.class,
       PeakListTableModule.class, IsotopePatternExportModule.class, MSMSExportModule.class,
       ScatterPlotVisualizerModule.class, HistogramVisualizerModule.class,
-      InfoVisualizerModule.class, IntensityPlotModule.class,
-      KendrickMassPlotModule.class,
+      InfoVisualizerModule.class, IntensityPlotModule.class, KendrickMassPlotModule.class,
 
       // Tools
       MzRangeMassCalculatorModule.class, MzRangeFormulaCalculatorModule.class

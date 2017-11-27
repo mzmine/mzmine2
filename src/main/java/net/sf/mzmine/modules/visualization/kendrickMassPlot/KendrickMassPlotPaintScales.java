@@ -1,4 +1,4 @@
-package kendrickMassPlots;
+package net.sf.mzmine.modules.visualization.kendrickMassPlot;
 
 import java.awt.Color;
 import java.awt.Paint;

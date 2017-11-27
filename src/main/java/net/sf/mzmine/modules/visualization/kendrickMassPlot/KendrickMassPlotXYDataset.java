@@ -1,4 +1,4 @@
-package kendrickMassPlots;
+package net.sf.mzmine.modules.visualization.kendrickMassPlot;
 
 import org.jfree.data.xy.AbstractXYDataset;
 import org.jmol.util.Logger;
