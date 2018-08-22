@@ -1,17 +1,17 @@
 /*
  * Copyright 2006-2015 The MZmine 2 Development Team
- * 
+ *
  * This file is part of MZmine 2.
- * 
+ *
  * MZmine 2 is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
- * 
+ *
  * MZmine 2 is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * MZmine 2; if not, write to the Free Software Foundation, Inc., 51 Franklin
  * St, Fifth Floor, Boston, MA 02110-1301 USA
@@ -20,6 +20,11 @@
 package net.sf.mzmine.modules.peaklistmethods.gapfilling.samerange;
 
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.Feature;
@@ -55,179 +60,192 @@ class SameRangeTask extends AbstractTask {
     private boolean removeOriginal;
 
     private int processedRows, totalRows;
+    private AtomicInteger processedRowsAtomic;;
 
     private ParameterSet parameters;
 
     SameRangeTask(MZmineProject project, PeakList peakList,
-	    ParameterSet parameters) {
+        ParameterSet parameters) {
 
-	this.project = project;
-	this.peakList = peakList;
-	this.parameters = parameters;
+    this.project = project;
+    this.peakList = peakList;
+    this.parameters = parameters;
 
-	suffix = parameters.getParameter(SameRangeGapFillerParameters.suffix)
-		.getValue();
-	mzTolerance = parameters.getParameter(
-		SameRangeGapFillerParameters.mzTolerance).getValue();
-	removeOriginal = parameters.getParameter(
-		SameRangeGapFillerParameters.autoRemove).getValue();
+    suffix = parameters.getParameter(SameRangeGapFillerParameters.suffix)
+        .getValue();
+    mzTolerance = parameters.getParameter(
+        SameRangeGapFillerParameters.mzTolerance).getValue();
+    removeOriginal = parameters.getParameter(
+        SameRangeGapFillerParameters.autoRemove).getValue();
 
     }
 
     public void run() {
 
-	logger.info("Started gap-filling " + peakList);
+        logger.info("Started gap-filling " + peakList);
 
-	setStatus(TaskStatus.PROCESSING);
+        setStatus(TaskStatus.PROCESSING);
 
-	// Get total number of rows
-	totalRows = peakList.getNumberOfRows();
+        // Get total number of rows
+        totalRows = peakList.getNumberOfRows();
 
-	// Get peak list columns
-	RawDataFile columns[] = peakList.getRawDataFiles();
+        // Get peak list columns
+        RawDataFile columns[] = peakList.getRawDataFiles();
 
-	// Create new peak list
-	processedPeakList = new SimplePeakList(peakList + " " + suffix, columns);
+        // Create new peak list
+        processedPeakList = new SimplePeakList(peakList + " " + suffix, columns);
 
-	// Fill gaps in given column
-	for (int row = 0; row < totalRows; row++) {
 
-	    // Canceled?
-	    if (isCanceled())
-		return;
+        /*************************************************************
+            Creating a stream to process the data in parallel
+        */
+        processedRowsAtomic = new AtomicInteger(0);
 
-	    PeakListRow sourceRow = peakList.getRow(row);
-	    PeakListRow newRow = new SimplePeakListRow(sourceRow.getID());
+        List outputList = Collections.synchronizedList(new ArrayList());
 
-	    // Copy comment
-	    newRow.setComment(sourceRow.getComment());
+        IntStream.range(0, totalRows).parallel().forEach(rowObj -> {
+            int row = rowObj.intValue();
 
-	    // Copy identities
-	    for (PeakIdentity ident : sourceRow.getPeakIdentities())
-		newRow.addPeakIdentity(ident, false);
-	    if (sourceRow.getPreferredPeakIdentity() != null)
-		newRow.setPreferredPeakIdentity(sourceRow
-			.getPreferredPeakIdentity());
+            // Canceled?
+            if (isCanceled())
+                return;
 
-	    // Copy each peaks and fill gaps
-	    for (RawDataFile column : columns) {
+            PeakListRow sourceRow = peakList.getRow(row);
+            PeakListRow newRow = new SimplePeakListRow(sourceRow.getID());
 
-		// Canceled?
-		if (isCanceled())
-		    return;
+            // Copy comment
+            newRow.setComment(sourceRow.getComment());
 
-		// Get current peak
-		Feature currentPeak = sourceRow.getPeak(column);
+            // Copy identities
+            for (PeakIdentity ident : sourceRow.getPeakIdentities())
+            newRow.addPeakIdentity(ident, false);
+            if (sourceRow.getPreferredPeakIdentity() != null)
+            newRow.setPreferredPeakIdentity(sourceRow
+                .getPreferredPeakIdentity());
 
-		// If there is a gap, try to fill it
-		if (currentPeak == null)
-		    currentPeak = fillGap(sourceRow, column);
+            // Copy each peaks and fill gaps
+            for (RawDataFile column : columns) {
 
-		// If a peak was found or created, add it
-		if (currentPeak != null)
-		    newRow.addPeak(column, currentPeak);
+                // Canceled?
+                if (isCanceled())
+                    return;
 
-	    }
+                // Get current peak
+                Feature currentPeak = sourceRow.getPeak(column);
 
-	    processedPeakList.addRow(newRow);
+                // If there is a gap, try to fill it
+                if (currentPeak == null)
+                    currentPeak = fillGap(sourceRow, column);
 
-	    processedRows++;
+                // If a peak was found or created, add it
+                if (currentPeak != null)
+                    newRow.addPeak(column, currentPeak);
+            }
 
-	}
+            outputList.add(newRow);
 
-	// Append processed peak list to the project
-	project.addPeakList(processedPeakList);
+            processedRowsAtomic.getAndAdd(1);
+        });
 
-        // Add quality parameters to peaks
-	QualityParameters.calculateQualityParameters(processedPeakList);
+        outputList.stream().forEach(newRow -> {
+            processedPeakList.addRow((PeakListRow)newRow);
+        });
 
-	// Add task description to peakList
-	processedPeakList
-		.addDescriptionOfAppliedTask(new SimplePeakListAppliedMethod(
-			"Gap filling using RT and m/z range", parameters));
+        if (isCanceled()) return;
 
-	// Remove the original peaklist if requested
-	if (removeOriginal)
-	    project.removePeakList(peakList);
+        // Append processed peak list to the project
+        project.addPeakList(processedPeakList);
 
-	setStatus(TaskStatus.FINISHED);
+            // Add quality parameters to peaks
+        QualityParameters.calculateQualityParameters(processedPeakList);
 
-	logger.info("Finished gap-filling " + peakList);
+        // Add task description to peakList
+        processedPeakList
+            .addDescriptionOfAppliedTask(new SimplePeakListAppliedMethod(
+                "Gap filling using RT and m/z range", parameters));
 
-    }
+        // Remove the original peaklist if requested
+        if (removeOriginal)
+            project.removePeakList(peakList);
 
-    private Feature fillGap(PeakListRow row, RawDataFile column) {
+        setStatus(TaskStatus.FINISHED);
 
-	SameRangePeak newPeak = new SameRangePeak(column);
+        logger.info("Finished gap-filling " + peakList);
 
-	Range<Double> mzRange = null, rtRange = null;
+        }
 
-	// Check the peaks for selected data files
-	for (RawDataFile dataFile : row.getRawDataFiles()) {
-	    Feature peak = row.getPeak(dataFile);
-	    if (peak == null)
-		continue;
-	    if ((mzRange == null) || (rtRange == null)) {
-		mzRange = peak.getRawDataPointsMZRange();
-		rtRange = peak.getRawDataPointsRTRange();
-	    } else {
-		mzRange = mzRange.span(peak.getRawDataPointsMZRange());
-		rtRange = rtRange.span(peak.getRawDataPointsRTRange());
-	    }
-	}
+        private Feature fillGap(PeakListRow row, RawDataFile column) {
 
-	assert mzRange != null;
-	assert rtRange != null;
+        SameRangePeak newPeak = new SameRangePeak(column);
 
-	Range<Double> mzRangeWithTol = mzTolerance.getToleranceRange(mzRange);
+        Range<Double> mzRange = null, rtRange = null;
 
-	// Get scan numbers
-	int[] scanNumbers = column.getScanNumbers(1, rtRange);
+        // Check the peaks for selected data files
+        for (RawDataFile dataFile : row.getRawDataFiles()) {
+            Feature peak = row.getPeak(dataFile);
+            if (peak == null)
+            continue;
+            if ((mzRange == null) || (rtRange == null)) {
+            mzRange = peak.getRawDataPointsMZRange();
+            rtRange = peak.getRawDataPointsRTRange();
+            } else {
+            mzRange = mzRange.span(peak.getRawDataPointsMZRange());
+            rtRange = rtRange.span(peak.getRawDataPointsRTRange());
+            }
+        }
 
-	boolean dataPointFound = false;
+        assert mzRange != null;
+        assert rtRange != null;
 
-	for (int scanNumber : scanNumbers) {
+        Range<Double> mzRangeWithTol = mzTolerance.getToleranceRange(mzRange);
 
-	    if (isCanceled())
-		return null;
+        // Get scan numbers
+        int[] scanNumbers = column.getScanNumbers(1, rtRange);
 
-	    // Get next scan
-	    Scan scan = column.getScan(scanNumber);
+        boolean dataPointFound = false;
 
-	    // Find most intense m/z peak
-	    DataPoint basePeak = ScanUtils.findBasePeak(scan, mzRangeWithTol);
+        for (int scanNumber : scanNumbers) {
 
-	    if (basePeak != null) {
-		if (basePeak.getIntensity() > 0)
-		    dataPointFound = true;
-		newPeak.addDatapoint(scan.getScanNumber(), basePeak);
-	    } else {
-		DataPoint fakeDataPoint = new SimpleDataPoint(
-			RangeUtils.rangeCenter(mzRangeWithTol), 0);
-		newPeak.addDatapoint(scan.getScanNumber(), fakeDataPoint);
-	    }
+            if (isCanceled())
+            return null;
 
-	}
+            // Get next scan
+            Scan scan = column.getScan(scanNumber);
 
-	if (dataPointFound) {
-	    newPeak.finalizePeak();
-	    if (newPeak.getArea() == 0)
-		return null;
-	    return newPeak;
-	}
+            // Find most intense m/z peak
+            DataPoint basePeak = ScanUtils.findBasePeak(scan, mzRangeWithTol);
 
-	return null;
+            if (basePeak != null) {
+            if (basePeak.getIntensity() > 0)
+                dataPointFound = true;
+            newPeak.addDatapoint(scan.getScanNumber(), basePeak);
+            } else {
+            DataPoint fakeDataPoint = new SimpleDataPoint(
+                RangeUtils.rangeCenter(mzRangeWithTol), 0);
+            newPeak.addDatapoint(scan.getScanNumber(), fakeDataPoint);
+            }
+
+        }
+
+        if (dataPointFound) {
+            newPeak.finalizePeak();
+            if (newPeak.getArea() == 0)
+            return null;
+            return newPeak;
+        }
+
+        return null;
     }
 
     public double getFinishedPercentage() {
-	if (totalRows == 0)
-	    return 0;
-	return (double) processedRows / (double) totalRows;
+    if (totalRows == 0)
+        return 0;
+    return (double) processedRowsAtomic.get() / (double) totalRows;
 
     }
 
     public String getTaskDescription() {
-	return "Gap filling " + peakList + " using RT and m/z range";
+    return "Gap filling " + peakList + " using RT and m/z range";
     }
 
 }
