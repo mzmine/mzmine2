@@ -151,6 +151,7 @@ class SameRangeTask extends AbstractTask {
             processedPeakList.addRow((PeakListRow)newRow);
         });
 
+        if (isCanceled()) return;
 
         // Append processed peak list to the project
         project.addPeakList(processedPeakList);
