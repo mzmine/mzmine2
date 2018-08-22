@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.Feature;
@@ -98,17 +99,11 @@ class SameRangeTask extends AbstractTask {
         /*************************************************************
             Creating a stream to process the data in parallel
         */
-
-        List<Integer> rowList = new ArrayList<Integer>();
-        for (int row = 0; row < totalRows; row++){
-            rowList.add(new Integer(row));
-        }
-
         processedRowsAtomic = new AtomicInteger(0);
 
         List outputList = Collections.synchronizedList(new ArrayList());
 
-        rowList.parallelStream().forEach(rowObj -> {
+        IntStream.range(0, totalRows).parallel().forEach(rowObj -> {
             int row = rowObj.intValue();
 
             // Canceled?
