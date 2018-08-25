@@ -97,7 +97,7 @@ public class Candidates {
    */
   public Candidate get(int index) {
     if (index >= candidate.length)
-      throw new MSDKRuntimeException("Candidates.get(index) - index > length");
+      throw new MSDKRuntimeException("Candidates.get(index): index > length");
     return candidate[index];
   }
 
@@ -111,7 +111,7 @@ public class Candidates {
       return -1.0;
 
     if (index >= candidate.length)
-      throw new MSDKRuntimeException("Candidates.get(index) - index > length");
+      throw new MSDKRuntimeException("Candidates.get(index): index > length");
     return avgRating[index];
   }
 
@@ -119,7 +119,7 @@ public class Candidates {
    * 
    * @return total average rating of all data points in the detected pattern
    */
-  public double getAvgAvgRatings() {
+  public double getAvgAccAvgRatings() {
     if (pattern == null) // if we run a neutral loss scan this doesn't exist
       return -1.0;
 
