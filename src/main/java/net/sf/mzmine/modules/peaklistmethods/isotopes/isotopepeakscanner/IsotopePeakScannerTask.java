@@ -41,6 +41,8 @@ import net.sf.mzmine.datamodel.impl.SimpleIsotopePattern;
 import net.sf.mzmine.datamodel.impl.SimplePeakList;
 import net.sf.mzmine.datamodel.impl.SimplePeakListAppliedMethod;
 import net.sf.mzmine.datamodel.impl.SimplePeakListRow;
+import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.IsotopePeakScannerTask.RatingType;
+import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.IsotopePeakScannerTask.ScanType;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import net.sf.mzmine.parameters.parametertypes.tolerances.RTTolerance;
@@ -84,25 +86,28 @@ public class IsotopePeakScannerTask extends AbstractTask {
   private MZmineProject project;
   private PeakList peakList;
   private boolean checkRT;
-  private ExtendedIsotopePattern pattern;
+  private ExtendedIsotopePattern[] pattern;
   private PolarityType polarityType;
   private int charge;
   private boolean accurateAvgIntensity;
   private String massListName;
   private String ratingChoice;
   private double minAccurateAvgIntensity;
-  
-  private int autoCarbonMin, autoCarbonMax;
+
+  private int carbonRange, autoCarbonMin, autoCarbonMax;
+  private int maxPatternSize, maxPatternIndex;
+  private boolean excludeZeroCPattern;
 
 
   public enum RatingType {
     HIGHEST, TEMPAVG
   };
-  
+
   public enum ScanType {
     SPECIFIC, AUTOCARBON
   };
-  
+
+
   ScanType scanType;
 
   RatingType ratingType;
@@ -140,10 +145,17 @@ public class IsotopePeakScannerTask extends AbstractTask {
     massListName = parameters.getParameter(IsotopePeakScannerParameters.massList)
         .getEmbeddedParameter().getValue();
     ratingChoice = parameters.getParameter(IsotopePeakScannerParameters.ratingChoices).getValue();
+    
+    autoCarbonMin = parameters.getParameter(IsotopePeakScannerParameters.minCarbon).getValue();
+    autoCarbonMax = parameters.getParameter(IsotopePeakScannerParameters.maxCarbon).getValue();
+    
+    excludeZeroCPattern = true;
 
     if (accurateAvgIntensity && !checkIntensity) {
       accurateAvgIntensity = false;
     }
+
+    carbonRange = autoCarbonMax - autoCarbonMin;
 
     if (charge == 0)
       throw new MSDKRuntimeException("Error: Charge may not be 0!");
@@ -194,184 +206,273 @@ public class IsotopePeakScannerTask extends AbstractTask {
 
     totalRows = peakList.getNumberOfRows();
 
-    ArrayList<Double> diff = setUpDiff();
-    if (diff == null) {
-      message = "ERROR: could not set up diff.";
-      return;
-    }
+    scanType = ScanType.AUTOCARBON;
+    if (scanType == ScanType.AUTOCARBON) {
 
-    // get all rows and sort by m/z
-    PeakListRow[] rows = peakList.getRows();
-    Arrays.sort(rows, new PeakListRowSorter(SortingProperty.MZ, SortingDirection.Ascending));
-
-    PeakListHandler plh = new PeakListHandler();
-    plh.setUp(peakList);
-    // totalRows = rows.length;
-
-    resultPeakList = new SimplePeakList(peakList.getName() + suffix, peakList.getRawDataFiles());
-    PeakListHandler resultMap = new PeakListHandler();
-
-    for (int i = 0; i < totalRows; i++) {
-      // i will represent the index of the row in peakList
-      if (peakList.getRow(i).getPeakIdentities().length > 0) {
-        finishedRows++;
-        continue;
+      double[][] diff = setUpDiffAutoCarbon();
+      if (diff == null) {
+        message = "ERROR: could not set up diff.";
+        return;
       }
+      
+      logger.info("diff.length: " + diff.length);
+      logger.info("maxPatternIndex: " + maxPatternIndex);
+      logger.info("maxPatternSize: " + maxPatternSize);
 
-      message = "Row " + i + "/" + totalRows;
+      // get all rows and sort by m/z
+      PeakListRow[] rows = peakList.getRows();
+      Arrays.sort(rows, new PeakListRowSorter(SortingProperty.MZ, SortingDirection.Ascending));
 
-      // now get all peaks that lie within RT and maxIsotopeMassRange: pL[index].mz ->
-      // pL[index].mz+maxMass
-      ArrayList<PeakListRow> groupedPeaks =
-          groupPeaks(rows, i, diff.get(diff.size() - 1).doubleValue());
+      PeakListHandler plh = new PeakListHandler();
+      plh.setUp(peakList);
 
-      if (groupedPeaks.size() < 2) {
-        finishedRows++;
-        continue;
-      }
-      // else
-      // logger.info("groupedPeaks.size > 2 in row: " + i + " size: " +
-      // groupedPeaks.size());
+      resultPeakList = new SimplePeakList(peakList.getName() + suffix, peakList.getRawDataFiles());
+      PeakListHandler resultMap = new PeakListHandler();
 
-      ResultBuffer[] resultBuffer = new ResultBuffer[diff.size()]; // this will store row indexes of
-                                                                   // all features with fitting rt
-                                                                   // and mz
-      for (int a = 0; a < diff.size(); a++) // resultBuffer[i] index will represent Isotope[i] (if
-                                            // numAtoms = 0)
-        resultBuffer[a] = new ResultBuffer(); // [0] will be the isotope with lowest mass#
+      for (int i = 0; i < totalRows; i++) {
+        // i will represent the index of the row in peakList
+        if (peakList.getRow(i).getPeakIdentities().length > 0) {
+          finishedRows++;
+          continue;
+        }
 
-      for (int j = 0; j < groupedPeaks.size(); j++) // go through all possible peaks
-      {
-        for (int k = 0; k < diff.size(); k++) // check for each peak if it is a possible feature for
-                                              // every diff[](isotope)
-        { // this is necessary bc there might be more than one possible feature
-          // j represents the row index in groupedPeaks
-          // k represents the isotope number the peak will be a candidate for
-          if (mzTolerance.checkWithinTolerance(groupedPeaks.get(0).getAverageMZ() + diff.get(k),
-              groupedPeaks.get(j).getAverageMZ())) {
-            // this will automatically add groupedPeaks[0] to the list -> isotope with
-            // lowest mass
-            resultBuffer[k].addFound(); // +1 result for isotope k
-            resultBuffer[k].addRow(j); // row in groupedPeaks[]
-            resultBuffer[k].addID(groupedPeaks.get(j).getID());
+        message = "Row " + i + "/" + totalRows;
+
+        // now get all peaks that lie within RT and maxIsotopeMassRange: pL[index].mz ->
+        // pL[index].mz+maxMass
+        ArrayList<PeakListRow> groupedPeaks =
+            groupPeaks(rows, i, diff[maxPatternIndex][diff[maxPatternIndex].length-1]);
+
+        if (groupedPeaks.size() < 2) {
+          finishedRows++;
+          continue;
+        }
+        // else
+        // logger.info("groupedPeaks.size > 2 in row: " + i + " size: " +
+        // groupedPeaks.size());
+
+        ResultBuffer[][] resultBuffer = new ResultBuffer[diff.length][]; // this will store row
+                                                                         // indexes
+     // TODO: it should be possible to use a single array of result buffer instead of a 2D array
+        // which should reduce computation time later on. the problem is that some carbon peaks
+        // might pop up within
+        // the pattern and change indices. for testing purposes ill do it as it is
+
+        for (int p = 0; p < diff.length; p++) { // resultBuffer[i] index will represent Isotope[i] (if
+                                              // numAtoms = 0)
+          resultBuffer[p] = new ResultBuffer[diff[p].length];
+          
+          for (int k = 0; k < diff[p].length; k++)
+            resultBuffer[p][k] = new ResultBuffer(); // [p][0] will be the isotope with lowest mass#
+        }
+        
+        // of all features with fitting rt
+        // and mz
+        boolean trueBuffers[] = new boolean[diff.length];
+        Arrays.fill(trueBuffers, false);
+
+        for (int j = 0; j < groupedPeaks.size(); j++) // go through all possible peaks
+        {
+          for (int p = 0; p < diff.length; p++) {
+
+            for (int k = 0; k < diff[p].length; k++) // check for each peak if it is a possible
+                                                     // feature
+            // for
+            // every diff[](isotope)
+            { // this is necessary bc there might be more than one possible feature
+              // j represents the row index in groupedPeaks
+              // k represents the isotope number the peak will be a candidate for
+              // p = pattern index for autoCarbon
+              if (mzTolerance.checkWithinTolerance(groupedPeaks.get(0).getAverageMZ() + diff[p][k],
+                  groupedPeaks.get(j).getAverageMZ())) {
+                // this will automatically add groupedPeaks[0] to the list -> isotope with
+                // lowest mass
+                resultBuffer[p][k].addFound(); // +1 result for isotope k
+                resultBuffer[p][k].addRow(j); // row in groupedPeaks[]
+                resultBuffer[p][k].addID(groupedPeaks.get(j).getID());
+              }
+            }
           }
         }
-      }
 
-      if (!checkIfAllTrue(resultBuffer)) // this means that for every isotope we expected to find,
-                                         // we found one or more possible features
-      {
-        finishedRows++;
-        continue;
-      }
+        boolean foundOne = false;
 
-      Candidates candidates = new Candidates(diff.size(), minHeight, mzTolerance, pattern,
-          massListName, plh, ratingType);
-
-      for (int k = 0; k < resultBuffer.length; k++) // reminder: resultBuffer.length = diff.size()
-      {
-        for (int l = 0; l < resultBuffer[k].getFoundCount(); l++) {
-          // k represents index resultBuffer[k] and thereby the isotope number
-          // l represents the number of results in resultBuffer[k]
-          candidates.checkForBetterRating(k, groupedPeaks.get(0),
-              groupedPeaks.get(resultBuffer[k].getRow(l)), minRating, checkIntensity);
-
+        for (int p = 0; p < diff.length; p++)
+          if (checkIfAllTrue(resultBuffer[p])) { // this means that for every isotope we expected to
+                                                 // find,
+            foundOne = true; // we found one or more possible features
+            trueBuffers[p] = true;
+//            logger.info("Row: " + i + " filled buffer[" + p +"]");
+          }
+        if (!foundOne) {
+          finishedRows++;
+          continue;
         }
-      }
 
-      if (!checkIfAllTrue(candidates.getCandidates())) {
-        finishedRows++;
-        // logger.info("Not enough valid candidates for parent feature " +
-        // groupedPeaks.get(0).getAverageMZ() + "\talthough enough peaks were found.") ;
-        continue; // jump to next i
-      }
+        Candidates[] candidates = new Candidates[diff.length];
+        for (int p = 0; p < diff.length; p++)
+          candidates[p] = new Candidates(diff[p].length, minHeight, mzTolerance, pattern[p],
+              massListName, plh, ratingType);
 
-      String comParent = "", comChild = "";
-      PeakListRow parent = copyPeakRow(peakList.getRow(i));
+        for (int p = 0; p < diff.length; p++) {
+          if (!trueBuffers[p])
+            continue;
+          for (int k = 0; k < resultBuffer[p].length; k++) // reminder: resultBuffer.length =
+                                                           // diff.length
+          {
+            for (int l = 0; l < resultBuffer[p][k].getFoundCount(); l++) {
+              // k represents index resultBuffer[k] and thereby the isotope number
+              // l represents the number of results in resultBuffer[k]
+              candidates[p].checkForBetterRating(k, groupedPeaks.get(0),
+                  groupedPeaks.get(resultBuffer[p][k].getRow(l)), minRating, checkIntensity);
 
-      if (resultMap.containsID(parent.getID())) // if we can assign this row multiple times we have
-                                                // to copy the comment, because adding it to the map
-                                                // twice will overwrite the results
-        comParent += resultMap.getRowByID(parent.getID()).getComment();
+            }
+          }
+        }
 
-      comParent += parent.getID() + "--IS PARENT--"; // ID is added to be able to sort by comment to
-                                                     // bring all isotope patterns together
-      addComment(parent, comParent);
+        foundOne = false;
+        boolean trueCandidates[] = new boolean[diff.length];
+        Arrays.fill(trueCandidates, false);
 
-      resultMap.addRow(parent); // add results to resultPeakList
+        for (int p = 0; p < diff.length; p++) {
+          if (trueBuffers[p] && checkIfAllTrue(candidates[p].getCandidates())) {
+            trueCandidates[p] = true;
+            foundOne = true;
+//            logger.info("Row: " + i + " filled candidates[" + p + "]");
+          }
+        }
+        if (!foundOne) {
+          finishedRows++;
+          // logger.info("Not enough valid candidates for parent feature " +
+          // groupedPeaks.get(0).getAverageMZ() + "\talthough enough peaks were found.") ;
+          continue; // jump to next i
+        }
 
-      DataPoint[] dp = new DataPoint[candidates.size()]; // we need this to add the IsotopePattern
-                                                         // later on
+        // find best result now, first we have to calc avg ratings if specified by user
+        int bestPatternIndex = 0;
+        double bestRating = 0.0;
+        for (int p = 0; p < diff.length; p++) {
 
-      if (accurateAvgIntensity) {
-        candidates.calcAvgRatings(); // this is a final rating, with averaged intensities in all
-                                     // mass lists that contain EVERY peak that was selected.
-                                     // thats why we can only do it after ALL peaks have been found
-        dp[0] = new SimpleDataPoint(parent.getAverageMZ(), candidates.getAvgHeight(0));
-      } else {
-        dp[0] = new SimpleDataPoint(parent.getAverageMZ(), parent.getAverageHeight());
-      }
+          if (!trueCandidates[p])
+            continue;
+          
+          if (accurateAvgIntensity)
+            candidates[p].calcAvgRatings();
+          // this is a final rating, with averaged intensities in all
+          // mass lists that contain EVERY peak that was selected.
+          // thats why we can only do it after ALL peaks have been
+          // found
 
-      for (int k = 1; k < candidates.size(); k++) // we skip k=0 because == groupedPeaks[0]/
-                                                  // ==candidates.get(0) which we
-                                                  // added before
-      {
-        PeakListRow child = copyPeakRow(plh.getRowByID(candidates.get(k).getCandID()));
+          if (accurateAvgIntensity && candidates[p].getAvgAccAvgRating() > bestRating) {
+            bestPatternIndex = p;
+            bestRating = candidates[p].getAvgAccAvgRating();
+            logger.info("Row: " + i + " new best pattern: " + p + " best rating: " + bestRating);
+          } 
+          else if (!accurateAvgIntensity && candidates[p].getSimpleAvgRating() > bestRating) {
+            bestPatternIndex = p;
+            bestRating = candidates[p].getSimpleAvgRating();
+            logger.info("Row: " + i + " new best pattern: " + p + " best rating: " + bestRating);
+          }
+        }
+
+
+
+        String comParent = "", comChild = "";
+        PeakListRow parent = copyPeakRow(peakList.getRow(i));
+
+        if (resultMap.containsID(parent.getID())) // if we can assign this row multiple times we
+                                                  // have to copy the comment, because adding it to the
+                                                  // map twice will overwrite the results
+          comParent += resultMap.getRowByID(parent.getID()).getComment();
+
+        comParent += parent.getID() + "--IS PARENT--"; // ID is added to be able to sort by comment
+                                                       // to bring all isotope patterns together
+        comParent += "BestPattern: " + pattern[bestPatternIndex].getDescription();
+        addComment(parent, comParent);
+
+        resultMap.addRow(parent); // add results to resultPeakList
+
+        DataPoint[] dp = new DataPoint[pattern[bestPatternIndex].getNumberOfDataPoints()];
+        // we need this to add the IsotopePattern later on
+
         if (accurateAvgIntensity) {
-          dp[k] = new SimpleDataPoint(child.getAverageMZ(), candidates.getAvgHeight(k));
+          dp[0] = new SimpleDataPoint(parent.getAverageMZ(),
+              candidates[bestPatternIndex].getAvgHeight(0));
         } else {
-          dp[k] = new SimpleDataPoint(child.getAverageMZ(), child.getAverageHeight());
+          dp[0] = new SimpleDataPoint(parent.getAverageMZ(), parent.getAverageHeight());
         }
 
-        String average = "";
-        if (accurateAvgIntensity) {
-          average = " AvgRating: " + round(candidates.getAvgRating(k), 3);
+        for (int k = 1; k < candidates[bestPatternIndex].size(); k++) // we skip k=0 because ==
+                                                                      // groupedPeaks[0]/
+        // ==candidates.get(0) which we
+        // added before
+        {
+          PeakListRow child =
+              copyPeakRow(plh.getRowByID(candidates[bestPatternIndex].get(k).getCandID()));
+          if (accurateAvgIntensity) {
+            dp[k] = new SimpleDataPoint(child.getAverageMZ(),
+                candidates[bestPatternIndex].getAvgHeight(k));
+          } else {
+            dp[k] = new SimpleDataPoint(child.getAverageMZ(), child.getAverageHeight());
+          }
+
+          String average = "";
+          if (accurateAvgIntensity) {
+            average = " AvgRating: " + round(candidates[bestPatternIndex].getAvgRating(k), 3);
+          }
+
+
+          addComment(parent,
+              "Intensity ratios: "
+                  + getIntensityRatios(pattern[bestPatternIndex],
+                      pattern[bestPatternIndex].getHighestDataPointIndex()));
+          if (accurateAvgIntensity)
+            addComment(parent, " Avg pattern rating: "
+                + round(candidates[bestPatternIndex].getAvgAccAvgRating(), 3));
+          else
+            addComment(parent, " pattern rating: " + round(candidates[bestPatternIndex].getSimpleAvgRating(), 3));
+
+          comChild = (parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
+              + round(((child.getAverageMZ() - parent.getAverageMZ()) - diff[bestPatternIndex][k])
+                  / child.getAverageMZ() * 1E6, 2)
+              + " I(c)/I(p): "
+              + round(child.getAverageHeight() / plh
+                  .getRowByID(candidates[bestPatternIndex]
+                      .get(pattern[bestPatternIndex].getHighestDataPointIndex()).getCandID())
+                  .getAverageHeight(), 2)
+              + " Identity: " + pattern[bestPatternIndex].getDetailedPeakDescription(k)
+              + " Rating: " + round(candidates[bestPatternIndex].get(k).getRating(), 3) + average);
+          addComment(child, comChild);
+
+          resultMap.addRow(child);
         }
 
-        addComment(parent,
-            "Intensity ratios: " + getIntensityRatios(pattern, pattern.getHighestDataPointIndex())
-                + " Identity: " + pattern.getDetailedPeakDescription(0));
-        if (accurateAvgIntensity)
-          addComment(parent, " Avg pattern rating: " + round(candidates.getAvgAccAvgRatings(), 3));
+        IsotopePattern resultPattern = new SimpleIsotopePattern(dp, IsotopePatternStatus.DETECTED,
+            "C" + (autoCarbonMin + bestPatternIndex) + element + " monoisotopic mass: "
+                + parent.getAverageMZ());
+        parent.getBestPeak().setIsotopePattern(resultPattern);
 
-        comChild = (parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
-            + round(((child.getAverageMZ() - parent.getAverageMZ()) - diff.get(k))
-                / child.getAverageMZ() * 1E6, 2)
-            + " I(c)/I(p): "
-            + round(child.getAverageHeight()
-                / plh.getRowByID(candidates.get(pattern.getHighestDataPointIndex()).getCandID())
-                    .getAverageHeight(),
-                2)
-            + " Identity: " + pattern.getDetailedPeakDescription(k) + " Rating: "
-            + round(candidates.get(k).getRating(), 3) + average);
-        addComment(child, comChild);
+        for (int j = 1; j < diff[bestPatternIndex].length; j++)
+          resultMap.getRowByID(candidates[bestPatternIndex].get(j).getCandID()).getBestPeak()
+              .setIsotopePattern(resultPattern);
 
-        resultMap.addRow(child);
+        if (isCanceled())
+          return;
+
+        finishedRows++;
       }
 
-      IsotopePattern resultPattern = new SimpleIsotopePattern(dp, IsotopePatternStatus.DETECTED,
-          element + " monoisotopic mass: " + parent.getAverageMZ());
-      parent.getBestPeak().setIsotopePattern(resultPattern);
+      ArrayList<Integer> keys = resultMap.getAllKeys();
+      for (int j = 0; j < keys.size(); j++)
+        resultPeakList.addRow(resultMap.getRowByID(keys.get(j)));
 
-      for (int j = 1; j < candidates.size(); j++)
-        resultMap.getRowByID(candidates.get(j).getCandID()).getBestPeak()
-            .setIsotopePattern(resultPattern);
-
-      if (isCanceled())
-        return;
-
-      finishedRows++;
+      if (resultPeakList.getNumberOfRows() > 1)
+        addResultToProject(/* resultPeakList */);
+      else
+        message = "Element not found.";
+      setStatus(TaskStatus.FINISHED);
+      return;
     }
-
-    ArrayList<Integer> keys = resultMap.getAllKeys();
-    for (int j = 0; j < keys.size(); j++)
-      resultPeakList.addRow(resultMap.getRowByID(keys.get(j)));
-
-    if (resultPeakList.getNumberOfRows() > 1)
-      addResultToProject(/* resultPeakList */);
-    else
-      message = "Element not found.";
-    setStatus(TaskStatus.FINISHED);
   }
 
   /**
@@ -400,21 +501,45 @@ public class IsotopePeakScannerTask extends AbstractTask {
    * 
    * @return
    */
-  private ArrayList<Double> setUpDiff() {
+  private double[][] setUpDiffAutoCarbon() {
+
+    // ArrayList<Double> diff = new ArrayList<Double>(2);
+    double[][] diff = new double[carbonRange][];
+
+    String[] strPattern = new String[carbonRange];
     
-    ArrayList<Double> diff = new ArrayList<Double>(2);
+    pattern = new ExtendedIsotopePattern[carbonRange];
 
-    pattern = new ExtendedIsotopePattern();
-    pattern.setUpFromFormula(element, minAbundance, mergeWidth, minPatternIntensity);
-    pattern.normalizePatternToHighestPeak();
-    pattern.print();
-    pattern.applyCharge(charge, polarityType);
+    for (int p = 0; p < carbonRange; p++) {
+      if(p + autoCarbonMin != 0)
+        strPattern[p] = "C" + (p + autoCarbonMin) + element;
+      else
+        strPattern[p] = element;
+      
+      logger.info("Calculating isotope pattern " + p + ": " + strPattern[p]);
 
-    DataPoint[] points = pattern.getDataPoints();
-    logger.info("DataPoints in Pattern: " + points.length);
-    for (int i = 0; i < pattern.getNumberOfDataPoints(); i++) {
-      diff.add(i, points[i].getMZ() - points[0].getMZ());
+      pattern[p] = new ExtendedIsotopePattern();
+      pattern[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth, minPatternIntensity);
+      pattern[p].normalizePatternToHighestPeak();
+//      pattern[p].print();
+      pattern[p].applyCharge(charge, polarityType);
+
+
+      DataPoint[] points = pattern[p].getDataPoints();
+      logger.info("DataPoints in pattern C" + (autoCarbonMin + p) + ": " + points.length);
+
+      diff[p] = new double[points.length];
+
+      if (maxPatternSize < diff[p].length) {
+        maxPatternSize = diff[p].length;
+        maxPatternIndex = p;
+      }
+
+      for (int i = 0; i < pattern[p].getNumberOfDataPoints(); i++) {
+        diff[p][i] = points[i].getMZ() - points[0].getMZ();
+      }
     }
+
     return diff;
   }
 
