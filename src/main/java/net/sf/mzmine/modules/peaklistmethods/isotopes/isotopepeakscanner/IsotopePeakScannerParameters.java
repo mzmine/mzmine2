@@ -50,7 +50,7 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
 
   public static final PercentParameter minAbundance = new PercentParameter("Minimum abundance",
       "The minimum abundance (%) of Isotopes. Small values "
-          + "might increase accuracy but will decrease sensitivity.");
+          + "might increase accuracy but will decrease sensitivity.", 1.0);
 
   public static final DoubleParameter minHeight = new DoubleParameter("Minimum height",
       "Minimum peak height to be considered as an isotope peak.",
@@ -85,13 +85,16 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
 
   public static final IntegerParameter charge =
       new IntegerParameter("Charge", "Amount and polarity (e.g.: [M]+=+1 / [M]-=-1", 1, true);
+  
+  public static final IntegerParameter minCarbon = new IntegerParameter("Min. carbon", "Minumum amount of carbon to search for.", 1, true);
+  public static final IntegerParameter maxCarbon = new IntegerParameter("Max. carbon", "Maximum amount of carbon to search for.", 1, true);
 
   public static final OptionalParameter<MassListParameter> massList =
       new OptionalParameter<MassListParameter>(new MassListParameter("Calculate accurate average",
           "Please select a mass list.\nThis method will use averaged intensitys over all mass lists in which ALL relevant masses were detected in.\nThis will only be done for peaks that match the defined rating-calculation with the given rating.\nMake sure the mass list is contained in the peak list.\nIf there are no Scans that match all criteria avg rating will be -1.0."));
 
   public IsotopePeakScannerParameters() {
-    super(new Parameter[] {PEAK_LISTS, mzTolerance, checkRT, rtTolerance, element, charge,
+    super(new Parameter[] {PEAK_LISTS, mzTolerance, checkRT, rtTolerance, minCarbon, maxCarbon, element, charge,
         minAbundance, minPatternIntensity, mergeWidth, minHeight, checkIntensity, minRating,
         ratingChoices, massList, suffix});
   }
