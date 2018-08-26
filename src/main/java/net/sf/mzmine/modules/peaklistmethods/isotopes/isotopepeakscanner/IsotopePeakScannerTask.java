@@ -375,7 +375,12 @@ public class IsotopePeakScannerTask extends AbstractTask {
           }
         }
 
-
+        if(!checkIfAllTrue(candidates[bestPatternIndex].getCandidates())) { 
+          logger.warning("We were about to add candidates with null pointers. Continuing.");
+          continue;
+        }//TODO: this shouldnt be needed, fix the bug that causes the crash later on. 
+        //i think its because if not all candidates have been found then it crashes when
+        //copying because it tries to copy a null pointer row
 
         String comParent = "", comChild = "";
         PeakListRow parent = copyPeakRow(peakList.getRow(i));
