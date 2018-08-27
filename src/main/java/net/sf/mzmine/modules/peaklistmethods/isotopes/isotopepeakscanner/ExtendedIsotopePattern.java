@@ -33,6 +33,7 @@ import net.sf.mzmine.datamodel.MassSpectrumType;
 import net.sf.mzmine.datamodel.PolarityType;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
 import com.google.common.collect.Range;
+import io.github.msdk.MSDKException;
 
 /**
  * Extended implementation of IsotopePattern interface. This can calculate isotope patterns starting
@@ -79,6 +80,7 @@ public class ExtendedIsotopePattern implements IsotopePattern {
    * @param sumFormula
    * @param minAbundance minimum abundance to be used to calculate the pattern 0.0-1.0
    * @param minIntensity the minimum intensity of a peak in finished pattern
+   * @throws MSDKException 
    */
   public void setUpFromFormula(String sumFormula, double minAbundance, double mzMerge,
       double minIntensity) {
