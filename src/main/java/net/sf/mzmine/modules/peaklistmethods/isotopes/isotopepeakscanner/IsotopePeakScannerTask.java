@@ -531,7 +531,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
 
 
       DataPoint[] points = pattern[p].getDataPoints();
-      logger.info("DataPoints in pattern C" + (autoCarbonMin + p) + ": " + points.length);
+      logger.info("DataPoints in pattern #" + p + " C" + (autoCarbonMin + p) + ": " + points.length);
 
       diff[p] = new double[points.length];
 
