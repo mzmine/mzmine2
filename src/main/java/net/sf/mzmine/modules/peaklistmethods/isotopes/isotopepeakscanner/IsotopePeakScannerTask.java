@@ -557,7 +557,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
           patternBuffer[p] = null;
         }
       }
-      
+      logger.info("about to add " + sizeCounter + " patterns to the scan.");
       diff = new double[sizeCounter][];
       int addCounter = 0;
       pattern = new ExtendedIsotopePattern[sizeCounter];
