@@ -163,7 +163,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
     }
 
     if (scanType == ScanType.AUTOCARBON)
-      carbonRange = autoCarbonMax - autoCarbonMin;
+      carbonRange = autoCarbonMax - autoCarbonMin + 1;
     else if (scanType == ScanType.SPECIFIC)
       carbonRange = 1;
 
