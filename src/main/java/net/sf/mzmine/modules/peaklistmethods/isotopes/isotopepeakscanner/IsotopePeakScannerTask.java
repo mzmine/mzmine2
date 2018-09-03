@@ -534,21 +534,18 @@ public class IsotopePeakScannerTask extends AbstractTask {
         else
           strPattern[p] = element;
 
-        logger.info("Calculating isotope pattern " + p + ": " + strPattern[p]);
-
         patternBuffer[p] = new ExtendedIsotopePattern();
         patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth, minPatternIntensity);
         patternBuffer[p].normalizePatternToHighestPeak();
         // pattern[p].print();
         patternBuffer[p].applyCharge(charge, polarityType);
-        
       }
       
       int sizeCounter = 0;
       //in this for we check how much of the patterns match the autoCarbonMinPatternSize criteria
       //if they dont fit we null them
-      for(int p = 0; p < sizeCounter; p++) {
-        if(patternBuffer[p].getNumberOfDataPoints() <= autoCarbonMinPatternSize) {
+      for(int p = 0; p < carbonRange; p++) {
+        if(patternBuffer[p].getNumberOfDataPoints() >= autoCarbonMinPatternSize) {
           sizeCounter++;
           logger.info("Pattern " + p + " contains " + patternBuffer[p].getNumberOfDataPoints() + " data points. - added");
         }
@@ -557,6 +554,10 @@ public class IsotopePeakScannerTask extends AbstractTask {
           patternBuffer[p] = null;
         }
       }
+      
+      if(sizeCounter == 0)
+        throw new MSDKRuntimeException("Min pattern size excludes every calculated isotope pattern.\nPlease increase min pattern intensity for more data points or decrease the minimum pattern size.");
+      
       logger.info("about to add " + sizeCounter + " patterns to the scan.");
       diff = new double[sizeCounter][];
       int addCounter = 0;
