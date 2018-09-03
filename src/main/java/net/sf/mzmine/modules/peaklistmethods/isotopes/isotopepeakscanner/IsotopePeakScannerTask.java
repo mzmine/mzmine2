@@ -97,7 +97,9 @@ public class IsotopePeakScannerTask extends AbstractTask {
   private boolean autoCarbon;
   private int carbonRange, autoCarbonMin, autoCarbonMax;
   private int maxPatternSize, maxPatternIndex;
+  private int autoCarbonMinPatternSize;
   private boolean excludeZeroCPattern;
+  
 
 
   public enum RatingType {
@@ -150,6 +152,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
     autoCarbonMin = parameters.getParameter(IsotopePeakScannerParameters.minCarbon).getValue();
     autoCarbonMax = parameters.getParameter(IsotopePeakScannerParameters.maxCarbon).getValue();
     autoCarbon = parameters.getParameter(IsotopePeakScannerParameters.autoCarbon).getValue();
+    autoCarbonMinPatternSize = 1;
 
     scanType = (autoCarbon) ? ScanType.AUTOCARBON : ScanType.SPECIFIC;
 
@@ -389,7 +392,6 @@ public class IsotopePeakScannerTask extends AbstractTask {
         // i think its because if not all candidates have been found then it crashes when
         // copying because it tries to copy a null pointer row
 
-      String comParent = "", comChild = "";
       PeakListRow parent = copyPeakRow(peakList.getRow(i));
 
       if (resultMap.containsID(parent.getID())) // if we can assign this row multiple times we
@@ -445,7 +447,8 @@ public class IsotopePeakScannerTask extends AbstractTask {
           addComment(parent,
               " pattern rating: " + round(candidates[bestPatternIndex].getSimpleAvgRating(), 3));
 
-        comChild = (parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
+            ;
+        addComment(child,(parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
             + round(((child.getAverageMZ() - parent.getAverageMZ()) - diff[bestPatternIndex][k])
                 / child.getAverageMZ() * 1E6, 2)
             + " I(c)/I(p): "
@@ -454,8 +457,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
                     .get(pattern[bestPatternIndex].getHighestDataPointIndex()).getCandID())
                 .getAverageHeight(), 2)
             + " Identity: " + pattern[bestPatternIndex].getDetailedPeakDescription(k) + " Rating: "
-            + round(candidates[bestPatternIndex].get(k).getRating(), 3) + average);
-        addComment(child, comChild);
+            + round(candidates[bestPatternIndex].get(k).getRating(), 3) + average));
 
         resultMap.addRow(child);
       }

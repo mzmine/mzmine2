@@ -87,8 +87,8 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
       new IntegerParameter("Charge", "Amount and polarity (e.g.: [M]+=+1 / [M]-=-1", 1, true);
   
   public static final BooleanParameter autoCarbon = new BooleanParameter("Auto carbon", "If activated, Isotope peak scanner will calculate isotope patterns with variable numbers of carbon specified below.\nThe pattern with the best fitting number of carbon atoms will be chosen for every detected pattern.\nThis will greatly increase computation time.");
-  public static final IntegerParameter minCarbon = new IntegerParameter("Min. carbon", "Minumum amount of carbon to search for.", 10, true);
-  public static final IntegerParameter maxCarbon = new IntegerParameter("Max. carbon", "Maximum amount of carbon to search for.", 20, true);
+  public static final IntegerParameter minCarbon = new IntegerParameter("Min. carbon", "Minumum amount of carbon to search for.", 15, true);
+  public static final IntegerParameter maxCarbon = new IntegerParameter("Max. carbon", "Maximum amount of carbon to search for.", 25, true);
 
   public static final OptionalParameter<MassListParameter> massList =
       new OptionalParameter<MassListParameter>(new MassListParameter("Calculate accurate average",
