@@ -43,6 +43,7 @@ import net.sf.mzmine.datamodel.impl.SimplePeakListAppliedMethod;
 import net.sf.mzmine.datamodel.impl.SimplePeakListRow;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.IsotopePeakScannerTask.RatingType;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.IsotopePeakScannerTask.ScanType;
+import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.autocarbon.AutoCarbonParameters;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import net.sf.mzmine.parameters.parametertypes.tolerances.RTTolerance;
@@ -99,7 +100,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
   private int maxPatternSize, maxPatternIndex;
   private int autoCarbonMinPatternSize;
   private boolean excludeZeroCPattern;
-  
+
 
 
   public enum RatingType {
@@ -149,10 +150,11 @@ public class IsotopePeakScannerTask extends AbstractTask {
         .getEmbeddedParameter().getValue();
     ratingChoice = parameters.getParameter(IsotopePeakScannerParameters.ratingChoices).getValue();
 
-    autoCarbonMin = parameters.getParameter(IsotopePeakScannerParameters.minCarbon).getValue();
-    autoCarbonMax = parameters.getParameter(IsotopePeakScannerParameters.maxCarbon).getValue();
-    autoCarbon = parameters.getParameter(IsotopePeakScannerParameters.autoCarbon).getValue();
-    autoCarbonMinPatternSize = 1;
+    autoCarbon = parameters.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getValue();
+    ParameterSet autoCarbonParameters = parameters.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getEmbeddedParameters();
+    autoCarbonMin = autoCarbonParameters.getParameter(AutoCarbonParameters.minCarbon).getValue();
+    autoCarbonMax = autoCarbonParameters.getParameter(AutoCarbonParameters.maxCarbon).getValue();
+    autoCarbonMinPatternSize = autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize).getValue();
 
     scanType = (autoCarbon) ? ScanType.AUTOCARBON : ScanType.SPECIFIC;
 
@@ -447,17 +449,19 @@ public class IsotopePeakScannerTask extends AbstractTask {
           addComment(parent,
               " pattern rating: " + round(candidates[bestPatternIndex].getSimpleAvgRating(), 3));
 
-            ;
-        addComment(child,(parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
-            + round(((child.getAverageMZ() - parent.getAverageMZ()) - diff[bestPatternIndex][k])
-                / child.getAverageMZ() * 1E6, 2)
-            + " I(c)/I(p): "
-            + round(child.getAverageHeight() / plh
-                .getRowByID(candidates[bestPatternIndex]
-                    .get(pattern[bestPatternIndex].getHighestDataPointIndex()).getCandID())
-                .getAverageHeight(), 2)
-            + " Identity: " + pattern[bestPatternIndex].getDetailedPeakDescription(k) + " Rating: "
-            + round(candidates[bestPatternIndex].get(k).getRating(), 3) + average));
+        ;
+        addComment(child,
+            (parent.getID() + "-Parent ID" + " m/z-shift(ppm): "
+                + round(((child.getAverageMZ() - parent.getAverageMZ()) - diff[bestPatternIndex][k])
+                    / child.getAverageMZ() * 1E6, 2)
+                + " I(c)/I(p): "
+                + round(child.getAverageHeight() / plh
+                    .getRowByID(candidates[bestPatternIndex]
+                        .get(pattern[bestPatternIndex].getHighestDataPointIndex()).getCandID())
+                    .getAverageHeight(), 2)
+                + " Identity: " + pattern[bestPatternIndex].getDetailedPeakDescription(k)
+                + " Rating: " + round(candidates[bestPatternIndex].get(k).getRating(), 3)
+                + average));
 
         resultMap.addRow(child);
       }
@@ -521,13 +525,13 @@ public class IsotopePeakScannerTask extends AbstractTask {
     double[][] diff;
 
     if (scanType == ScanType.AUTOCARBON) {
-      
+
       String[] strPattern = new String[carbonRange];
 
-//      pattern = new ExtendedIsotopePattern[carbonRange];
-      ExtendedIsotopePattern patternBuffer [] = new ExtendedIsotopePattern[carbonRange]; 
-      
-      //in the following for we calculate up the patterns
+      // pattern = new ExtendedIsotopePattern[carbonRange];
+      ExtendedIsotopePattern patternBuffer[] = new ExtendedIsotopePattern[carbonRange];
+
+      // in the following for we calculate up the patterns
       for (int p = 0; p < carbonRange; p++) {
         if (p + autoCarbonMin != 0)
           strPattern[p] = "C" + (p + autoCarbonMin) + element;
@@ -535,43 +539,46 @@ public class IsotopePeakScannerTask extends AbstractTask {
           strPattern[p] = element;
 
         patternBuffer[p] = new ExtendedIsotopePattern();
-        patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth, minPatternIntensity);
+        patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth,
+            minPatternIntensity);
         patternBuffer[p].normalizePatternToHighestPeak();
         // pattern[p].print();
         patternBuffer[p].applyCharge(charge, polarityType);
       }
-      
+
       int sizeCounter = 0;
-      //in this for we check how much of the patterns match the autoCarbonMinPatternSize criteria
-      //if they dont fit we null them
-      for(int p = 0; p < carbonRange; p++) {
-        if(patternBuffer[p].getNumberOfDataPoints() >= autoCarbonMinPatternSize) {
+      // in this for we check how much of the patterns match the autoCarbonMinPatternSize criteria
+      // if they dont fit we null them
+      for (int p = 0; p < carbonRange; p++) {
+        if (patternBuffer[p].getNumberOfDataPoints() >= autoCarbonMinPatternSize) {
           sizeCounter++;
-          logger.info("Pattern " + p + " contains " + patternBuffer[p].getNumberOfDataPoints() + " data points. - added");
-        }
-        else {
-          logger.info("Pattern " + p + " contains " + patternBuffer[p].getNumberOfDataPoints() + " data points. - not added");
+          logger.info("Pattern " + p + " contains " + patternBuffer[p].getNumberOfDataPoints()
+              + " data points. - added");
+        } else {
+          logger.info("Pattern " + p + " contains " + patternBuffer[p].getNumberOfDataPoints()
+              + " data points. - not added");
           patternBuffer[p] = null;
         }
       }
-      
-      if(sizeCounter == 0)
-        throw new MSDKRuntimeException("Min pattern size excludes every calculated isotope pattern.\nPlease increase min pattern intensity for more data points or decrease the minimum pattern size.");
-      
+
+      if (sizeCounter == 0)
+        throw new MSDKRuntimeException(
+            "Min pattern size excludes every calculated isotope pattern.\nPlease increase min pattern intensity for more data points or decrease the minimum pattern size.");
+
       logger.info("about to add " + sizeCounter + " patterns to the scan.");
       diff = new double[sizeCounter][];
       int addCounter = 0;
       pattern = new ExtendedIsotopePattern[sizeCounter];
-      for(int p = 0; p < carbonRange; p++) {
-        
-        if(patternBuffer[p] == null)
+      for (int p = 0; p < carbonRange; p++) {
+
+        if (patternBuffer[p] == null)
           continue;
-        
+
         pattern[addCounter] = patternBuffer[p];
-        
+
         DataPoint[] points = patternBuffer[p].getDataPoints();
-        logger.info(
-            "DataPoints in pattern #" + addCounter + " C" + (autoCarbonMin + p) + ": " + points.length);
+        logger.info("DataPoints in pattern #" + addCounter + " C" + (autoCarbonMin + p) + ": "
+            + points.length);
 
         diff[addCounter] = new double[points.length];
 
