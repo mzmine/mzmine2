@@ -42,6 +42,9 @@ import io.github.msdk.MSDKException;
  * getDetailedPeakDescription.
  * 
  * set up via setUp(...)
+ * 
+ *  @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ *  
  */
 public class ExtendedIsotopePattern implements IsotopePattern {
 

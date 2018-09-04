@@ -38,6 +38,8 @@ import net.sf.mzmine.parameters.parametertypes.tolerances.MZTolerance;
  * since its easier to handle row ids than row indexes.
  * 
  *
+ * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ *
  */
 public class Candidates {
 

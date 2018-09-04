@@ -22,6 +22,11 @@ import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.parameters.parametertypes.IntegerParameter;
 
+/**
+ * 
+ * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ *
+ */
 public class AutoCarbonParameters extends SimpleParameterSet {
   
   public static final IntegerParameter minCarbon =

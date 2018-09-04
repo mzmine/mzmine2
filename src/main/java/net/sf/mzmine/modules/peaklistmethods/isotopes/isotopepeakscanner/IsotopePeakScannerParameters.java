@@ -38,7 +38,11 @@ import net.sf.mzmine.parameters.parametertypes.selectors.PeakListsParameter;
 import net.sf.mzmine.parameters.parametertypes.tolerances.MZToleranceParameter;
 import net.sf.mzmine.parameters.parametertypes.tolerances.RTToleranceParameter;
 import net.sf.mzmine.util.ExitCode;
-
+/**
+ * 
+ * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ *
+ */
 public class IsotopePeakScannerParameters extends SimpleParameterSet {
 
   public static final PeakListsParameter PEAK_LISTS = new PeakListsParameter();
