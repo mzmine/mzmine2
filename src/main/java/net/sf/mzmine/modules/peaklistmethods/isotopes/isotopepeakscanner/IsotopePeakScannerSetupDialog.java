@@ -4,28 +4,22 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-import java.util.Map;
 import java.util.logging.Logger;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.NumberFormatter;
-import org.openscience.cdk.io.formats.JaguarFormat;
-import net.sf.mzmine.main.MZmineCore;
+import org.jfree.chart.plot.XYPlot;
+import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
-import net.sf.mzmine.util.ExitCode;
-import net.sf.mzmine.util.GUIUtils;
-import net.sf.mzmine.util.components.GridBagPanel;
-
+/**
+ * 
+ * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ *
+ */
 public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   
   private Logger logger = Logger.getLogger(this.getClass().getName());
@@ -33,6 +27,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private JPanel pnlPreview;  // this will contain the preview and navigation panels
   private JPanel pnlButtons;  // this will contain the navigation
   private JPanel pnlCheckbox; // this will contain the checkbox to enable the preview
+  
+  private EChartPanel chartPanel;
+  private XYPlot plot;
+  
   
   
   private JButton btnPrevPattern, btnNextPattern;

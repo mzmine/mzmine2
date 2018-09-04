@@ -67,6 +67,8 @@ import net.sf.mzmine.util.SortingProperty;
  * algorithm was able to find a peak inside the peak list for every expected isotope peak the result
  * will be added to a result peak list including a description.
  * 
+ *  @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ * 
  */
 public class IsotopePeakScannerTask extends AbstractTask {
 
