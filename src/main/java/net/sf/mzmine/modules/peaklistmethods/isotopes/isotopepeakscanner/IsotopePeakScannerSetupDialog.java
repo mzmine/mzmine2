@@ -18,7 +18,7 @@ import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 
-public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog implements ActionListener, DocumentListener {
+/*public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog implements ActionListener, DocumentListener {
   
   private Logger logger = Logger.getLogger(this.getClass().getName());
   private JButton autoCSetup;
@@ -50,9 +50,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog implemen
     logger.info("should have added");
   }
   
-  /**
-   * Implementation for ActionListener interface
-   */
+
   @Override
   public void actionPerformed(ActionEvent ae) {
     super.actionPerformed(ae);
@@ -63,4 +61,4 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog implemen
     }
   }
     
-}
+}*/
