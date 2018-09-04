@@ -1,8 +1,11 @@
 package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.NumberFormat;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
@@ -10,18 +13,35 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.NumberFormatter;
+import org.openscience.cdk.io.formats.JaguarFormat;
+import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.util.ExitCode;
 import net.sf.mzmine.util.GUIUtils;
 import net.sf.mzmine.util.components.GridBagPanel;
 
-/*public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog implements ActionListener, DocumentListener {
+public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   
   private Logger logger = Logger.getLogger(this.getClass().getName());
-  private JButton autoCSetup;
+  
+  private JPanel pnlPreview;  // this will contain the preview and navigation panels
+  private JPanel pnlButtons;  // this will contain the navigation
+  private JPanel pnlCheckbox; // this will contain the checkbox to enable the preview
+  
+  
+  private JButton btnPrevPattern, btnNextPattern;
+  private JCheckBox cbxPreview;
+  private JFormattedTextField txtCurrentPatternIndex;
+  
+  private int minC, maxC;
+  
+  NumberFormatter form;
   
   public IsotopePeakScannerSetupDialog(Window parent, boolean valueCheckRequired,
       ParameterSet parameters) {
@@ -30,35 +50,87 @@ import net.sf.mzmine.util.components.GridBagPanel;
   
   @Override
   protected void addDialogComponents() {
-    logger.info("should add");
     super.addDialogComponents();
     
-    JPanel pnlAutoCButton = new JPanel();
-    pnlAutoCButton.setLayout(new BoxLayout(pnlAutoCButton, BoxLayout.X_AXIS));
+    minC = 10;//TODO: dont hardcode this
+    maxC = 100;
+    form = new NumberFormatter(NumberFormat.getInstance());
+    form.setValueClass(Integer.class);
+    form.setAllowsInvalid(false);
+    form.setMinimum(minC);
+    form.setMaximum(maxC);
     
-    autoCSetup = new JButton();
-    autoCSetup.addActionListener(this);
-    autoCSetup.setText("Auto carbon");
-    autoCSetup.setToolTipText("Set up automatic carbon detection.\nThis will calculate isotope patterns with a given range of carbon atoms\n"
-        + "and add the best fitting one as an isotope pattern. Set up minimum and maximum carbon atoms, minimum number of data points in\n"
-        + "the isotope pattern and view predicted peaks.");
-    autoCSetup.setMinimumSize(autoCSetup.getPreferredSize());
-    GUIUtils.addButton(pnlAutoCButton, "Auto carbon", null, this);
+    pnlPreview = new JPanel(new BorderLayout());
+    pnlButtons = new JPanel(new FlowLayout());
+    pnlCheckbox = new JPanel(new FlowLayout());
     
-    mainPanel.add(pnlAutoCButton);
+    cbxPreview = new JCheckBox("Preview");
+    cbxPreview.addActionListener(this);
+    cbxPreview.setSelected(false);;
+    pnlCheckbox.add(cbxPreview);
+
+    btnPrevPattern = new JButton("Previous");
+    btnPrevPattern.addActionListener(this);
+    btnPrevPattern.setMinimumSize(btnPrevPattern.getPreferredSize());
+    btnPrevPattern.setEnabled(cbxPreview.isSelected());
     
-    logger.info("should have added");
+    txtCurrentPatternIndex = new JFormattedTextField(form);
+    txtCurrentPatternIndex.addActionListener(this);
+    txtCurrentPatternIndex.setText("" + maxC);
+    txtCurrentPatternIndex.setMinimumSize(txtCurrentPatternIndex.getPreferredSize());
+    txtCurrentPatternIndex.setText("");
+    txtCurrentPatternIndex.setEditable(true);
+    txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
+    
+    btnNextPattern = new JButton("Next");
+    btnNextPattern.addActionListener(this);
+    btnNextPattern.setPreferredSize(btnNextPattern.getMaximumSize());
+    btnNextPattern.setEnabled(cbxPreview.isSelected());
+    
+    pnlButtons.add(btnPrevPattern);
+    pnlButtons.add(txtCurrentPatternIndex);
+    pnlButtons.add(btnNextPattern);
+
+    
+    pnlPreview.add(pnlCheckbox, BorderLayout.NORTH);
+    pnlPreview.add(pnlButtons, BorderLayout.SOUTH);
+    
+    mainPanel.add(pnlPreview, 3, 0, 0, 0, 1, 1); 
   }
   
 
   @Override
   public void actionPerformed(ActionEvent ae) {
     super.actionPerformed(ae);
-    Object src = ae.getSource();
-    if(src == autoCSetup)
-    {
-      logger.info("auto c pressed");
+    
+    if(ae.getSource() == btnNextPattern) {
+      logger.info(ae.getSource().toString());
+      
+      int current = Integer.parseInt(txtCurrentPatternIndex.getText());
+      
+      if(current < (maxC)) {
+        current++;
+      }
+      txtCurrentPatternIndex.setText(String.valueOf(current));
+    }
+    else if(ae.getSource() == btnPrevPattern) {
+      logger.info(ae.getSource().toString());
+      
+      int current = Integer.parseInt(txtCurrentPatternIndex.getText());
+      
+      if(current > (minC)) {
+        current--;
+      }
+      txtCurrentPatternIndex.setText(String.valueOf(current));
+    }
+    else if(ae.getSource() == cbxPreview) {
+      logger.info(ae.getSource().toString());
+      btnNextPattern.setEnabled(cbxPreview.isSelected());
+      btnPrevPattern.setEnabled(cbxPreview.isSelected());
+      txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
+    }  
+    else if(ae.getSource() == txtCurrentPatternIndex) {
+      logger.info(ae.getSource().toString());
     }
   }
-    
-}*/
+}

@@ -18,10 +18,12 @@
 
 package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 
+import java.awt.Window;
 import java.text.DecimalFormat;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.autocarbon.AutoCarbonParameters;
 import net.sf.mzmine.parameters.Parameter;
+import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.BooleanParameter;
 import net.sf.mzmine.parameters.parametertypes.ComboParameter;
@@ -35,6 +37,7 @@ import net.sf.mzmine.parameters.parametertypes.StringParameter;
 import net.sf.mzmine.parameters.parametertypes.selectors.PeakListsParameter;
 import net.sf.mzmine.parameters.parametertypes.tolerances.MZToleranceParameter;
 import net.sf.mzmine.parameters.parametertypes.tolerances.RTToleranceParameter;
+import net.sf.mzmine.util.ExitCode;
 
 public class IsotopePeakScannerParameters extends SimpleParameterSet {
 
@@ -114,16 +117,13 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
         ratingChoices, massList, suffix});
   }
 
-  /*
-   * @Override public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) { ExitCode
-   * exitCode = super.showSetupDialog(parent, valueCheckRequired);
-   * 
-   * // If the parameters are not complete, let's just stop here if (exitCode != ExitCode.OK) return
-   * exitCode;
-   * 
-   * if ((getParameters() == null) || (getParameters().length == 0)) return ExitCode.OK;
-   * ParameterSetupDialog dialog = new IsotopePeakScannerSetupDialog(parent, valueCheckRequired,
-   * this); dialog.setVisible(true); return dialog.getExitCode(); }
-   */
+  public ExitCode showSetupDialog(Window parent, boolean valueCheckRequired) {
+    if ((getParameters() == null) || (getParameters().length == 0))
+      return ExitCode.OK;
+    
+    ParameterSetupDialog dialog = new IsotopePeakScannerSetupDialog(parent, valueCheckRequired, this);
+    dialog.setVisible(true);
+    return dialog.getExitCode();
+  }
 
 }
