@@ -9,7 +9,6 @@ import java.text.NumberFormat;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -20,6 +19,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.experimental.theories.DataPoints;
+import java.awt.Component;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.PolarityType;
@@ -27,6 +27,8 @@ import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.parameters.parametertypes.DoubleComponent;
 import net.sf.mzmine.parameters.parametertypes.IntegerComponent;
+import net.sf.mzmine.parameters.parametertypes.OptionalModuleComponent;
+import net.sf.mzmine.parameters.parametertypes.OptionalModuleParameter;
 import net.sf.mzmine.parameters.parametertypes.PercentComponent;
 import net.sf.mzmine.parameters.parametertypes.StringComponent;
 
@@ -131,6 +133,18 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     txtMinIntensity = (DoubleComponent) parametersAndComponents.get("Min. pattern intensity");
     txtCharge = (IntegerComponent) parametersAndComponents.get("Charge");
     txtMergeWidth = (DoubleComponent) parametersAndComponents.get("Merge width(m/z)");
+    //idk if this works
+    OptionalModuleComponent autoCarbon = (OptionalModuleComponent) parametersAndComponents.get("Auto carbon");
+    Component[] autoCarbonComps = autoCarbon.getComponents();
+    for(Component comp : autoCarbonComps) {
+      if(comp.getName().equals("Min. carbon"))
+        txtMinC = (IntegerComponent) comp;
+      if(comp.getName().equals("Max. carbon"))
+        txtMaxC = (IntegerComponent) comp;
+      if(comp.getName().equals("Min. pattern size"))
+        txtMinSize = (IntegerComponent) comp;
+    }
+    
   }
 
 
@@ -231,6 +245,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     mergeWidth = Double.parseDouble(txtMergeWidth.getText());
     minIntensity = Double.parseDouble(txtMinIntensity.getText());
     charge = Integer.parseInt(txtCharge.getText());
+    minC = Integer.parseInt(txtMinC.getText());
+    maxC = Integer.parseInt(txtMaxC.getText());
+    minSize = Integer.parseInt(txtMinSize.getText());
     return true;
   }
   private boolean checkParameters() {
