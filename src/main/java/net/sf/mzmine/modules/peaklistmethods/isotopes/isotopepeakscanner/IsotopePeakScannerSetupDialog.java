@@ -50,14 +50,17 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private JButton btnPrevPattern, btnNextPattern;
   private JCheckBox cbxPreview;
   private JFormattedTextField txtCurrentPatternIndex;
+  
+  NumberFormatter form;
 
-  private int minC, maxC;
   PercentComponent txtMinAbundance;
   StringComponent txtElement;
   DoubleComponent txtMinIntensity, txtMergeWidth;
-  IntegerComponent txtCharge;
-
-  NumberFormatter form;
+  IntegerComponent txtCharge, txtMinC, txtMaxC, txtMinSize;
+  
+  private double minAbundance, minIntensity, mergeWidth;
+  private int charge, minSize, minC, maxC;
+  private String element;
 
   public IsotopePeakScannerSetupDialog(Window parent, boolean valueCheckRequired,
       ParameterSet parameters) {
@@ -128,7 +131,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     txtMinIntensity = (DoubleComponent) parametersAndComponents.get("Min. pattern intensity");
     txtCharge = (IntegerComponent) parametersAndComponents.get("Charge");
     txtMergeWidth = (DoubleComponent) parametersAndComponents.get("Merge width(m/z)");
-
   }
 
 
@@ -188,10 +190,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     if(txtElement.getText().equals(""))
       return new ExtendedIsotopePattern();
     
-    pattern.setUpFromFormula(txtElement.getText(), txtMinAbundance.getValue() / 100,
-        Double.parseDouble(txtMergeWidth.getText()), Double.parseDouble(txtMinIntensity.getText()));
+    pattern.setUpFromFormula(element, minAbundance, 
+        mergeWidth, minIntensity);
 
-    pattern.applyCharge(Integer.parseInt(txtCharge.getText()), PolarityType.POSITIVE);
+    pattern.applyCharge(charge, PolarityType.POSITIVE);
     return pattern;
   }
 
@@ -218,5 +220,27 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance", dataset);
     pnlChart.setChart(chart);
+  }
+  
+  private boolean updateParameters()
+  {
+    if(!checkParameters())
+      return false;
+    element = txtElement.getText();
+    minAbundance = txtMinAbundance.getValue() / 100;
+    mergeWidth = Double.parseDouble(txtMergeWidth.getText());
+    minIntensity = Double.parseDouble(txtMinIntensity.getText());
+    charge = Integer.parseInt(txtCharge.getText());
+    return true;
+  }
+  private boolean checkParameters() {
+    if(txtElement.getText().equals(""))
+      return false;
+    if(txtMinAbundance.getValue() / 100 > 100)
+      return false;
+    if(Double.parseDouble(txtMinIntensity.getText()) > 1.0)
+        return false;
+    
+    return true;
   }
 }
