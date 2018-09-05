@@ -544,7 +544,6 @@ public class IsotopePeakScannerTask extends AbstractTask {
         patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth,
             minPatternIntensity);
         patternBuffer[p].normalizePatternToHighestPeak();
-        // pattern[p].print();
         patternBuffer[p].applyCharge(charge, polarityType);
       }
 
@@ -594,7 +593,8 @@ public class IsotopePeakScannerTask extends AbstractTask {
         }
         addCounter++;
       }
-    } else /* if(scanType == ScanType.SPECIFIC) */ {
+    } 
+    else /* if(scanType == ScanType.SPECIFIC) */ {
       diff = new double[1][];
       pattern = new ExtendedIsotopePattern[1];
       pattern[0] = new ExtendedIsotopePattern();
