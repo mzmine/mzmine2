@@ -18,11 +18,11 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.junit.experimental.theories.DataPoints;
 import java.awt.Component;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.PolarityType;
+import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.parameters.parametertypes.DoubleComponent;
@@ -59,6 +59,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   StringComponent txtElement;
   DoubleComponent txtMinIntensity, txtMergeWidth;
   IntegerComponent txtCharge, txtMinC, txtMaxC, txtMinSize;
+  ParameterSet autoCarbon;
   
   private double minAbundance, minIntensity, mergeWidth;
   private int charge, minSize, minC, maxC;
@@ -127,21 +128,23 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     mainPanel.add(pnlPreview, 3, 0, 0, 0, 1, 1);
 
-
-    txtMinAbundance = (PercentComponent) parametersAndComponents.get("Minimum abundance");
-    txtElement = (StringComponent) parametersAndComponents.get("Element pattern");
-    txtMinIntensity = (DoubleComponent) parametersAndComponents.get("Min. pattern intensity");
-    txtCharge = (IntegerComponent) parametersAndComponents.get("Charge");
-    txtMergeWidth = (DoubleComponent) parametersAndComponents.get("Merge width(m/z)");
+    
+    txtMinAbundance = (PercentComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minAbundance);
+    txtElement = (StringComponent) this.getComponentForParameter(IsotopePeakScannerParameters.element);
+    txtMinIntensity = (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minPatternIntensity);
+    txtCharge = (IntegerComponent) this.getComponentForParameter(IsotopePeakScannerParameters.charge);
+    txtMergeWidth = (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.mergeWidth);
     //idk if this works
-    OptionalModuleComponent autoCarbon = (OptionalModuleComponent) parametersAndComponents.get("Auto carbon");
-    Component[] autoCarbonComps = autoCarbon.getComponents();
-    for(Component comp : autoCarbonComps) {
-      if(comp.getName().equals("Min. carbon"))
+    OptionalModuleComponent autoCarbonComponent = (OptionalModuleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.autoCarbonOpt);
+    
+    autoCarbon = autoCarbonComponent.getEmbeddedParameters();
+    
+    for(Parameter<?> p : ) {
+      if(p.getName().equals("Min. carbon"))
         txtMinC = (IntegerComponent) comp;
-      if(comp.getName().equals("Max. carbon"))
+      if(p.getName().equals("Max. carbon"))
         txtMaxC = (IntegerComponent) comp;
-      if(comp.getName().equals("Min. pattern size"))
+      if(p.getName().equals("Min. pattern size"))
         txtMinSize = (IntegerComponent) comp;
     }
     
@@ -151,7 +154,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   @Override
   public void actionPerformed(ActionEvent ae) {
     super.actionPerformed(ae);
-
 
     if (ae.getSource() == btnNextPattern) {
       logger.info(ae.getSource().toString());
