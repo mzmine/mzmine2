@@ -1,6 +1,8 @@
 package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -16,7 +18,9 @@ import javax.swing.JTextField;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import java.awt.Component;
@@ -66,6 +70,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   IntegerComponent cmpCharge, cmpMinC, cmpMaxC, cmpMinSize;
   StringComponent cmpElement;
   OptionalModuleComponent cmpAutoCarbon;
+  JCheckBox cmpAutoCarbonCbx;
   
   IntegerParameter pMinC, pMaxC, pMinSize, pCharge;
   StringParameter pElement;
@@ -73,6 +78,8 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   PercentParameter pMinAbundance;
   OptionalModuleParameter pAutoCarbon;
  
+  Color aboveMin, belowMin;
+//  BasicStroke stroke;
   
   ParameterSet autoCarbonParameters;
   
@@ -85,6 +92,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
       ParameterSet parameters) {
     super(parent, valueCheckRequired, parameters);
 
+    aboveMin = new Color(30, 255, 30);
+    belowMin = new Color(255, 30, 30);
+//    stroke = new BasicStroke((float)mergeWidth);
   }
 
   @Override
@@ -156,6 +166,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     cmpMergeWidth = (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.mergeWidth);
     cmpElement = (StringComponent) this.getComponentForParameter(IsotopePeakScannerParameters.element);
     cmpAutoCarbon = (OptionalModuleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.autoCarbonOpt);
+    cmpAutoCarbonCbx = (JCheckBox) cmpAutoCarbon.getComponent(0);
     
     
     pMinAbundance = parameterSet.getParameter(IsotopePeakScannerParameters.minAbundance);
@@ -197,15 +208,24 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
         updatePreview();
     } 
     
-    else if (ae.getSource() == cbxPreview) {
+    else if (ae.getSource() == cbxPreview) { // TODO: this looks like you can do it simpler
       logger.info(ae.getSource().toString());
-      if(parameterSet.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getValue()) {
+      if(cmpAutoCarbonCbx.isSelected()) {
         btnNextPattern.setEnabled(cbxPreview.isSelected());
         btnPrevPattern.setEnabled(cbxPreview.isSelected());
         txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
       }
-      if (cbxPreview.isSelected())
+      else { // false
+        btnNextPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
+        btnPrevPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
+        txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
+      }
+      if (cbxPreview.isSelected()) {
+        btnUpdatePerview.setEnabled(cbxPreview.isSelected());
         updatePreview();
+      }
+      else
+        btnUpdatePerview.setEnabled(cbxPreview.isSelected());
     }
     
     else if (ae.getSource() == txtCurrentPatternIndex) {
@@ -215,11 +235,23 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     else if(ae.getSource() == btnUpdatePerview) {
       updatePreview();
     }
+    else if(ae.getSource() == cmpMergeWidth) {
+//      stroke = new BasicStroke(Float.parseFloat(String.valueOf(pMergeWidth.getValue())));
+    }
+    
+    else if(ae.getSource() == cmpAutoCarbonCbx) { // checkbox is added first therefore index 0
+        if(!cmpAutoCarbonCbx.isSelected() && !cbxPreview.isSelected()) // TODO: this looks like you can do it simpler
+          btnUpdatePerview.setEnabled(false);
+        else if(!cmpAutoCarbonCbx.isSelected() && cbxPreview.isSelected())
+          btnUpdatePerview.setEnabled(true);
+        else if(cmpAutoCarbonCbx.isSelected() && cbxPreview.isSelected())
+          btnUpdatePerview.setEnabled(true);
+        else if(cmpAutoCarbonCbx.isSelected() && !cbxPreview.isSelected())
+          btnUpdatePerview.setEnabled(false);
+    }
     
     if(pAutoCarbon.getValue() == false || (pAutoCarbon.getValue() == true && cbxPreview.isSelected())) {
-      btnNextPattern.setEnabled(pAutoCarbon.getValue());
-      btnPrevPattern.setEnabled(pAutoCarbon.getValue());
-      txtCurrentPatternIndex.setEnabled(pAutoCarbon.getValue());
+      
     }
   }
 
@@ -245,6 +277,19 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     for (XYSeries xy : xypattern)
       dataset.addSeries(xy);
     chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance", dataset);
+    Plot plot = chart.getPlot();
+    
+    if(plot instanceof XYPlot) {
+      XYItemRenderer r = ((XYPlot)plot).getRenderer();
+      
+      for(int p = 1; p < xypattern.length; p++) { // using p because its a pattern. starting at 1 because 0 is the minimum intensity line
+        if(xypattern[p].getMaxY() < minIntensity)
+          r.setSeriesPaint(p, belowMin);
+        else
+          r.setSeriesPaint(p, aboveMin);
+//        r.setSeriesStroke(p, stroke, false);
+      }
+    }
     pnlChart.setChart(chart);
   }
   
