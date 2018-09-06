@@ -18,9 +18,11 @@ import javax.swing.JTextField;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import java.awt.Component;
@@ -143,6 +145,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance",
         new XYSeriesCollection(new XYSeries("")));
+    chart.getPlot().setBackgroundPaint(Color.WHITE);
+    ((XYPlot)chart.getPlot()).setDomainGridlinePaint(Color.GRAY);
+    ((XYPlot)plot).setRangeGridlinePaint(Color.GRAY);
     pnlChart = new EChartPanel(chart);
     pnlChart.setEnabled(cbxPreview.isSelected());
 
@@ -278,8 +283,11 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
       dataset.addSeries(xy);
     chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance", dataset);
     Plot plot = chart.getPlot();
+    plot.setBackgroundPaint(Color.WHITE);
     
     if(plot instanceof XYPlot) {
+      ((XYPlot)plot).setDomainGridlinePaint(Color.GRAY);
+      ((XYPlot)plot).setRangeGridlinePaint(Color.GRAY);
       XYItemRenderer r = ((XYPlot)plot).getRenderer();
       
       for(int p = 1; p < xypattern.length; p++) { // using p because its a pattern. starting at 1 because 0 is the minimum intensity line
@@ -288,6 +296,15 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
         else
           r.setSeriesPaint(p, aboveMin);
 //        r.setSeriesStroke(p, stroke, false);
+        
+        /*XYTooltipGenerator gen = new XYToolTipGenerator() {
+          
+          @Override
+          public String generateToolTip(XYDataset dataset, int series, int item) {
+            // TODO Auto-generated method stub
+            return null;
+          }
+        };*/
       }
     }
     pnlChart.setChart(chart);
@@ -321,7 +338,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     minIntensity = Double.parseDouble(cmpMinIntensity.getText());
     charge = Integer.parseInt(cmpCharge.getText());*/
     
-    //element = pElement.getValue(); //TODO: Why does this return an empty string all the time?
+    //element = pElement.getValue(); //TODO
     element = cmpElement.getText();
     minAbundance = pMinAbundance.getValue() / 100;
     mergeWidth = pMergeWidth.getValue();
