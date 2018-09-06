@@ -14,9 +14,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.chart.plot.Plot;
@@ -26,6 +28,7 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import java.awt.Component;
+import java.awt.Dimension;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.PolarityType;
@@ -146,8 +149,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance",
         new XYSeriesCollection(new XYSeries("")));
     chart.getPlot().setBackgroundPaint(Color.WHITE);
-    ((XYPlot)chart.getPlot()).setDomainGridlinePaint(Color.GRAY);
-    ((XYPlot)plot).setRangeGridlinePaint(Color.GRAY);
+    chart.getXYPlot().setDomainGridlinePaint(Color.GRAY);
+    chart.getXYPlot().setRangeGridlinePaint(Color.GRAY);
+    
     pnlChart = new EChartPanel(chart);
     pnlChart.setEnabled(cbxPreview.isSelected());
 
@@ -158,11 +162,19 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     pnlButtons.add(btnUpdatePerview);
 
 
+    // remove 
+    getContentPane().remove(mainPanel);
+    JScrollPane scroll = new JScrollPane();
+    scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scroll.setViewportView(mainPanel);
+    mainPanel.setMinimumSize(new Dimension(200, 200));
+    
     pnlPreview.add(pnlCheckbox, BorderLayout.NORTH);
     pnlPreview.add(pnlButtons, BorderLayout.SOUTH);
     pnlPreview.add(pnlChart, BorderLayout.CENTER);
+    pnlPreview.add(scroll, BorderLayout.WEST);
 
-    mainPanel.add(pnlPreview, 3, 0, 0, 0, 1, 1);
+    getContentPane().add(pnlPreview, BorderLayout.CENTER);
     
     
     cmpMinAbundance = (PercentComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minAbundance);
