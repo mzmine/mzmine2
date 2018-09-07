@@ -20,6 +20,7 @@ import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYBarPainter;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.data.xy.XYBarDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import net.sf.mzmine.chartbasics.chartthemes.ChartThemeFactory;
@@ -246,16 +247,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     
     else if (ae.getSource() == cbxPreview) { // TODO: this looks like you can do it simpler
       logger.info(ae.getSource().toString());
-      if(cmpAutoCarbonCbx.isSelected()) {
-        btnNextPattern.setEnabled(cbxPreview.isSelected());
-        btnPrevPattern.setEnabled(cbxPreview.isSelected());
-        txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
-      }
-      else { // false
-        btnNextPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
-        btnPrevPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
-        txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
-      }
+      
       if (cbxPreview.isSelected()) {
         btnUpdatePerview.setEnabled(cbxPreview.isSelected());
         updatePreview();
@@ -275,19 +267,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 //      stroke = new BasicStroke(Float.parseFloat(String.valueOf(pMergeWidth.getValue())));
     }
     
-    else if(ae.getSource() == cmpAutoCarbonCbx) { // checkbox is added first therefore index 0
-        if(!cmpAutoCarbonCbx.isSelected() && !cbxPreview.isSelected()) // TODO: this looks like you can do it simpler
-          btnUpdatePerview.setEnabled(false);
-        else if(!cmpAutoCarbonCbx.isSelected() && cbxPreview.isSelected())
-          btnUpdatePerview.setEnabled(true);
-        else if(cmpAutoCarbonCbx.isSelected() && cbxPreview.isSelected())
-          btnUpdatePerview.setEnabled(true);
-        else if(cmpAutoCarbonCbx.isSelected() && !cbxPreview.isSelected())
-          btnUpdatePerview.setEnabled(false);
-    }
-    
-    if(pAutoCarbon.getValue() == false || (pAutoCarbon.getValue() == true && cbxPreview.isSelected())) {
-      
+    else if(ae.getSource() == cmpAutoCarbonCbx) {
+          btnNextPattern.setEnabled(cbxPreview.isSelected());
+          btnPrevPattern.setEnabled(cbxPreview.isSelected());
+          txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
     }
   }
 
@@ -308,18 +291,20 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   }
 
   private void updateChart(ExtendedIsotopePattern pattern) {
-    dataset = new IsotopePatternDataSet(pattern, minAbundance, mergeWidth);
+    dataset = new IsotopePatternDataSet(pattern, minIntensity, mergeWidth);
     logger.info("Series count: " + dataset.getSeriesCount());
-
-    chart = ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", dataset.getBarData());
-    Plot plot = chart.getXYPlot();
+    XYBarDataset set = dataset.getBarData();
+    int t = set.getSeriesCount();
+    chart = ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", set);
     theme.apply(chart);
+    Plot plot = chart.getXYPlot();
+    
     
     if(plot instanceof XYPlot) {
       XYItemRenderer r = ((XYPlot)plot).getRenderer();
       
-      r.setSeriesPaint(0, belowMin);
-      r.setSeriesPaint(1, aboveMin);
+      r.setSeriesPaint(0, aboveMin);
+      r.setSeriesPaint(1, belowMin);
 
         /*XYTooltipGenerator gen = new XYToolTipGenerator() {
           

@@ -27,9 +27,10 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
   private XYBarDataset barData;
   private double width;
  
+  private enum AB {ABOVE, BELOW};
   Assignment assignment[];
   private class Assignment{
-    private boolean ab;
+    AB ab;
     private int id;
   }
   
@@ -47,30 +48,31 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
     
     for(int i = 0; i < dp.length ; i++) {
       if(dp[i].getIntensity() < minAbundance) {
-        assignment[i].ab = false;
+        assignment[i].ab = AB.BELOW;
         assignment[i].id = i;
         below.add(dp[i].getMZ(), dp[i].getIntensity());
       }
       else {
-        assignment[i].ab = true;
+        assignment[i].ab = AB.ABOVE;
         assignment[i].id = i;
         above.add(dp[i].getMZ(), dp[i].getIntensity());
       }
     }
     
-    super.addSeries(below);
     super.addSeries(above);
+    super.addSeries(below);
+    
     
     barData = new XYBarDataset(this, width);
   }
   
-  public int getSeriesDpIndex(int index) {
+  public int getSeriesDpIndex(int index) throws MSDKRuntimeException {
     if(index > dp.length)
-      return -1;
+      throw new MSDKRuntimeException("Index out of bounds.");
     return assignment[index].id;
   }
   
-  public boolean getSeriesBool(int index) throws MSDKRuntimeException {
+  public AB getSeriesAB(int index) throws MSDKRuntimeException {
     if(index > dp.length)
       throw new MSDKRuntimeException("Index out of bounds.");
     return assignment[index].ab;
