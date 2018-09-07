@@ -1,5 +1,6 @@
 package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -16,11 +17,16 @@ import javax.swing.JScrollPane;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.XYToolTipGenerator;
+import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.xy.XYBarPainter;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYBarDataset;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import net.sf.mzmine.chartbasics.chartthemes.ChartThemeFactory;
@@ -55,39 +61,46 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private Logger logger = Logger.getLogger(this.getClass().getName());
 
   private JPanel pnlPreview; // this will contain the preview and navigation panels
-  private JPanel pnlButtons; // this will contain the navigation
-  private JPanel pnlCheckbox; // this will contain the checkbox to enable the preview
+  private JPanel pnlPreviewButtons; // this will contain the navigation
+  private JPanel newMainPanel; // this will be the new main panel
+  private JPanel pnlParameters; // this will contain all parameters of the module (the main panel
+                                // will be inserted here)
 
   private EChartPanel pnlChart;
   private JFreeChart chart;
   private XYPlot plot;
   private EIsotopePatternChartTheme theme;
 
-  private JButton btnPrevPattern, btnNextPattern, btnUpdatePerview;
-  private JCheckBox cbxPreview;
+
+  // componnents created by this class
+  private JButton btnPrevPattern, btnNextPattern, btnUpdatePreview;
   private JFormattedTextField txtCurrentPatternIndex;
-  
+
   NumberFormatter form;
 
+  // components created by parameters
   PercentComponent cmpMinAbundance;
   DoubleComponent cmpMinIntensity, cmpMergeWidth;
   IntegerComponent cmpCharge, cmpMinC, cmpMaxC, cmpMinSize;
   StringComponent cmpElement;
   OptionalModuleComponent cmpAutoCarbon;
-  JCheckBox cmpAutoCarbonCbx;
+  JCheckBox cmpAutoCarbonCbx, cmpPreview;
   
+
+  // relevant parameters
   IntegerParameter pMinC, pMaxC, pMinSize, pCharge;
   StringParameter pElement;
   DoubleParameter pMinIntensity, pMergeWidth;
   PercentParameter pMinAbundance;
   OptionalModuleParameter pAutoCarbon;
-  
+
   IsotopePatternDataSet dataset;
- 
+  private PatternTooltipGenerator ttGen;
+
   Color aboveMin, belowMin;
-  
+
   ParameterSet autoCarbonParameters;
-  
+
   private double minAbundance, minIntensity, mergeWidth;
   private int charge, minSize, minC, maxC;
   private String element;
@@ -101,12 +114,44 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     belowMin = new Color(255, 30, 30);
     theme = new EIsotopePatternChartTheme();
     theme.initialize();
-//    stroke = new BasicStroke((float)mergeWidth);
+    // stroke = new BasicStroke((float)mergeWidth);
+    ttGen = new PatternTooltipGenerator();
   }
 
   @Override
   protected void addDialogComponents() {
     super.addDialogComponents();
+
+    // get components
+    cmpMinAbundance =
+        (PercentComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minAbundance);
+    cmpMinIntensity = (DoubleComponent) this
+        .getComponentForParameter(IsotopePeakScannerParameters.minPatternIntensity);
+    cmpCharge =
+        (IntegerComponent) this.getComponentForParameter(IsotopePeakScannerParameters.charge);
+    cmpMergeWidth =
+        (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.mergeWidth);
+    cmpElement =
+        (StringComponent) this.getComponentForParameter(IsotopePeakScannerParameters.element);
+    cmpAutoCarbon = (OptionalModuleComponent) this
+        .getComponentForParameter(IsotopePeakScannerParameters.autoCarbonOpt);
+    cmpAutoCarbonCbx = (JCheckBox) cmpAutoCarbon.getComponent(0);
+    cmpPreview =
+        (JCheckBox) this.getComponentForParameter(IsotopePeakScannerParameters.showPreview);
+    cmpPreview.setSelected(false);; // i want to have the checkbox below the pattern settings
+    // but it should be disabled by default. Thats why it's hardcoded here.
+
+    // get parameters
+    pMinAbundance = parameterSet.getParameter(IsotopePeakScannerParameters.minAbundance);
+    pElement = parameterSet.getParameter(IsotopePeakScannerParameters.element);
+    pMinIntensity = parameterSet.getParameter(IsotopePeakScannerParameters.minPatternIntensity);
+    pCharge = parameterSet.getParameter(IsotopePeakScannerParameters.charge);
+    pMergeWidth = parameterSet.getParameter(IsotopePeakScannerParameters.mergeWidth);
+    pAutoCarbon = parameterSet.getParameter(IsotopePeakScannerParameters.autoCarbonOpt);
+    autoCarbonParameters = pAutoCarbon.getEmbeddedParameters();
+    pMinC = autoCarbonParameters.getParameter(AutoCarbonParameters.minCarbon);
+    pMaxC = autoCarbonParameters.getParameter(AutoCarbonParameters.maxCarbon);
+    pMinSize = autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize);
 
     minC = 10;// TODO: dont hardcode this
     maxC = 100;
@@ -117,105 +162,63 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     form.setMaximum(maxC);
 
     pnlPreview = new JPanel(new BorderLayout());
-    pnlButtons = new JPanel(new FlowLayout());
-    pnlCheckbox = new JPanel(new FlowLayout());
-
-
-    cbxPreview = new JCheckBox("Preview");
-    cbxPreview.addActionListener(this);
-    cbxPreview.setSelected(false);;
-    pnlCheckbox.add(cbxPreview);
+    pnlPreviewButtons = new JPanel(new FlowLayout());
+    pnlParameters = new JPanel(new BorderLayout());
 
     btnPrevPattern = new JButton("Previous");
     btnPrevPattern.addActionListener(this);
     btnPrevPattern.setMinimumSize(btnPrevPattern.getPreferredSize());
-    btnPrevPattern.setEnabled(cbxPreview.isSelected());
+    btnPrevPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
 
     txtCurrentPatternIndex = new JFormattedTextField(form);
     txtCurrentPatternIndex.addActionListener(this);
     txtCurrentPatternIndex.setText(String.valueOf(1000));
     txtCurrentPatternIndex.setMinimumSize(txtCurrentPatternIndex.getPreferredSize());
-    txtCurrentPatternIndex.setText(String.valueOf((minC+maxC)/2));
+    txtCurrentPatternIndex.setText(String.valueOf((minC + maxC) / 2));
     txtCurrentPatternIndex.setEditable(true);
-    txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
+    txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
 
     btnNextPattern = new JButton("Next");
     btnNextPattern.addActionListener(this);
     btnNextPattern.setPreferredSize(btnNextPattern.getMaximumSize());
-    btnNextPattern.setEnabled(cbxPreview.isSelected());
-    
-    btnUpdatePerview = new JButton("Update");
-    btnUpdatePerview.addActionListener(this);
-    btnUpdatePerview.setPreferredSize(btnUpdatePerview.getMinimumSize());
-    btnUpdatePerview.setEnabled(true);
-    
-    chart = ChartFactory.createXYLineChart("Isotope pattern preview", "m/z", "Abundance",
+    btnNextPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
+
+    btnUpdatePreview = new JButton("Update");
+    btnUpdatePreview.addActionListener(this);
+    btnUpdatePreview.setPreferredSize(btnUpdatePreview.getMinimumSize());
+    btnUpdatePreview.setEnabled(cmpPreview.isSelected());
+
+    chart = ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance",
         new XYSeriesCollection(new XYSeries("")));
     chart.getPlot().setBackgroundPaint(Color.WHITE);
     chart.getXYPlot().setDomainGridlinePaint(Color.GRAY);
     chart.getXYPlot().setRangeGridlinePaint(Color.GRAY);
-    
+
     pnlChart = new EChartPanel(chart);
-    pnlChart.setEnabled(cbxPreview.isSelected());
+
+    pnlPreviewButtons.add(btnPrevPattern);
+    pnlPreviewButtons.add(txtCurrentPatternIndex);
+    pnlPreviewButtons.add(btnNextPattern);
+    pnlPreviewButtons.add(btnUpdatePreview);
 
 
-    pnlButtons.add(btnPrevPattern);
-    pnlButtons.add(txtCurrentPatternIndex);
-    pnlButtons.add(btnNextPattern);
-    pnlButtons.add(btnUpdatePerview);
-
-
-    // remove 
+    // remove
     getContentPane().remove(mainPanel);
-    JPanel pnlParameters = new JPanel();
-    pnlParameters.setLayout(new BorderLayout());
     JScrollPane scroll = new JScrollPane();
     scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     scroll.setViewportView(mainPanel);
-    mainPanel.setMinimumSize(new Dimension(200, 200));
-    mainPanel.remove(super.btnOK);
-    mainPanel.remove(super.btnCancel);
-    mainPanel.remove(super.btnHelp);
-    
-    JPanel pnlButtons2 = new JPanel();
-    pnlButtons2.setLayout(new FlowLayout());
+    mainPanel.setMinimumSize(new Dimension(200, 400));
+    mainPanel.remove(super.pnlButtons);
+    pnlParameters.add(super.pnlButtons, BorderLayout.SOUTH);
     pnlParameters.add(scroll, BorderLayout.CENTER);
-    pnlButtons2.add(super.btnOK);
-    pnlButtons2.add(super.btnCancel);
-    pnlButtons2.add(super.btnHelp);
-    pnlParameters.add(pnlButtons2, BorderLayout.SOUTH);
-    
-    JPanel newMainPanel = new JPanel();
-    newMainPanel.setLayout(new BorderLayout());
+
+    newMainPanel = new JPanel(new BorderLayout());
     newMainPanel.add(pnlParameters, BorderLayout.WEST);
-    
-    pnlPreview.add(pnlCheckbox, BorderLayout.NORTH);
-    pnlPreview.add(pnlButtons, BorderLayout.SOUTH);
+
+    pnlPreview.add(pnlPreviewButtons, BorderLayout.SOUTH);
     pnlPreview.add(pnlChart, BorderLayout.CENTER);
-    newMainPanel.add(pnlPreview, BorderLayout.CENTER);
 
     getContentPane().add(newMainPanel, BorderLayout.CENTER);
-    
-    
-    cmpMinAbundance = (PercentComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minAbundance);
-    cmpMinIntensity = (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minPatternIntensity);
-    cmpCharge = (IntegerComponent) this.getComponentForParameter(IsotopePeakScannerParameters.charge);
-    cmpMergeWidth = (DoubleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.mergeWidth);
-    cmpElement = (StringComponent) this.getComponentForParameter(IsotopePeakScannerParameters.element);
-    cmpAutoCarbon = (OptionalModuleComponent) this.getComponentForParameter(IsotopePeakScannerParameters.autoCarbonOpt);
-    cmpAutoCarbonCbx = (JCheckBox) cmpAutoCarbon.getComponent(0);
-    
-    
-    pMinAbundance = parameterSet.getParameter(IsotopePeakScannerParameters.minAbundance);
-    pElement = parameterSet.getParameter(IsotopePeakScannerParameters.element);
-    pMinIntensity = parameterSet.getParameter(IsotopePeakScannerParameters.minPatternIntensity);
-    pCharge = parameterSet.getParameter(IsotopePeakScannerParameters.charge);
-    pMergeWidth = parameterSet.getParameter(IsotopePeakScannerParameters.mergeWidth);
-    pAutoCarbon = parameterSet.getParameter(IsotopePeakScannerParameters.autoCarbonOpt);
-    autoCarbonParameters = pAutoCarbon.getEmbeddedParameters();
-    pMinC = autoCarbonParameters.getParameter(AutoCarbonParameters.minCarbon);
-    pMaxC = autoCarbonParameters.getParameter(AutoCarbonParameters.maxCarbon);
-    pMinSize = autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize);    
   }
 
 
@@ -230,10 +233,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
         current++;
       }
       txtCurrentPatternIndex.setText(String.valueOf(current));
-      if (cbxPreview.isSelected())
+      if (cmpPreview.isSelected())
         updatePreview();
-    } 
-    
+    }
+
     else if (ae.getSource() == btnPrevPattern) {
       logger.info(ae.getSource().toString());
       int current = Integer.parseInt(txtCurrentPatternIndex.getText());
@@ -241,52 +244,60 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
         current--;
       }
       txtCurrentPatternIndex.setText(String.valueOf(current));
-      if (cbxPreview.isSelected())
+      if (cmpPreview.isSelected())
         updatePreview();
-    } 
-    
-    else if (ae.getSource() == cbxPreview) { // TODO: this looks like you can do it simpler
-      logger.info(ae.getSource().toString());
-      
-      if (cbxPreview.isSelected()) {
-        btnUpdatePerview.setEnabled(cbxPreview.isSelected());
-        updatePreview();
-      }
-      else
-        btnUpdatePerview.setEnabled(cbxPreview.isSelected());
     }
-    
+
+    else if (ae.getSource() == cmpPreview) { // TODO: this looks like you can do it simpler
+      logger.info(ae.getSource().toString());
+
+      if (cmpPreview.isSelected()) {
+        newMainPanel.add(pnlPreview, BorderLayout.CENTER);
+        pnlPreview.setVisible(true);
+        btnUpdatePreview.setEnabled(cmpPreview.isSelected());
+        updatePreview();
+        updateMinimumSize();
+        pack();
+      } else {
+        newMainPanel.remove(pnlPreview);
+        pnlPreview.setVisible(false);
+        btnUpdatePreview.setEnabled(cmpPreview.isSelected());
+        updateMinimumSize();
+        pack();
+      }
+    }
+
     else if (ae.getSource() == txtCurrentPatternIndex) {
       logger.info(ae.getSource().toString());
     }
-    
-    else if(ae.getSource() == btnUpdatePerview) {
+
+    else if (ae.getSource() == btnUpdatePreview) {
       updatePreview();
+    } else if (ae.getSource() == cmpMergeWidth) {
+      // stroke = new BasicStroke(Float.parseFloat(String.valueOf(pMergeWidth.getValue())));
     }
-    else if(ae.getSource() == cmpMergeWidth) {
-//      stroke = new BasicStroke(Float.parseFloat(String.valueOf(pMergeWidth.getValue())));
-    }
-    
-    else if(ae.getSource() == cmpAutoCarbonCbx) {
-          btnNextPattern.setEnabled(cbxPreview.isSelected());
-          btnPrevPattern.setEnabled(cbxPreview.isSelected());
-          txtCurrentPatternIndex.setEnabled(cbxPreview.isSelected());
+
+    else if (ae.getSource() == cmpAutoCarbonCbx) {
+      btnNextPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
+      btnPrevPattern.setEnabled(cmpAutoCarbonCbx.isSelected());
+      txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
     }
   }
 
 
   private void updatePreview() {
-    if(!updateParameters()) {
-      logger.warning("Could not update parameters or parameters are invalid. Please check the parameters.");
+    if (!updateParameters()) {
+      logger.warning(
+          "Could not update parameters or parameters are invalid. Please check the parameters.");
       return;
     }
-    
+
     ExtendedIsotopePattern pattern = calculateIsotopePattern();
-    if(pattern == null) {
+    if (pattern == null) {
       logger.warning("Could not calculate isotope pattern. Please check the parameters.");
       return;
     }
-    
+
     updateChart(pattern);
   }
 
@@ -295,147 +306,109 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     logger.info("Series count: " + dataset.getSeriesCount());
     XYBarDataset set = dataset.getBarData();
     int t = set.getSeriesCount();
-    chart = ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", set);
+    chart =
+        ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance",set);
     theme.apply(chart);
-    Plot plot = chart.getXYPlot();
-    
-    
-    if(plot instanceof XYPlot) {
-      XYItemRenderer r = ((XYPlot)plot).getRenderer();
-      
+    XYPlot plot = chart.getXYPlot();
+    plot.addRangeMarker(new ValueMarker(minIntensity, belowMin, new BasicStroke(1.0f)));
+
+    if (plot instanceof XYPlot) {
+      XYItemRenderer r = ((XYPlot) plot).getRenderer();
+
       r.setSeriesPaint(0, aboveMin);
       r.setSeriesPaint(1, belowMin);
-
-        /*XYTooltipGenerator gen = new XYToolTipGenerator() {
-          
-          @Override
-          public String generateToolTip(XYDataset dataset, int series, int item) {
-            // TODO Auto-generated method stub
-            return null;
-          }
-        };
-      }*/
+      
+      if(ttGen != null) {
+        ttGen.setDataset(dataset);
+        r.setDefaultToolTipGenerator(ttGen);
+      }
     }
     pnlChart.setChart(chart);
   }
-  
-  private boolean updateParameters()
-  {
+
+  private boolean updateParameters() {
     updateParameterSetFromComponents();
     autoCarbon = pAutoCarbon.getValue();
-    
-    if(!checkParameters())
+
+    if (!checkParameters())
       return false;
-    
-    /*element = cmpElement.getText();
-    minAbundance = cmpMinAbundance.getValue() / 100;
-    mergeWidth = Double.parseDouble(cmpMergeWidth.getText());
-    minIntensity = Double.parseDouble(cmpMinIntensity.getText());
-    charge = Integer.parseInt(cmpCharge.getText());*/
-    
-    //element = pElement.getValue(); //TODO
+
+    /*
+     * element = cmpElement.getText(); minAbundance = cmpMinAbundance.getValue() / 100; mergeWidth =
+     * Double.parseDouble(cmpMergeWidth.getText()); minIntensity =
+     * Double.parseDouble(cmpMinIntensity.getText()); charge =
+     * Integer.parseInt(cmpCharge.getText());
+     */
+
+    // element = pElement.getValue(); //TODO
     element = cmpElement.getText();
     minAbundance = pMinAbundance.getValue() / 100;
     mergeWidth = pMergeWidth.getValue();
     minIntensity = pMinIntensity.getValue();
     charge = pCharge.getValue();
-    
-    if(autoCarbon)
+
+    if (autoCarbon)
       updateAutoCarbonParameters();
-    
-    logger.info("new parameter values:\n"
-        + "element: " + element + "\tMinimum abundance: " + minAbundance
-        + "\nMerge width: " + mergeWidth + "\tMinimum intensity: " + minIntensity
-        + "\nCharge: " + charge + "\tAuto carbon: " + autoCarbon
-        + "\nMinimum C: " + minC + "\tMaximum C: " + maxC);
+
+    logger.info("new parameter values:\n" + "element: " + element + "\tMinimum abundance: "
+        + minAbundance + "\nMerge width: " + mergeWidth + "\tMinimum intensity: " + minIntensity
+        + "\nCharge: " + charge + "\tAuto carbon: " + autoCarbon + "\nMinimum C: " + minC
+        + "\tMaximum C: " + maxC);
     return true;
   }
-  
+
   private void updateAutoCarbonParameters() {
     minC = pMinC.getValue();
     maxC = pMaxC.getValue();
     minSize = pMinSize.getValue();
-    
-    if(Integer.parseInt(txtCurrentPatternIndex.getText()) > maxC)
+
+    if (Integer.parseInt(txtCurrentPatternIndex.getText()) > maxC)
       txtCurrentPatternIndex.setText(String.valueOf(maxC));
-    if(Integer.parseInt(txtCurrentPatternIndex.getText()) < minC)
+    if (Integer.parseInt(txtCurrentPatternIndex.getText()) < minC)
       txtCurrentPatternIndex.setText(String.valueOf(minC));
     form.setMaximum(maxC);
     form.setMinimum(minC);
   }
-  
+
   private boolean checkParameters() {
-    if(/*pElement.getValue().equals("")*/ cmpElement.getText().equals("") && !autoCarbon) {
+    if (/* pElement.getValue().equals("") */ cmpElement.getText().equals("") && !autoCarbon) {
       logger.info("Element == null and no autoCarbon");
       return false;
     }
-    if(pMinAbundance.getValue() / 100 > 1.0 || pMinAbundance.getValue() / 100 < 0.0) {
+    if (pMinAbundance.getValue() / 100 > 1.0 || pMinAbundance.getValue() / 100 < 0.0) {
       logger.info("Minimun abundance invalid.");
       return false;
     }
-    if(pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() < 0.0) {
+    if (pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() < 0.0) {
       logger.info("Minimum intensity invalid.");
       return false;
     }
     logger.info("Parameters valid");
     return true;
   }
-  
+
   private ExtendedIsotopePattern calculateIsotopePattern() {
     ExtendedIsotopePattern pattern = new ExtendedIsotopePattern();
-    
-    if(!checkParameters())
+
+    if (!checkParameters())
       return null;
-    
+
     String strPattern = "";
     int currentCarbonPattern = Integer.parseInt(txtCurrentPatternIndex.getText());
-    
-    if(autoCarbon)
+
+    if (autoCarbon)
       strPattern = "C" + String.valueOf(currentCarbonPattern) + element;
     else
       strPattern = element;
-    
-    if(strPattern.equals(""))
+
+    if (strPattern.equals(""))
       return null;
     logger.info("Calculating isotope pattern: " + strPattern);
-    
-    pattern.setUpFromFormula(strPattern, minAbundance, 
-        mergeWidth, minIntensity*0.2); // *0.2 so the user can see the peaks below the threshold
+
+    // *0.2 so the user can see the peaks below the threshold
+    pattern.setUpFromFormula(strPattern, minAbundance, mergeWidth, minIntensity * 0.2);
     pattern.applyCharge(charge, PolarityType.POSITIVE);
     return pattern;
   }
 
-  private XYSeries[] convertPatternToXYSeries(ExtendedIsotopePattern pattern) {
-
-//    DataPoint[] dp = pattern.getDataPoints();
-//    XYSeries[] xypattern = new XYSeries[dp.length+1];
-//
-//    xypattern[0] = new XYSeries("Minimum Intensity");
-//    xypattern[0].add(dp[0].getMZ()-0.5, minIntensity);
-//    xypattern[0].add(dp[dp.length-1].getMZ()+0.5, minIntensity);
-//    xypattern[0].setDescription("this is a test");
-//    
-//    for (int i = 1; i < xypattern.length; i++) {
-//      xypattern[i] = new XYSeries(pattern.getDetailedPeakDescription(i-1));
-//
-//      xypattern[i].add(dp[i-1].getMZ()/* - dp[0].getMZ()*/, 0);
-//      xypattern[i].add(dp[i-1].getMZ()/* - dp[0].getMZ()*/, dp[i-1].getIntensity());
-//    }
-//    return xypattern;
-    DataPoint[] dp = pattern.getDataPoints();
-    XYSeries[] xypattern = new XYSeries[2];
-   
-    xypattern[0] = new XYSeries("Below minimum intensity");
-    xypattern[1] = new XYSeries("Above minimum intensity");
-
-    for (int i = 0; i < dp.length; i++) {
-      if(dp[i].getIntensity() < minIntensity) {
-        xypattern[0].add(dp[i].getMZ()/* - dp[0].getMZ()*/, dp[i].getIntensity());
-      }
-      else {
-        xypattern[1].add(dp[i].getMZ()/* - dp[0].getMZ()*/, dp[i].getIntensity());
-      }
-    }
-    return xypattern;
-  }
 }
