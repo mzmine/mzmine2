@@ -19,7 +19,7 @@ public class PatternTooltipGenerator implements XYToolTipGenerator {
     @Override
     public String generateToolTip(XYDataset data, int series, int item) {
       if(dataset != null)
-        return dataset.getItemDescription(series, item);
+        return dataset.getItemDescription(series, item) + ", Intensity: " + IsotopePeakScannerTask.round(dataset.getY(series, item).doubleValue(), 2);
       return "Invalid";
     }
 }
