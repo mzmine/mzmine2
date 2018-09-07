@@ -114,10 +114,12 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
       + "The pattern with the best fitting number of carbon atoms will be chosen for every detected pattern.\n"
       +" This will greatly increase computation time.",
       new AutoCarbonParameters());
+  
+  public static final BooleanParameter showPreview = new BooleanParameter("Show preview", "If selected this will add a preview chart of the calculated isotope pattern with the current settings.");
 
   public IsotopePeakScannerParameters() {
     super(new Parameter[] {PEAK_LISTS, mzTolerance, checkRT, rtTolerance, element, autoCarbonOpt,
-        charge, minAbundance, minPatternIntensity, mergeWidth, minHeight, checkIntensity, minRating,
+        charge, minAbundance, minPatternIntensity, mergeWidth, showPreview, minHeight, checkIntensity, minRating,
         ratingChoices, massList, suffix});
   }
 

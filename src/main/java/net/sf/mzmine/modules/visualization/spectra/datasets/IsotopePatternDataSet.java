@@ -1,32 +1,38 @@
 package net.sf.mzmine.modules.visualization.spectra.datasets;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.jfree.data.xy.XYBarDataset;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import com.sun.xml.xsom.impl.scd.Iterators.Map;
 import io.github.msdk.MSDKRuntimeException;
 import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.IsotopePattern;
+import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.ExtendedIsotopePattern;
 /**
  * 
  * @author Steffen
  *
  */
-//public class IsotopePatternDataSet extends XYSeriesCollection {
+//public class IsotopePatternDataSet extends DataPointsDataSet {
 public class IsotopePatternDataSet extends XYSeriesCollection {
   /**
    *
    */
   private static final long serialVersionUID = 1L;
-  
-  private IsotopePattern pattern;
+  private ExtendedIsotopePattern pattern;
   private double minAbundance;
   private DataPoint[] dp;
   private XYSeries above;
   private XYSeries below;
   private XYBarDataset barData;
   private double width;
- 
+  private List <String> descrBelow, descrAbove; 
+  
+  private ArrayList data;
+  
   private enum AB {ABOVE, BELOW};
   Assignment assignment[];
   private class Assignment{
@@ -34,12 +40,16 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
     private int id;
   }
   
-  public IsotopePatternDataSet(IsotopePattern pattern, double minAbundance, double width)
+  public IsotopePatternDataSet(ExtendedIsotopePattern pattern, double minAbundance, double width)
   {
+//    super(pattern.getDescription(), pattern.getDataPoints());
+    
     this.pattern = pattern;
     this.minAbundance = minAbundance;
     above = new XYSeries("Above minimum intensity");
     below = new XYSeries("Below minimum intensity");
+    descrBelow = new ArrayList <String>();
+    descrAbove = new ArrayList <String>();
     
     dp = pattern.getDataPoints();
     assignment = new Assignment[dp.length];
@@ -51,11 +61,13 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
         assignment[i].ab = AB.BELOW;
         assignment[i].id = i;
         below.add(dp[i].getMZ(), dp[i].getIntensity());
+        descrBelow.add(pattern.getDetailedPeakDescription(i));
       }
       else {
         assignment[i].ab = AB.ABOVE;
         assignment[i].id = i;
         above.add(dp[i].getMZ(), dp[i].getIntensity());
+        descrAbove.add(pattern.getDetailedPeakDescription(i));
       }
     }
     
@@ -66,10 +78,20 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
     barData = new XYBarDataset(this, width);
   }
   
-  public int getSeriesDpIndex(int index) throws MSDKRuntimeException {
-    if(index > dp.length)
+  public String getItemDescription(int series, int item) {
+    if(series == 0 && item < descrAbove.size())
+      return descrAbove.get(item);
+    if(series == 1 && item < descrBelow.size())
+      return descrBelow.get(item);
+    
+    return "Invalid series/index";
+    
+  }
+  
+  public int getSeriesDpIndex(int item) throws MSDKRuntimeException {
+    if(item > dp.length)
       throw new MSDKRuntimeException("Index out of bounds.");
-    return assignment[index].id;
+    return assignment[item].id;
   }
   
   public AB getSeriesAB(int index) throws MSDKRuntimeException {
@@ -77,6 +99,7 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
       throw new MSDKRuntimeException("Index out of bounds.");
     return assignment[index].ab;
   }
+  
   public IsotopePattern getIsotopePattern() {
     return pattern;
   }
@@ -97,5 +120,24 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
 
   public XYBarDataset getBarData() {
     return barData;
+  }
+  
+  @Override
+  public Number getStartX(int series, int item) {
+    return (this.getX(series, item).doubleValue() - width/2);
+  }
+  
+  @Override
+  public Number getEndX(int series, int item) {
+      return (this.getX(series, item).doubleValue() + width/2);
+  }
+  @Override
+  public double getStartXValue(int series, int item) {
+    return (this.getX(series, item).doubleValue() - width/2);
+  }
+  
+  @Override
+  public double getEndXValue(int series, int item) {
+      return (this.getX(series, item).doubleValue() + width/2);
   }
 }
