@@ -27,7 +27,7 @@ import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.datamodel.PeakListRow;
 import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.IsotopePeakScannerTask;
-import net.sf.mzmine.modules.visualization.spectra.datasets.IsotopePatternDataSet;
+import net.sf.mzmine.modules.visualization.spectra.datasets.ExtendedIsotopePatternDataSet;
 import net.sf.mzmine.modules.visualization.spectra.datasets.IsotopesDataSet;
 import net.sf.mzmine.modules.visualization.spectra.datasets.PeakListDataSet;
 
@@ -85,9 +85,10 @@ public class SpectraToolTipGenerator implements XYToolTipGenerator {
 
     }
     
-    if(dataset instanceof IsotopePatternDataSet) {
-      return "Isotope pattern: " + ((IsotopePatternDataSet)dataset).getIsotopePattern().getDescription() +
-          "\nIdentity: " + ((IsotopePatternDataSet)dataset).getItemDescription(series, item) 
+    if(dataset instanceof ExtendedIsotopePatternDataSet) {
+      return "Isotope pattern: " + ((ExtendedIsotopePatternDataSet)dataset).getIsotopePattern().getDescription()
+          + "\nm/z: " + mzFormat.format(mzValue)
+          + "\nIdentity: " + ((ExtendedIsotopePatternDataSet)dataset).getItemDescription(series, item) 
           + "\nRelative intensity: " + percentFormat.format((dataset.getY(series, item).doubleValue() * 100)) + "%";
     }
 

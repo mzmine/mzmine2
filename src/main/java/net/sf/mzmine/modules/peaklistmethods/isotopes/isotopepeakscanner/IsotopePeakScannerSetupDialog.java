@@ -17,27 +17,17 @@ import javax.swing.JScrollPane;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.XYToolTipGenerator;
-import org.jfree.chart.plot.Marker;
-import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.chart.renderer.xy.XYBarPainter;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.data.xy.XYBarDataset;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import net.sf.mzmine.chartbasics.chartthemes.ChartThemeFactory;
-import net.sf.mzmine.chartbasics.chartthemes.ChartThemeFactory.THEME;
 import net.sf.mzmine.chartbasics.chartthemes.EIsotopePatternChartTheme;
-import net.sf.mzmine.chartbasics.chartthemes.EStandardChartTheme;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
-import net.sf.mzmine.datamodel.DataPoint;
 import net.sf.mzmine.datamodel.PolarityType;
 import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.autocarbon.AutoCarbonParameters;
-import net.sf.mzmine.modules.visualization.spectra.datasets.IsotopePatternDataSet;
+import net.sf.mzmine.modules.visualization.spectra.datasets.ExtendedIsotopePatternDataSet;
+import net.sf.mzmine.modules.visualization.spectra.renderers.SpectraToolTipGenerator;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
 import net.sf.mzmine.parameters.parametertypes.DoubleComponent;
@@ -50,14 +40,21 @@ import net.sf.mzmine.parameters.parametertypes.PercentComponent;
 import net.sf.mzmine.parameters.parametertypes.PercentParameter;
 import net.sf.mzmine.parameters.parametertypes.StringComponent;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
-import net.sf.mzmine.modules.visualization.spectra.renderers.SpectraToolTipGenerator;
 
 /**
- * 
+ *
+ *Extension of ParameterSetupDialog to allow a preview window
+ *
+ *
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
 public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
+
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
 
   private Logger logger = Logger.getLogger(this.getClass().getName());
 
@@ -73,7 +70,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private EIsotopePatternChartTheme theme;
 
 
-  // componnents created by this class
+  // components created by this class
   private JButton btnPrevPattern, btnNextPattern, btnUpdatePreview;
   private JFormattedTextField txtCurrentPatternIndex;
 
@@ -95,7 +92,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   PercentParameter pMinAbundance;
   OptionalModuleParameter pAutoCarbon;
 
-  IsotopePatternDataSet dataset;
+  ExtendedIsotopePatternDataSet dataset;
   private SpectraToolTipGenerator ttGen;
 
   Color aboveMin, belowMin;
@@ -154,6 +151,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     pMaxC = autoCarbonParameters.getParameter(AutoCarbonParameters.maxCarbon);
     pMinSize = autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize);
 
+    //set up gui
     minC = 10;// TODO: dont hardcode this
     maxC = 100;
     form = new NumberFormatter(NumberFormat.getInstance());
@@ -173,9 +171,8 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     txtCurrentPatternIndex = new JFormattedTextField(form);
     txtCurrentPatternIndex.addActionListener(this);
-    txtCurrentPatternIndex.setText("10000");
-    txtCurrentPatternIndex.setMinimumSize(txtCurrentPatternIndex.getPreferredSize());
     txtCurrentPatternIndex.setText(String.valueOf((minC + maxC) / 2));
+    txtCurrentPatternIndex.setMinimumSize(new Dimension(50, 12));
     txtCurrentPatternIndex.setEditable(true);
     txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
 
@@ -220,6 +217,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     pnlPreview.add(pnlChart, BorderLayout.CENTER);
 
     getContentPane().add(newMainPanel, BorderLayout.CENTER);
+    pack();
   }
 
 
@@ -303,17 +301,14 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   }
 
   private void updateChart(ExtendedIsotopePattern pattern) {
-    dataset = new IsotopePatternDataSet(pattern, minIntensity, mergeWidth);
+    dataset = new ExtendedIsotopePatternDataSet(pattern, minIntensity, mergeWidth);
     logger.info("Series count: " + dataset.getSeriesCount());
-    XYBarDataset set = dataset.getBarData();
-    int t = set.getSeriesCount();
     chart =
         ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", dataset);
     theme.apply(chart);
     XYPlot plot = chart.getXYPlot();
     plot.addRangeMarker(new ValueMarker(minIntensity, belowMin, new BasicStroke(1.0f)));
-
-    XYItemRenderer r = ((XYPlot) plot).getRenderer();
+    XYItemRenderer r = plot.getRenderer();
     r.setSeriesPaint(0, aboveMin);
     r.setSeriesPaint(1, belowMin);
     r.setDefaultToolTipGenerator(ttGen);
@@ -327,15 +322,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     if (!checkParameters())
       return false;
 
-    /*
-     * element = cmpElement.getText(); minAbundance = cmpMinAbundance.getValue() / 100; mergeWidth =
-     * Double.parseDouble(cmpMergeWidth.getText()); minIntensity =
-     * Double.parseDouble(cmpMinIntensity.getText()); charge =
-     * Integer.parseInt(cmpCharge.getText());
-     */
-
-    // element = pElement.getValue(); //TODO
-    element = cmpElement.getText();
+    element = pElement.getValue(); //TODO
     minAbundance = pMinAbundance.getValue() / 100;
     mergeWidth = pMergeWidth.getValue();
     minIntensity = pMinIntensity.getValue();
@@ -343,11 +330,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     if (autoCarbon)
       updateAutoCarbonParameters();
-
-    logger.info("new parameter values:\n" + "element: " + element + "\tMinimum abundance: "
-        + minAbundance + "\nMerge width: " + mergeWidth + "\tMinimum intensity: " + minIntensity
-        + "\nCharge: " + charge + "\tAuto carbon: " + autoCarbon + "\nMinimum C: " + minC
-        + "\tMaximum C: " + maxC);
     return true;
   }
 
@@ -401,8 +383,8 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     // *0.2 so the user can see the peaks below the threshold
     pattern.setUpFromFormula(strPattern, minAbundance, mergeWidth, minIntensity * 0.2);
-    pattern.applyCharge(charge, PolarityType.POSITIVE);
+    PolarityType pol = (charge > 0) ? PolarityType.POSITIVE : PolarityType.NEGATIVE;
+    pattern.applyCharge(charge, pol);
     return pattern;
   }
-
 }
