@@ -2,6 +2,7 @@ package net.sf.mzmine.modules.visualization.spectra.datasets;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jfree.data.xy.IntervalXYDelegate;
 import org.jfree.data.xy.XYBarDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
@@ -16,7 +17,7 @@ import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.Extende
  * @author Steffen
  *
  */
-//public class IsotopePatternDataSet extends DataPointsDataSet {
+//public class IsotopePatternDataSet extends XYBarDataset {
 public class IsotopePatternDataSet extends XYSeriesCollection {
   /**
    *
@@ -29,9 +30,8 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
   private XYSeries below;
   private XYBarDataset barData;
   private double width;
-  private List <String> descrBelow, descrAbove; 
-  
-  private ArrayList data;
+  private List <String> descrBelow, descrAbove;
+  private IntervalXYDelegate intervalDelegate;
   
   private enum AB {ABOVE, BELOW};
   Assignment assignment[];
@@ -42,8 +42,7 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
   
   public IsotopePatternDataSet(ExtendedIsotopePattern pattern, double minAbundance, double width)
   {
-//    super(pattern.getDescription(), pattern.getDataPoints());
-    
+//    super(pattern.getDescription(), pattern.getDataPoints());    
     this.pattern = pattern;
     this.minAbundance = minAbundance;
     above = new XYSeries("Above minimum intensity");
@@ -71,6 +70,8 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
       }
     }
     
+    this.intervalDelegate = new IntervalXYDelegate(this);
+    this.intervalDelegate.setFixedIntervalWidth(width);
     super.addSeries(above);
     super.addSeries(below);
     
@@ -116,28 +117,31 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
   public void setWidth(double width) {
     this.width = width;
     barData.setBarWidth(width);
+    this.intervalDelegate.setFixedIntervalWidth(width);
   }
 
   public XYBarDataset getBarData() {
     return barData;
   }
   
-  @Override
-  public Number getStartX(int series, int item) {
-    return (this.getX(series, item).doubleValue() - width/2);
-  }
-  
-  @Override
-  public Number getEndX(int series, int item) {
-      return (this.getX(series, item).doubleValue() + width/2);
-  }
+//  @Override
+//  public Number getStartX(int series, int item) {
+//    System.out.println("getStartX called.");
+//    return (this.getX(series, item).doubleValue() - width/2);
+//  }
+//  
+//  @Override
+//  public Number getEndX(int series, int item) {
+//    System.out.println("getEndX called.");
+//    return (this.getX(series, item).doubleValue() + width/2);
+//  }
   @Override
   public double getStartXValue(int series, int item) {
-    return (this.getX(series, item).doubleValue() - width/2);
+    return intervalDelegate.getStartXValue(series, item);
   }
   
   @Override
   public double getEndXValue(int series, int item) {
-      return (this.getX(series, item).doubleValue() + width/2);
+    return intervalDelegate.getEndXValue(series, item);
   }
 }

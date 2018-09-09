@@ -50,6 +50,7 @@ import net.sf.mzmine.parameters.parametertypes.PercentComponent;
 import net.sf.mzmine.parameters.parametertypes.PercentParameter;
 import net.sf.mzmine.parameters.parametertypes.StringComponent;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
+import net.sf.mzmine.modules.visualization.spectra.renderers.SpectraToolTipGenerator;
 
 /**
  * 
@@ -95,7 +96,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   OptionalModuleParameter pAutoCarbon;
 
   IsotopePatternDataSet dataset;
-  private PatternTooltipGenerator ttGen;
+  private SpectraToolTipGenerator ttGen;
 
   Color aboveMin, belowMin;
 
@@ -115,7 +116,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     theme = new EIsotopePatternChartTheme();
     theme.initialize();
     // stroke = new BasicStroke((float)mergeWidth);
-    ttGen = new PatternTooltipGenerator();
+    ttGen = new SpectraToolTipGenerator();
   }
 
   @Override
@@ -172,7 +173,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
 
     txtCurrentPatternIndex = new JFormattedTextField(form);
     txtCurrentPatternIndex.addActionListener(this);
-    txtCurrentPatternIndex.setText(String.valueOf(1000));
+    txtCurrentPatternIndex.setText("10000");
     txtCurrentPatternIndex.setMinimumSize(txtCurrentPatternIndex.getPreferredSize());
     txtCurrentPatternIndex.setText(String.valueOf((minC + maxC) / 2));
     txtCurrentPatternIndex.setEditable(true);
@@ -307,22 +308,15 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     XYBarDataset set = dataset.getBarData();
     int t = set.getSeriesCount();
     chart =
-        ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance",set);
+        ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", dataset);
     theme.apply(chart);
     XYPlot plot = chart.getXYPlot();
     plot.addRangeMarker(new ValueMarker(minIntensity, belowMin, new BasicStroke(1.0f)));
 
-    if (plot instanceof XYPlot) {
-      XYItemRenderer r = ((XYPlot) plot).getRenderer();
-
-      r.setSeriesPaint(0, aboveMin);
-      r.setSeriesPaint(1, belowMin);
-      
-      if(ttGen != null) {
-        ttGen.setDataset(dataset);
-        r.setDefaultToolTipGenerator(ttGen);
-      }
-    }
+    XYItemRenderer r = ((XYPlot) plot).getRenderer();
+    r.setSeriesPaint(0, aboveMin);
+    r.setSeriesPaint(1, belowMin);
+    r.setDefaultToolTipGenerator(ttGen);
     pnlChart.setChart(chart);
   }
 
