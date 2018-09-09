@@ -28,7 +28,6 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
   private DataPoint[] dp;
   private XYSeries above;
   private XYSeries below;
-  private XYBarDataset barData;
   private double width;
   private List <String> descrBelow, descrAbove;
   private IntervalXYDelegate intervalDelegate;
@@ -74,9 +73,6 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
     this.intervalDelegate.setFixedIntervalWidth(width);
     super.addSeries(above);
     super.addSeries(below);
-    
-    
-    barData = new XYBarDataset(this, width);
   }
   
   public String getItemDescription(int series, int item) {
@@ -116,12 +112,7 @@ public class IsotopePatternDataSet extends XYSeriesCollection {
 
   public void setWidth(double width) {
     this.width = width;
-    barData.setBarWidth(width);
     this.intervalDelegate.setFixedIntervalWidth(width);
-  }
-
-  public XYBarDataset getBarData() {
-    return barData;
   }
   
 //  @Override
