@@ -30,6 +30,7 @@ import net.sf.mzmine.modules.visualization.spectra.datasets.ExtendedIsotopePatte
 import net.sf.mzmine.modules.visualization.spectra.renderers.SpectraToolTipGenerator;
 import net.sf.mzmine.parameters.ParameterSet;
 import net.sf.mzmine.parameters.dialogs.ParameterSetupDialog;
+import net.sf.mzmine.parameters.dialogs.ParameterSetupDialogWithEmptyPreview;
 import net.sf.mzmine.parameters.parametertypes.DoubleComponent;
 import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
 import net.sf.mzmine.parameters.parametertypes.IntegerComponent;
@@ -49,7 +50,7 @@ import net.sf.mzmine.parameters.parametertypes.StringParameter;
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
-public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
+public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmptyPreview {
 
   /**
    * 
@@ -57,13 +58,12 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private static final long serialVersionUID = 1L;
 
   private Logger logger = Logger.getLogger(this.getClass().getName());
-
-  private JPanel pnlPreview; // this will contain the preview and navigation panels
-  private JPanel pnlPreviewButtons; // this will contain the navigation
-  private JPanel newMainPanel; // this will be the new main panel
-  private JPanel pnlParameters; // this will contain all parameters of the module (the main panel
-                                // will be inserted here)
-
+  
+  private double minAbundance, minIntensity, mergeWidth;
+  private int charge, minSize, minC, maxC;
+  private String element;
+  private boolean autoCarbon;
+  
   private EChartPanel pnlChart;
   private JFreeChart chart;
   private XYPlot plot;
@@ -74,35 +74,30 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   private JButton btnPrevPattern, btnNextPattern, btnUpdatePreview;
   private JFormattedTextField txtCurrentPatternIndex;
 
-  NumberFormatter form;
+  private NumberFormatter form;
 
   // components created by parameters
-  PercentComponent cmpMinAbundance;
-  DoubleComponent cmpMinIntensity, cmpMergeWidth;
-  IntegerComponent cmpCharge, cmpMinC, cmpMaxC, cmpMinSize;
-  StringComponent cmpElement;
-  OptionalModuleComponent cmpAutoCarbon;
-  JCheckBox cmpAutoCarbonCbx, cmpPreview;
+  private PercentComponent cmpMinAbundance;
+  private DoubleComponent cmpMinIntensity, cmpMergeWidth;
+  private IntegerComponent cmpCharge, cmpMinC, cmpMaxC, cmpMinSize;
+  private StringComponent cmpElement;
+  private OptionalModuleComponent cmpAutoCarbon;
+  private JCheckBox cmpAutoCarbonCbx, cmpPreview;
   
 
   // relevant parameters
-  IntegerParameter pMinC, pMaxC, pMinSize, pCharge;
-  StringParameter pElement;
-  DoubleParameter pMinIntensity, pMergeWidth;
-  PercentParameter pMinAbundance;
-  OptionalModuleParameter pAutoCarbon;
+  private IntegerParameter pMinC, pMaxC, pMinSize, pCharge;
+  private StringParameter pElement;
+  private DoubleParameter pMinIntensity, pMergeWidth;
+  private PercentParameter pMinAbundance;
+  private OptionalModuleParameter pAutoCarbon;
 
-  ExtendedIsotopePatternDataSet dataset;
+  private ExtendedIsotopePatternDataSet dataset;
   private SpectraToolTipGenerator ttGen;
 
   Color aboveMin, belowMin;
 
   ParameterSet autoCarbonParameters;
-
-  private double minAbundance, minIntensity, mergeWidth;
-  private int charge, minSize, minC, maxC;
-  private String element;
-  private boolean autoCarbon;
 
   public IsotopePeakScannerSetupDialog(Window parent, boolean valueCheckRequired,
       ParameterSet parameters) {
@@ -112,7 +107,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     belowMin = new Color(255, 30, 30);
     theme = new EIsotopePatternChartTheme();
     theme.initialize();
-    // stroke = new BasicStroke((float)mergeWidth);
     ttGen = new SpectraToolTipGenerator();
   }
 
@@ -120,6 +114,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
   protected void addDialogComponents() {
     super.addDialogComponents();
 
+    pnlChart = new EChartPanel(chart);
+    pnlPreview.add(pnlChart, BorderLayout.CENTER);
+
+    
     // get components
     cmpMinAbundance =
         (PercentComponent) this.getComponentForParameter(IsotopePeakScannerParameters.minAbundance);
@@ -136,7 +134,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     cmpAutoCarbonCbx = (JCheckBox) cmpAutoCarbon.getComponent(0);
     cmpPreview =
         (JCheckBox) this.getComponentForParameter(IsotopePeakScannerParameters.showPreview);
-    cmpPreview.setSelected(false);; // i want to have the checkbox below the pattern settings
+    cmpPreview.setSelected(false); // i want to have the checkbox below the pattern settings
     // but it should be disabled by default. Thats why it's hardcoded here.
 
     // get parameters
@@ -159,10 +157,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     form.setAllowsInvalid(true);
     form.setMinimum(minC);
     form.setMaximum(maxC);
-
-    pnlPreview = new JPanel(new BorderLayout());
-    pnlPreviewButtons = new JPanel(new FlowLayout());
-    pnlParameters = new JPanel(new BorderLayout());
 
     btnPrevPattern = new JButton("Previous");
     btnPrevPattern.addActionListener(this);
@@ -192,31 +186,12 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     chart.getXYPlot().setDomainGridlinePaint(Color.GRAY);
     chart.getXYPlot().setRangeGridlinePaint(Color.GRAY);
 
-    pnlChart = new EChartPanel(chart);
-
     pnlPreviewButtons.add(btnPrevPattern);
     pnlPreviewButtons.add(txtCurrentPatternIndex);
     pnlPreviewButtons.add(btnNextPattern);
     pnlPreviewButtons.add(btnUpdatePreview);
 
-
-    // remove
-    getContentPane().remove(mainPanel);
-    JScrollPane scroll = new JScrollPane();
-    scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scroll.setViewportView(mainPanel);
-    mainPanel.setMinimumSize(new Dimension(200, 400));
-    mainPanel.remove(super.pnlButtons);
-    pnlParameters.add(super.pnlButtons, BorderLayout.SOUTH);
-    pnlParameters.add(scroll, BorderLayout.CENTER);
-
-    newMainPanel = new JPanel(new BorderLayout());
-    newMainPanel.add(pnlParameters, BorderLayout.WEST);
-
-    pnlPreview.add(pnlPreviewButtons, BorderLayout.SOUTH);
-    pnlPreview.add(pnlChart, BorderLayout.CENTER);
-
-    getContentPane().add(newMainPanel, BorderLayout.CENTER);
+    
     pack();
   }
 
@@ -247,7 +222,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
         updatePreview();
     }
 
-    else if (ae.getSource() == cmpPreview) { // TODO: this looks like you can do it simpler
+    else if (ae.getSource() == cmpPreview) {
       logger.info(ae.getSource().toString());
 
       if (cmpPreview.isSelected()) {
@@ -384,6 +359,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialog {
     // *0.2 so the user can see the peaks below the threshold
     pattern.setUpFromFormula(strPattern, minAbundance, mergeWidth, minIntensity * 0.2);
     PolarityType pol = (charge > 0) ? PolarityType.POSITIVE : PolarityType.NEGATIVE;
+    charge = (charge > 0) ? charge : charge * -1;
     pattern.applyCharge(charge, pol);
     return pattern;
   }
