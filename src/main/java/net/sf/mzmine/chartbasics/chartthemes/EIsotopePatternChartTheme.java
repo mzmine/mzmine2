@@ -10,21 +10,21 @@ import org.jfree.chart.plot.XYPlot;
 import net.sf.mzmine.chartbasics.chartthemes.ChartThemeFactory.THEME;
 
 public class EIsotopePatternChartTheme extends EStandardChartTheme {
-  
+
   protected boolean showXGrid = true, showYGrid = true;
-  
+
   public EIsotopePatternChartTheme() {
     super(THEME.BNW_PRINT, "Isotope pattern this");
   }
-  
+
   public void initialize() {
     // Fonts
     this.setExtraLargeFont(new Font("Arial", Font.BOLD, 16));
     this.setLargeFont(new Font("Arial", Font.BOLD, 11));
     this.setRegularFont(new Font("Arial", Font.PLAIN, 11));
     this.setSmallFont(new Font("Arial", Font.PLAIN, 11));
-    
-    //paints
+
+    // paints
     this.setTitlePaint(Color.black);
     this.setSubtitlePaint(Color.black);
     this.setLegendItemPaint(Color.black);
@@ -40,7 +40,7 @@ public class EIsotopePatternChartTheme extends EStandardChartTheme {
     this.setLegendBackgroundPaint(Color.white);
     this.setChartBackgroundPaint(Color.white);
     this.setPlotBackgroundPaint(Color.white);
-    
+
     Paint[] colors = new Paint[] {Color.BLACK, new Color(0xFF, 0x55, 0x55),
         new Color(0x55, 0x55, 0xFF), new Color(0x55, 0xFF, 0x55), new Color(0xFF, 0xFF, 0x55),
         new Color(0xFF, 0x55, 0xFF), new Color(0x55, 0xFF, 0xFF), Color.pink, Color.gray,
@@ -52,24 +52,24 @@ public class EIsotopePatternChartTheme extends EStandardChartTheme {
         ChartColor.VERY_DARK_MAGENTA, ChartColor.VERY_DARK_CYAN, ChartColor.VERY_LIGHT_RED,
         ChartColor.VERY_LIGHT_BLUE, ChartColor.VERY_LIGHT_GREEN, ChartColor.VERY_LIGHT_YELLOW,
         ChartColor.VERY_LIGHT_MAGENTA, ChartColor.VERY_LIGHT_CYAN};
-    
+
     this.setDrawingSupplier(
         new DefaultDrawingSupplier(colors, DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
             DefaultDrawingSupplier.DEFAULT_OUTLINE_PAINT_SEQUENCE,
             DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
             DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
             DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE));
-    
+
     this.setRangeGridlinePaint(Color.GRAY);
     this.setDomainGridlinePaint(Color.GRAY);
 
     this.setAxisLinePaint(Color.black);
   }
-  
+
   @Override
   public void apply(JFreeChart chart) {
     super.apply(chart);
-    if(chart.getPlot() instanceof XYPlot) {
+    if (chart.getPlot() instanceof XYPlot) {
       chart.getXYPlot().setDomainGridlinesVisible(true);
       chart.getXYPlot().setRangeGridlinesVisible(true);
       chart.getXYPlot().getRenderer().setSeriesPaint(0, Color.red);
