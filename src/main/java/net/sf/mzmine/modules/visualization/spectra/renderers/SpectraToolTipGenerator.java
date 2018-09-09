@@ -20,7 +20,6 @@ package net.sf.mzmine.modules.visualization.spectra.renderers;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-
 import net.sf.mzmine.datamodel.Feature;
 import net.sf.mzmine.datamodel.IsotopePattern;
 import net.sf.mzmine.datamodel.PeakList;
@@ -30,7 +29,6 @@ import net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner.Isotope
 import net.sf.mzmine.modules.visualization.spectra.datasets.ExtendedIsotopePatternDataSet;
 import net.sf.mzmine.modules.visualization.spectra.datasets.IsotopesDataSet;
 import net.sf.mzmine.modules.visualization.spectra.datasets.PeakListDataSet;
-
 import org.jfree.chart.labels.XYToolTipGenerator;
 import org.jfree.data.xy.XYDataset;
 
@@ -84,12 +82,14 @@ public class SpectraToolTipGenerator implements XYToolTipGenerator {
       return tooltip;
 
     }
-    
-    if(dataset instanceof ExtendedIsotopePatternDataSet) {
-      return "Isotope pattern: " + ((ExtendedIsotopePatternDataSet)dataset).getIsotopePattern().getDescription()
-          + "\nm/z: " + mzFormat.format(mzValue)
-          + "\nIdentity: " + ((ExtendedIsotopePatternDataSet)dataset).getItemDescription(series, item) 
-          + "\nRelative intensity: " + percentFormat.format((dataset.getY(series, item).doubleValue() * 100)) + "%";
+
+    if (dataset instanceof ExtendedIsotopePatternDataSet) {
+      return "Isotope pattern: "
+          + ((ExtendedIsotopePatternDataSet) dataset).getIsotopePattern().getDescription()
+          + "\nm/z: " + mzFormat.format(mzValue) + "\nIdentity: "
+          + ((ExtendedIsotopePatternDataSet) dataset).getItemDescription(series, item)
+          + "\nRelative intensity: "
+          + percentFormat.format((dataset.getY(series, item).doubleValue() * 100)) + "%";
     }
 
     String tooltip =
