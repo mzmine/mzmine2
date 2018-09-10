@@ -14,6 +14,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
 import javax.swing.text.NumberFormatter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -136,6 +138,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
         (JCheckBox) this.getComponentForParameter(IsotopePeakScannerParameters.showPreview);
     cmpPreview.setSelected(false); // i want to have the checkbox below the pattern settings
     // but it should be disabled by default. Thats why it's hardcoded here.
+    cmpElement.getDocument().addDocumentListener(this);
+    cmpMinAbundance.getDocument().addDocumentListener(this);
+    cmpCharge.getDocument().addDocumentListener(this);
+    cmpMergeWidth.getDocument().addDocumentListener(this);
 
     // get parameters
     pMinAbundance = parameterSet.getParameter(IsotopePeakScannerParameters.minAbundance);
@@ -200,6 +206,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
   public void actionPerformed(ActionEvent ae) {
     super.actionPerformed(ae);
     updateParameterSetFromComponents();
+    
     if (ae.getSource() == btnNextPattern) {
       logger.info(ae.getSource().toString());
       int current = Integer.parseInt(txtCurrentPatternIndex.getText());
@@ -248,7 +255,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     else if (ae.getSource() == btnUpdatePreview) {
       updatePreview();
     } else if (ae.getSource() == cmpMergeWidth) {
-      // stroke = new BasicStroke(Float.parseFloat(String.valueOf(pMergeWidth.getValue())));
+      logger.info("mege event");
+      if(pMergeWidth.getValue() >= 0.0)
+        this.dataset.setWidth(pMergeWidth.getValue());
     }
 
     else if (ae.getSource() == cmpAutoCarbonCbx) {
@@ -258,11 +267,30 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     }
   }
 
-
+  @Override public void changedUpdate(DocumentEvent e) {
+    updateParameterSetFromComponents();
+    if(checkParameters() && cmpPreview.isSelected())
+      updatePreview();
+  }
+  @Override public void insertUpdate(DocumentEvent e) {
+    updateParameterSetFromComponents();
+    if(checkParameters() && cmpPreview.isSelected())
+      updatePreview();
+  }
+  @Override public void removeUpdate(DocumentEvent e) {
+    updateParameterSetFromComponents();
+    if(checkParameters() && cmpPreview.isSelected())
+      updatePreview();
+  }
+  
+  
+//  -----------------------------------------------------
+// methods
+//  -----------------------------------------------------  
   private void updatePreview() {
     if (!updateParameters()) {
       logger.warning(
-          "Could not update parameters or parameters are invalid. Please check the parameters.");
+          "updatePreview() failed. Could not update parameters or parameters are invalid. Please check the parameters.");
       return;
     }
 
@@ -277,11 +305,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
 
   private void updateChart(ExtendedIsotopePattern pattern) {
     dataset = new ExtendedIsotopePatternDataSet(pattern, minIntensity, mergeWidth);
-    logger.info("Series count: " + dataset.getSeriesCount());
     chart =
         ChartFactory.createXYBarChart("Isotope pattern preview", "m/z", false, "Abundance", dataset);
     theme.apply(chart);
-    XYPlot plot = chart.getXYPlot();
+    plot = chart.getXYPlot();
     plot.addRangeMarker(new ValueMarker(minIntensity, belowMin, new BasicStroke(1.0f)));
     XYItemRenderer r = plot.getRenderer();
     r.setSeriesPaint(0, aboveMin);
@@ -294,8 +321,11 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     updateParameterSetFromComponents();
     autoCarbon = pAutoCarbon.getValue();
 
-    if (!checkParameters())
+    if (!checkParameters()) {
+      logger.info("updateParameters() failed due to invalid input.");
       return false;
+    }
+      
 
     element = pElement.getValue(); //TODO
     minAbundance = pMinAbundance.getValue() / 100;
@@ -313,27 +343,34 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     maxC = pMaxC.getValue();
     minSize = pMinSize.getValue();
 
+    form.setMaximum(maxC);
+    form.setMinimum(minC);
+    
     if (Integer.parseInt(txtCurrentPatternIndex.getText()) > maxC)
       txtCurrentPatternIndex.setText(String.valueOf(maxC));
     if (Integer.parseInt(txtCurrentPatternIndex.getText()) < minC)
       txtCurrentPatternIndex.setText(String.valueOf(minC));
-    form.setMaximum(maxC);
-    form.setMinimum(minC);
   }
 
   private boolean checkParameters() {
-    if (/* pElement.getValue().equals("") */ cmpElement.getText().equals("") && !autoCarbon) {
-      logger.info("Element == null and no autoCarbon");
+    if (/* pElement.getValue().equals("") */ (cmpElement.getText().equals("") && !autoCarbon) || cmpElement.getText().contains(" ")) {
+      logger.info("Invalid input or Element == \"\" and no autoCarbon");
       return false;
     }
-    if (pMinAbundance.getValue() / 100 > 1.0 || pMinAbundance.getValue() / 100 < 0.0) {
-      logger.info("Minimun abundance invalid.");
+    if (pMinAbundance.getValue() / 100 > 1.0 || (pMinAbundance.getValue() / 100) <= 0.0) {
+      logger.info("Minimun abundance invalid. " + pMinAbundance.getValue());
       return false;
     }
-    if (pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() < 0.0) {
-      logger.info("Minimum intensity invalid.");
+    if (pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() <= 0.00000000) {
+      logger.info("Minimum intensity invalid. " + pMinIntensity.getValue());
       return false;
     }
+    if(pCharge.getValue() <= 0)
+    {
+      logger.info("charge invalid. " + pCharge.getValue());
+      return false;
+    }
+      
     logger.info("Parameters valid");
     return true;
   }

@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.sf.mzmine.parameters.ParameterSet;
 
 
@@ -28,7 +30,7 @@ import net.sf.mzmine.parameters.ParameterSet;
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
-public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog {
+public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog implements DocumentListener {
 
   private static final long serialVersionUID = 1L;
 
@@ -94,4 +96,16 @@ public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog {
      */
   }
 
+  public void insertUpdate(DocumentEvent e) {
+  }
+  
+  public void removeUpdate(DocumentEvent e) {
+  }
+  
+  public void changedUpdate(DocumentEvent e) {
+  }
+  
+  public void updateLog(DocumentEvent e, String action) {
+      
+  }
 }
