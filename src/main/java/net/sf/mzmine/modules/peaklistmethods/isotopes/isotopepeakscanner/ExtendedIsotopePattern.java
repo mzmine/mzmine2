@@ -21,6 +21,7 @@ package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.annotation.Nonnull;
+import org.jmol.util.Logger;
 import org.openscience.cdk.config.Isotopes;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;
@@ -98,7 +99,7 @@ public class ExtendedIsotopePattern implements IsotopePattern {
     addMolecule(form);
     mergeDuplicates();
     mergePeaks(mzMerge);
-    removePeaksBelowAbundance(minIntensity);
+    removePeaksBelowIntensity(minIntensity);
     sortByAscendingMZ();
   }
 
@@ -138,12 +139,16 @@ public class ExtendedIsotopePattern implements IsotopePattern {
     {
       for (IIsotope iso : isotopes) { // when adding new isotopes intensities only get smaller, so
                                       // we can to this here to avoid useless calculation
-        if (iso.getNaturalAbundance() < minAbundance
-            || ((iso.getNaturalAbundance() / 100) * dataPoints.get(i).getIntensity()) < 1E-12) {
+        if ((iso.getNaturalAbundance() / 100.0d) < minAbundance) {
           continue;
         }
+        if (((iso.getNaturalAbundance() / 100.0d) * dataPoints.get(i).getIntensity()) < 1E-12) {
+          continue;
+        }
+        
+        
         newDp.add(new SimpleDataPoint(dataPoints.get(i).getMZ() + iso.getExactMass(),
-            dataPoints.get(i).getIntensity() * (iso.getNaturalAbundance() / 100)));
+            dataPoints.get(i).getIntensity() * (iso.getNaturalAbundance() / 100.0d)));
         // System.out.println(iso.getMassNumber() + iso.getSymbol());
 
         if (dpDescr != null)
@@ -276,16 +281,17 @@ public class ExtendedIsotopePattern implements IsotopePattern {
   /**
    * Removes peaks below given intensity.
    * 
-   * @param minAbundance threshold min=0.0, max=1.0
+   * @param minIntensity threshold min=0.0, max=1.0
    */
-  private void removePeaksBelowAbundance(double minAbundance) {
+  private void removePeaksBelowIntensity(double minIntensity) {
     ArrayList<DataPoint> newDp = new ArrayList<DataPoint>();
     ArrayList<String> newDpDescr = new ArrayList<String>();
 
     normalizePatternToHighestPeak();
 
     for (int i = 0; i < dataPoints.size(); i++) {
-      if (dataPoints.get(i).getIntensity() < minAbundance) {
+      if (dataPoints.get(i).getIntensity() < minIntensity) {
+//        System.out.println("will remove peak " + i + dpDescr.get(i) + " bc " + dataPoints.get(i).getIntensity() + " < " + minIntensity);
         dataPoints.set(i, null);
         dpDescr.set(i, null);
       }
