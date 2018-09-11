@@ -255,7 +255,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     else if (ae.getSource() == btnUpdatePreview) {
       updatePreview();
     } else if (ae.getSource() == cmpMergeWidth) {
-      logger.info("mege event");
+      logger.info("merge event");
       if(pMergeWidth.getValue() >= 0.0)
         this.dataset.setWidth(pMergeWidth.getValue());
     }
@@ -269,16 +269,19 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
 
   @Override public void changedUpdate(DocumentEvent e) {
     updateParameterSetFromComponents();
+    logger.info("changedUpdate " + e);
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
   @Override public void insertUpdate(DocumentEvent e) {
+    logger.info("insertUpdate " + e);
     updateParameterSetFromComponents();
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
   @Override public void removeUpdate(DocumentEvent e) {
     updateParameterSetFromComponents();
+    logger.info("removeUpdate " + e);
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
@@ -328,7 +331,8 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
       
 
     element = pElement.getValue(); //TODO
-    minAbundance = pMinAbundance.getValue() / 100;
+    minAbundance = pMinAbundance.getValue();
+    logger.info("minAbundnance: " + minAbundance);
     mergeWidth = pMergeWidth.getValue();
     minIntensity = pMinIntensity.getValue();
     charge = pCharge.getValue();
@@ -353,21 +357,25 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
   }
 
   private boolean checkParameters() {
-    if (/* pElement.getValue().equals("") */ (cmpElement.getText().equals("") && !autoCarbon) || cmpElement.getText().contains(" ")) {
+    if (/* pElement.getValue().equals("") */pElement.getValue() == null ||  (pElement.getValue().equals("") && !autoCarbon) || pElement.getValue().contains(" ")) {
       logger.info("Invalid input or Element == \"\" and no autoCarbon");
       return false;
     }
-    if (pMinAbundance.getValue() / 100 > 1.0 || (pMinAbundance.getValue() / 100) <= 0.0) {
+    if (pMinAbundance.getValue() == null || pMinAbundance.getValue() > 1.0d || pMinAbundance.getValue() <= 0.0d) {
       logger.info("Minimun abundance invalid. " + pMinAbundance.getValue());
       return false;
     }
-    if (pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() <= 0.00000000) {
+    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() <= 1E-12) {
       logger.info("Minimum intensity invalid. " + pMinIntensity.getValue());
       return false;
     }
-    if(pCharge.getValue() <= 0)
+    if(pCharge.getValue() == null || pCharge.getValue() <= 0)
     {
-      logger.info("charge invalid. " + pCharge.getValue());
+      logger.info("Charge invalid. " + pCharge.getValue());
+      return false;
+    }
+    if(pMergeWidth.getValue() == null || pMergeWidth.getValue() <= 1E-12) {
+      logger.info("Merge width invalid. " + pMergeWidth.getValue());
       return false;
     }
       

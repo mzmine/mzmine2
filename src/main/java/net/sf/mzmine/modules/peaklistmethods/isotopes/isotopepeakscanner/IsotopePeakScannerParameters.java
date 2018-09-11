@@ -80,7 +80,7 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
               + "Depends on the sensitivity of your MS.\nMin = 0.0, Max = 0.99...",
           new DecimalFormat("0.####"), 0.01, 0.0, 0.99999);
 
-  public static final BooleanParameter checkIntensity = new BooleanParameter("Check intensity",
+  public static final BooleanParameter checkIntensity = new BooleanParameter("Check intensity ratios",
       "Compare intensity of peaks to the calculated abundance.", true);
 
   public static final DoubleParameter minRating = new DoubleParameter("Minimun rating",
@@ -113,10 +113,10 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
       "Auto carbon",
       "If activated, Isotope peak scanner will calculate isotope patterns with variable numbers of carbon specified below.\n"
           + "The pattern with the best fitting number of carbon atoms will be chosen for every detected pattern.\n"
-          + " This will greatly increase computation time.",
+          + " This will greatly increase computation time but help with unknown-compound-identification.",
       new AutoCarbonParameters());
 
-  public static final BooleanParameter showPreview = new BooleanParameter("Show preview",
+  public static final BooleanParameter showPreview = new BooleanParameter("Show pattern preview",
       "If selected this will add a preview chart of the calculated isotope pattern with the current settings.");
 
   public IsotopePeakScannerParameters() {
