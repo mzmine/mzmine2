@@ -21,4 +21,6 @@ public class IsotopePatternPreviewCustomParameters  extends SimpleParameterSet{
           "The minimum normalized intensity of a peak in the final calculated isotope pattern. "
               + "Depends on the sensitivity of your MS.\nMin = 0.0, Max = 0.99...",
           new DecimalFormat("0.####"), 0.01, 0.0, 0.99999);
+  
+  
 }
