@@ -249,15 +249,11 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     }
 
     else if (ae.getSource() == txtCurrentPatternIndex) {
-      logger.info(ae.getSource().toString());
+//      logger.info(ae.getSource().toString());
     }
 
     else if (ae.getSource() == btnUpdatePreview) {
       updatePreview();
-    } else if (ae.getSource() == cmpMergeWidth) {
-      logger.info("merge event");
-      if(pMergeWidth.getValue() >= 0.0)
-        this.dataset.setWidth(pMergeWidth.getValue());
     }
 
     else if (ae.getSource() == cmpAutoCarbonCbx) {
@@ -269,19 +265,19 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
 
   @Override public void changedUpdate(DocumentEvent e) {
     updateParameterSetFromComponents();
-    logger.info("changedUpdate " + e);
+//    logger.info("changedUpdate " + e);
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
   @Override public void insertUpdate(DocumentEvent e) {
-    logger.info("insertUpdate " + e);
+//    logger.info("insertUpdate " + e);
     updateParameterSetFromComponents();
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
   @Override public void removeUpdate(DocumentEvent e) {
     updateParameterSetFromComponents();
-    logger.info("removeUpdate " + e);
+//    logger.info("removeUpdate " + e);
     if(checkParameters() && cmpPreview.isSelected())
       updatePreview();
   }
