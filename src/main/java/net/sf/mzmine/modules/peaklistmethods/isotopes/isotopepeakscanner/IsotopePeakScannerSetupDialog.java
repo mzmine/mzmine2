@@ -328,7 +328,6 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
 
     element = pElement.getValue(); //TODO
     minAbundance = pMinAbundance.getValue();
-    logger.info("minAbundnance: " + minAbundance);
     mergeWidth = pMergeWidth.getValue();
     minIntensity = pMinIntensity.getValue();
     charge = pCharge.getValue();
@@ -361,7 +360,7 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
       logger.info("Minimun abundance invalid. " + pMinAbundance.getValue());
       return false;
     }
-    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0 || pMinIntensity.getValue() <= 1E-12) {
+    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0d || pMinIntensity.getValue() <= 1E-12) {
       logger.info("Minimum intensity invalid. " + pMinIntensity.getValue());
       return false;
     }
