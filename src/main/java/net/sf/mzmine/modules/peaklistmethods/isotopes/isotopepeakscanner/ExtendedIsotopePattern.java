@@ -35,6 +35,7 @@ import net.sf.mzmine.datamodel.PolarityType;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
 import com.google.common.collect.Range;
 import io.github.msdk.MSDKException;
+import io.github.msdk.MSDKRuntimeException;
 
 /**
  * Extended implementation of IsotopePattern interface. This can calculate isotope patterns starting
@@ -84,13 +85,18 @@ public class ExtendedIsotopePattern implements IsotopePattern {
    * @param sumFormula
    * @param minAbundance minimum abundance to be used to calculate the pattern 0.0-1.0
    * @param minIntensity the minimum intensity of a peak in finished pattern
-   * @throws MSDKException 
+   * @throws MSDKException if the sum formula was invalid
    */
   public void setUpFromFormula(String sumFormula, double minAbundance, double mzMerge,
       double minIntensity) {
     highestDpIndex = 0;
-    IMolecularFormula form =
-        MolecularFormulaManipulator.getMajorIsotopeMolecularFormula(sumFormula, builder);
+    IMolecularFormula form;
+    try {
+      form = MolecularFormulaManipulator.getMajorIsotopeMolecularFormula(sumFormula, builder);
+    }
+    catch (Exception e) {
+      throw new MSDKRuntimeException("Could not set up formula. Invalid input.");
+    }
     description = sumFormula;
     formula = form;
     this.minAbundance = minAbundance;

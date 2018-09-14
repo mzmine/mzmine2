@@ -21,7 +21,7 @@ public class IsotopePatternPreviewModule implements MZmineProcessingModule {
   }
 
   public @Nonnull MZmineModuleCategory getModuleCategory() {
-    return MZmineModuleCategory.ISOTOPES;
+    return MZmineModuleCategory.TOOLS;
   }
 
   @Override

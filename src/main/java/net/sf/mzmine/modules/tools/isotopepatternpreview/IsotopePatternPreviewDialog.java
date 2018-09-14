@@ -244,7 +244,13 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     logger.info("Calculating isotope pattern: " + molecule);
   
     // *0.2 so the user can see the peaks below the threshold
+    try {
     pattern.setUpFromFormula(molecule, minAbundance, mergeWidth, minIntensity * 0.2);
+    }
+    catch (Exception e) {
+      logger.warning("The entered Sum formula is invalid.");
+      return null;
+    }
     return pattern;
   }
 }

@@ -226,6 +226,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
     double[][] diff = setUpDiffAutoCarbon();
     if (diff == null) {
       message = "ERROR: could not set up diff.";
+      setStatus(TaskStatus.ERROR);
       return;
     }
 
@@ -541,8 +542,14 @@ public class IsotopePeakScannerTask extends AbstractTask {
           strPattern[p] = element;
 
         patternBuffer[p] = new ExtendedIsotopePattern();
+        try {
         patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth,
             minPatternIntensity);
+        }
+        catch(Exception e) {
+          logger.warning("The entered Sum formula is invalid.");
+          return null;
+        }
         patternBuffer[p].normalizePatternToHighestPeak();
         patternBuffer[p].applyCharge(charge, polarityType);
       }
