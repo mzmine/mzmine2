@@ -395,9 +395,15 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
     if (strPattern.equals(""))
       return null;
     logger.info("Calculating isotope pattern: " + strPattern);
-
+    
+    try {
     // *0.2 so the user can see the peaks below the threshold
     pattern.setUpFromFormula(strPattern, minAbundance, mergeWidth, minIntensity * 0.2);
+    }
+    catch(Exception e) {
+      logger.warning("The entered Sum formula is invalid.");
+      return null;
+    }
     PolarityType pol = (charge > 0) ? PolarityType.POSITIVE : PolarityType.NEGATIVE;
     charge = (charge > 0) ? charge : charge * -1;
     pattern.applyCharge(charge, pol);
