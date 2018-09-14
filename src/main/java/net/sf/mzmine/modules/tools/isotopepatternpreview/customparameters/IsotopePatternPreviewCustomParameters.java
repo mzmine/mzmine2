@@ -2,6 +2,7 @@ package net.sf.mzmine.modules.tools.isotopepatternpreview.customparameters;
 
 import java.text.DecimalFormat;
 import net.sf.mzmine.main.MZmineCore;
+import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.impl.SimpleParameterSet;
 import net.sf.mzmine.parameters.parametertypes.DoubleParameter;
 import net.sf.mzmine.parameters.parametertypes.PercentParameter;
@@ -22,5 +23,7 @@ public class IsotopePatternPreviewCustomParameters  extends SimpleParameterSet{
               + "Depends on the sensitivity of your MS.\nMin = 0.0, Max = 0.99...",
           new DecimalFormat("0.####"), 0.01, 0.0, 0.99999);
   
-  
+  public IsotopePatternPreviewCustomParameters(){
+    super( new Parameter[] {minAbundance, mergeWidth, minPatternIntensity});
+  }
 }
