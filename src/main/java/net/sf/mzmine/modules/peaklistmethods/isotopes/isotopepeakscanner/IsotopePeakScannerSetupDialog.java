@@ -105,8 +105,8 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
       ParameterSet parameters) {
     super(parent, valueCheckRequired, parameters);
 
-    aboveMin = new Color(30, 255, 30);
-    belowMin = new Color(255, 30, 30);
+    aboveMin = new Color(30, 180, 30);
+    belowMin = new Color(200, 30, 30);
     theme = new EIsotopePatternChartTheme();
     theme.initialize();
     ttGen = new SpectraToolTipGenerator();

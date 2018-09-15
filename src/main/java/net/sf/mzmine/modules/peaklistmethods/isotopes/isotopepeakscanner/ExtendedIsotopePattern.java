@@ -21,7 +21,6 @@ package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.annotation.Nonnull;
-import org.jmol.util.Logger;
 import org.openscience.cdk.config.Isotopes;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IIsotope;

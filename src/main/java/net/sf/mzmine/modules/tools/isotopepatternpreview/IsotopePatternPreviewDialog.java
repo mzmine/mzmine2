@@ -101,6 +101,8 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
   private ExtendedIsotopePatternDataSet dataset;
   private SpectraToolTipGenerator ttGen;
   
+  String[] columns = {"Exact Mass / Da", "Intensity", "Isotope composition"};
+  
   Color aboveMin, belowMin;
 
   ParameterSet customParameters;
@@ -120,8 +122,8 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     pMinAbundance = customParameters.getParameter(IsotopePatternPreviewCustomParameters.minAbundance);
     pMergeWidth = customParameters.getParameter(IsotopePatternPreviewCustomParameters.mergeWidth);
     
-    aboveMin = new Color(30, 255, 30);
-    belowMin = new Color(255, 30, 30);
+    aboveMin = new Color(30, 180, 30);
+    belowMin = new Color(200, 30, 30);
     
   }
 
@@ -133,8 +135,8 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     newMainPanel = new JPanel(new BorderLayout());
     pnText = new JScrollPane();
     pnlChart = new EChartPanel(chart);
-    pnSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnlChart, pnText);
-    table = new JTable(10, 3);
+    pnSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlChart, pnText);
+    table = new JTable();
     
     pnText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     pnText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -157,7 +159,7 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     getContentPane().remove(mainPanel);
     newMainPanel.add(mainPanel, BorderLayout.SOUTH);
     newMainPanel.add(pnSplit, BorderLayout.CENTER);
-    mainPanel.add(btnCalc);
+    mainPanel.add(btnCalc, 0, getNumberOfParameters() + 1);
     getContentPane().add(newMainPanel);
     pnlButtons.remove(super.btnCancel);
     
@@ -198,7 +200,6 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     }
   
     DataPoint[] dp = pattern.getDataPoints();
-    String[] columns = {"Exact Mass / Da", "Intensity", "Isotope composition"};
     Object[][] data = new Object[dp.length][];
     for(int i = 0; i < pattern.getNumberOfDataPoints(); i++) {
       data[i] = new Object[3];

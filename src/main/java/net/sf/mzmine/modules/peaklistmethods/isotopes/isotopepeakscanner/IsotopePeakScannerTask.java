@@ -67,7 +67,7 @@ import net.sf.mzmine.util.SortingProperty;
  * algorithm was able to find a peak inside the peak list for every expected isotope peak the result
  * will be added to a result peak list including a description.
  * 
- *  @author Steffen Heuckeroth s_heuc03@uni-muenster.de
+ * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  * 
  */
 public class IsotopePeakScannerTask extends AbstractTask {
@@ -153,10 +153,12 @@ public class IsotopePeakScannerTask extends AbstractTask {
     ratingChoice = parameters.getParameter(IsotopePeakScannerParameters.ratingChoices).getValue();
 
     autoCarbon = parameters.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getValue();
-    ParameterSet autoCarbonParameters = parameters.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getEmbeddedParameters();
+    ParameterSet autoCarbonParameters =
+        parameters.getParameter(IsotopePeakScannerParameters.autoCarbonOpt).getEmbeddedParameters();
     autoCarbonMin = autoCarbonParameters.getParameter(AutoCarbonParameters.minCarbon).getValue();
     autoCarbonMax = autoCarbonParameters.getParameter(AutoCarbonParameters.maxCarbon).getValue();
-    autoCarbonMinPatternSize = autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize).getValue();
+    autoCarbonMinPatternSize =
+        autoCarbonParameters.getParameter(AutoCarbonParameters.minPatternSize).getValue();
 
     scanType = (autoCarbon) ? ScanType.AUTOCARBON : ScanType.SPECIFIC;
 
@@ -193,7 +195,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
     if (suffix.equals("auto")) {
       suffix = "";
       if (scanType == ScanType.AUTOCARBON)
-        suffix = "autoCarbon";
+        suffix = " autoCarbon";
       suffix += "_-Pat=" + element + "-RT=" + checkRT + "-INT=" + checkIntensity + "-minR="
           + minRating + "-minH=" + minHeight + "_results";
     }
@@ -394,20 +396,24 @@ public class IsotopePeakScannerTask extends AbstractTask {
             "We were about to add candidates with null pointers.\nThis was no valid result. Continueing.");
         continue;
       } // TODO: this shouldnt be needed, fix the bug that causes the crash later on.
-        // i think its because if not all candidates have been found then it crashes when
-        // copying because it tries to copy a null pointer row
+        // this happens occasionally if the user wants to do accurate average but does not filter
+        // by RT. then possible isotope peaks are found, although they are not detected at the same
+        // time. This will result in the candidates return -1.0 which will sooner or later return a
+        // null pointer Fixing this will be done in a future update, but needs a rework of the
+        // candidates class.
+        // The results you miss by skipping here would have not been valid results anyway, so this
+        // is not urgent. Will be nicer though, because of cleaner code.
 
       PeakListRow parent = copyPeakRow(peakList.getRow(i));
 
       if (resultMap.containsID(parent.getID())) // if we can assign this row multiple times we
                                                 // have to copy the comment, because adding it to
-                                                // the
-                                                // map twice will overwrite the results
+                                                // the map twice will overwrite the results
         addComment(parent, resultMap.getRowByID(parent.getID()).getComment());
 
       addComment(parent, parent.getID() + "--IS PARENT--"); // ID is added to be able to sort by
-                                                            // comment
-      // to bring all isotope patterns together
+      // comment to bring all isotope patterns together
+      
       if (carbonRange != 1)
         addComment(parent, "BestPattern: " + pattern[bestPatternIndex].getDescription());
 
@@ -425,8 +431,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
 
       for (int k = 1; k < candidates[bestPatternIndex].size(); k++) // we skip k=0 because ==
                                                                     // groupedPeaks[0]/
-      // ==candidates.get(0) which we
-      // added before
+      // ==candidates.get(0) which we added before
       {
         PeakListRow child =
             copyPeakRow(plh.getRowByID(candidates[bestPatternIndex].get(k).getCandID()));
@@ -543,10 +548,9 @@ public class IsotopePeakScannerTask extends AbstractTask {
 
         patternBuffer[p] = new ExtendedIsotopePattern();
         try {
-        patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth,
-            minPatternIntensity);
-        }
-        catch(Exception e) {
+          patternBuffer[p].setUpFromFormula(strPattern[p], minAbundance, mergeWidth,
+              minPatternIntensity);
+        } catch (Exception e) {
           logger.warning("The entered Sum formula is invalid.");
           return null;
         }
@@ -600,8 +604,7 @@ public class IsotopePeakScannerTask extends AbstractTask {
         }
         addCounter++;
       }
-    } 
-    else /* if(scanType == ScanType.SPECIFIC) */ {
+    } else /* if(scanType == ScanType.SPECIFIC) */ {
       diff = new double[1][];
       pattern = new ExtendedIsotopePattern[1];
       pattern[0] = new ExtendedIsotopePattern();
