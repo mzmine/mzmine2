@@ -41,10 +41,6 @@ public class OptionalModuleComponent extends JPanel implements ActionListener {
   private JCheckBox checkBox;
   private JButton setButton;
   private ParameterSet embeddedParameters;
-  
-  public ParameterSet getEmbeddedParameters() {
-    return embeddedParameters;
-  }
 
   public OptionalModuleComponent(ParameterSet embeddedParameters) {
 
