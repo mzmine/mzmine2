@@ -72,13 +72,13 @@ public class IsotopePeakScannerParameters extends SimpleParameterSet {
   public static final DoubleParameter mergeWidth = new DoubleParameter("Merge width(m/z)",
       "This will be used to merge peaks in the calculated isotope pattern if they overlap in the spectrum."
           + " Specify in m/z, this depends on the resolution of your mass spectrometer.",
-      MZmineCore.getConfiguration().getMZFormat(), 0.0005, 1E-7, 10.0);
+      MZmineCore.getConfiguration().getMZFormat(), 0.0005, 0.0d, 10.0);
 
   public static final DoubleParameter minPatternIntensity =
       new DoubleParameter("Min. pattern intensity",
           "The minimum normalized intensity of a peak in the final calculated isotope pattern. "
               + "Depends on the sensitivity of your MS.\nMin = 0.0, Max = 0.99...",
-          new DecimalFormat("0.####"), 0.01, 0.0, 0.99999);
+          new DecimalFormat("0.####"), 0.01, 0.0d, 0.99999);
 
   public static final BooleanParameter checkIntensity = new BooleanParameter("Check intensity ratios",
       "Compare intensity of peaks to the calculated abundance.", true);

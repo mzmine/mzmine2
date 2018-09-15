@@ -360,16 +360,16 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
       logger.info("Minimun abundance invalid. " + pMinAbundance.getValue());
       return false;
     }
-    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0d || pMinIntensity.getValue() <= 1E-12) {
+    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0d || pMinIntensity.getValue() < 0.0d) {
       logger.info("Minimum intensity invalid. " + pMinIntensity.getValue());
       return false;
     }
-    if(pCharge.getValue() == null || pCharge.getValue() <= 0)
+    if(pCharge.getValue() == null || pCharge.getValue() == 0)
     {
       logger.info("Charge invalid. " + pCharge.getValue());
       return false;
     }
-    if(pMergeWidth.getValue() == null || pMergeWidth.getValue() <= 1E-12) {
+    if(pMergeWidth.getValue() == null || pMergeWidth.getValue() < 0.0d) {
       logger.info("Merge width invalid. " + pMergeWidth.getValue());
       return false;
     }

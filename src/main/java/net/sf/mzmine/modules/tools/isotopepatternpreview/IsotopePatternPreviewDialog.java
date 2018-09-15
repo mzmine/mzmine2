@@ -14,6 +14,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -60,6 +61,7 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
   private JPanel newMainPanel;
   private JScrollPane pnText;
   private JTextArea textArea;
+  private JTable table;
   private JButton btnCalc;
   private JSplitPane pnSplit;
   
@@ -109,12 +111,15 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     pnText = new JScrollPane();
     pnlChart = new EChartPanel(chart);
     pnSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnlChart, pnText);
+    table = new JTable(10, 3);
     
     pnText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     pnText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
     
     pnText.setMinimumSize(new Dimension(350, 300));
     pnlChart.setMinimumSize(new Dimension(350, 200));
+    table.setMinimumSize(new Dimension(350, 300));
+    table.setDefaultEditor(Object.class, null);
     
     // controls
     textArea = new JTextArea();
@@ -137,7 +142,7 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
         new XYSeriesCollection(new XYSeries("")));
     theme.apply(chart);
     pnlChart.setChart(chart);
-    pnText.setViewportView(textArea);
+    pnText.setViewportView(table);
     
     updateMinimumSize();
     pack();
@@ -151,7 +156,6 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
     if(ae.getSource() == btnCalc) {
       updateParameterSetFromComponents();
       updatePreview();
-
     }
   }
 //-----------------------------------------------------
@@ -170,14 +174,18 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
       return;
     }
   
-    textArea.setText("Mass / Da\tIntensity\tIsotope composition\n");
     DataPoint[] dp = pattern.getDataPoints();
+    String[] columns = {"Exact Mass / Da", "Intensity", "Isotope composition"};
+    Object[][] data = new Object[dp.length][];
     for(int i = 0; i < pattern.getNumberOfDataPoints(); i++) {
-      textArea.append(mzFormat.format(dp[i].getMZ()) + " \t"
-        + relFormat.format(dp[i].getIntensity()) + "\t"
-        + pattern.getDetailedPeakDescription(i) + "\n");
+      data[i] = new Object[3];
+      data[i][0] = mzFormat.format(dp[i].getMZ());
+      data[i][1] = relFormat.format(dp[i].getIntensity());
+      data[i][2] = pattern.getDetailedPeakDescription(i);
     }
-    textArea.setPreferredSize(textArea.getMinimumSize());
+    table = new JTable(data, columns);
+    pnText.setViewportView(table);
+    table.setDefaultEditor(Object.class, null);
     updateChart(pattern);
   }
   
@@ -201,12 +209,18 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
       logger.info("updateParameters() failed due to invalid input.");
       return false;
     }
-      
-  
-    molecule = pMolecule.getValue(); //TODO
-    minAbundance = pMinAbundance.getValue();
-    mergeWidth = pMergeWidth.getValue();
-    minIntensity = pMinIntensity.getValue();
+    
+    molecule = pMolecule.getValue();  
+    if(pCustom.getValue()) {
+      minAbundance = pMinAbundance.getValue();
+      mergeWidth = pMergeWidth.getValue();
+      minIntensity = pMinIntensity.getValue();
+    }
+    else {
+      minAbundance = 0.01;
+      mergeWidth = 0.0005;
+      minIntensity = 0.05;
+    }
     return true;
   }
   
@@ -219,11 +233,11 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
       logger.info("Minimun abundance invalid. " + pMinAbundance.getValue());
       return false;
     }
-    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0d || pMinIntensity.getValue() <= 1E-12) {
+    if (pMinIntensity.getValue() == null || pMinIntensity.getValue() > 1.0d || pMinIntensity.getValue() < 0.0d) {
       logger.info("Minimum intensity invalid. " + pMinIntensity.getValue());
       return false;
     }
-    if(pMergeWidth.getValue() == null || pMergeWidth.getValue() <= 1E-12) {
+    if(pMergeWidth.getValue() == null || pMergeWidth.getValue() < 0.0d) {
       logger.info("Merge width invalid. " + pMergeWidth.getValue());
       return false;
     }
@@ -245,10 +259,10 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
   
     // *0.2 so the user can see the peaks below the threshold
     try {
-    pattern.setUpFromFormula(molecule, minAbundance, mergeWidth, minIntensity * 0.2);
+      pattern.setUpFromFormula(molecule, minAbundance, mergeWidth, minIntensity); 
     }
     catch (Exception e) {
-      logger.warning("The entered Sum formula is invalid.");
+      logger.warning("The entered Sum formula is invalid. Canceling.");
       return null;
     }
     return pattern;
