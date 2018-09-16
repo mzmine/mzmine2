@@ -22,7 +22,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.text.Document;
 
 /**
  */
@@ -65,7 +64,4 @@ public class PercentComponent extends JPanel {
     percentField.setToolTipText(toolTip);
   }
 
-  public Document getDocument() {
-    return percentField.getDocument();
-  }
 }

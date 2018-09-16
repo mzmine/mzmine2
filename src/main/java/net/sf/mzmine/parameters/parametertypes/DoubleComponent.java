@@ -26,7 +26,6 @@ import javax.swing.InputVerifier;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 public class DoubleComponent extends JPanel {
@@ -106,9 +105,5 @@ public class DoubleComponent extends JPanel {
       }
       return verified;
     }
-  }
-  
-  public Document getDocument() {
-    return textField.getDocument();
   }
 }

@@ -48,7 +48,7 @@ import net.sf.mzmine.parameters.ParameterSet;
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
-public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog implements DocumentListener {
+public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog {
 
   private static final long serialVersionUID = 1L;
 
@@ -108,22 +108,14 @@ public class ParameterSetupDialogWithEmptyPreview extends ParameterSetupDialog i
     /*
      * if (ae.getSource() == cmpPreview) { logger.info(ae.getSource().toString());
      * 
-     * if (cmpPreview.isSelected()) { newMainPanel.add(pnlPreview, BorderLayout.CENTER);
-     * pnlPreview.setVisible(true); updateMinimumSize(); pack(); } else {
-     * newMainPanel.remove(pnlPreview); pnlPreview.setVisible(false); updateMinimumSize(); pack(); }
+     * if (cmpPreview.isSelected()) { 
+     *   newMainPanel.add(pnlPreview, BorderLayout.CENTER);
+     *   pnlPreview.setVisible(true); 
+     *   updateMinimumSize(); pack(); 
+     * } 
+     * else {
+     *   newMainPanel.remove(pnlPreview); pnlPreview.setVisible(false); updateMinimumSize(); pack(); 
+     * }
      */
-  }
-
-  public void insertUpdate(DocumentEvent e) {
-  }
-  
-  public void removeUpdate(DocumentEvent e) {
-  }
-  
-  public void changedUpdate(DocumentEvent e) {
-  }
-  
-  public void updateLog(DocumentEvent e, String action) {
-      
   }
 }
