@@ -46,7 +46,7 @@ import net.sf.mzmine.parameters.parametertypes.StringParameter;
 
 /**
  *
- *Extension of ParameterSetupDialog to allow a preview window
+ * Extension of ParameterSetupDialog to allow a preview window
  *
  *
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
@@ -138,10 +138,10 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
         (JCheckBox) this.getComponentForParameter(IsotopePeakScannerParameters.showPreview);
     cmpPreview.setSelected(false); // i want to have the checkbox below the pattern settings
     // but it should be disabled by default. Thats why it's hardcoded here.
-    cmpElement.getDocument().addDocumentListener(this);
+    /*cmpElement.getDocument().addDocumentListener(this);
     cmpMinAbundance.getDocument().addDocumentListener(this);
     cmpCharge.getDocument().addDocumentListener(this);
-    cmpMergeWidth.getDocument().addDocumentListener(this);
+    cmpMergeWidth.getDocument().addDocumentListener(this);*/
 
     // get parameters
     pMinAbundance = parameterSet.getParameter(IsotopePeakScannerParameters.minAbundance);
@@ -262,24 +262,9 @@ public class IsotopePeakScannerSetupDialog extends ParameterSetupDialogWithEmpty
       txtCurrentPatternIndex.setEnabled(cmpAutoCarbonCbx.isSelected());
     }
   }
-
-  @Override public void changedUpdate(DocumentEvent e) {
-    updateParameterSetFromComponents();
-//    logger.info("changedUpdate " + e);
-    if(checkParameters() && cmpPreview.isSelected())
-      updatePreview();
-  }
-  @Override public void insertUpdate(DocumentEvent e) {
-//    logger.info("insertUpdate " + e);
-    updateParameterSetFromComponents();
-    if(checkParameters() && cmpPreview.isSelected())
-      updatePreview();
-  }
-  @Override public void removeUpdate(DocumentEvent e) {
-    updateParameterSetFromComponents();
-//    logger.info("removeUpdate " + e);
-    if(checkParameters() && cmpPreview.isSelected())
-      updatePreview();
+  
+  @Override protected void parametersChanged() {
+    updatePreview();
   }
   
   
