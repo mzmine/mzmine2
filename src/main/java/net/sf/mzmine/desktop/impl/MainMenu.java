@@ -65,7 +65,7 @@ public class MainMenu extends JMenuBar implements ActionListener {
   private JMenu projectMenu, rawDataMenu, peakListMenu, visualizationMenu, helpMenu,
       rawDataFilteringMenu, peakDetectionMenu, gapFillingMenu, isotopesMenu,
       peakListPeakPickingMenu, peakListFilteringMenu, alignmentMenu, normalizationMenu,
-      identificationMenu, dataAnalysisMenu, peakListExportMenu, peakListSpectralDeconvolutionMenu, toolsMenu;
+      identificationMenu, dataAnalysisMenu, peakListExportMenu, peakListSpectralDeconvolutionMenu;
 
   private WindowsMenu windowsMenu;
 
@@ -186,14 +186,6 @@ public class MainMenu extends JMenuBar implements ActionListener {
     this.add(visualizationMenu);
 
     visualizationMenu.addSeparator();
-    
-    /*
-     * Tools menu
-     */
-    
-    toolsMenu = new JMenu("Tools");
-    toolsMenu.setMnemonic(KeyEvent.VK_T);
-    this.add(toolsMenu);
 
     /*
      * Windows menu
@@ -202,7 +194,7 @@ public class MainMenu extends JMenuBar implements ActionListener {
     windowsMenu = new WindowsMenu();
     windowsMenu.setMnemonic(KeyEvent.VK_W);
     this.add(windowsMenu);
-    
+
     /*
      * Help menu
      */
@@ -286,9 +278,6 @@ public class MainMenu extends JMenuBar implements ActionListener {
         break;
       case HELPSYSTEM:
         helpMenu.add(newItem);
-        break;
-      case TOOLS:
-        toolsMenu.add(newItem);
         break;
     }
   }

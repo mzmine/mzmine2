@@ -32,8 +32,6 @@ import net.sf.mzmine.datamodel.PeakListRow;
  * class uses a tree map the results will be in order and duplicates will be overwritten, which is
  * why it has the method containsID to check.
  *
- * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
- *
  */
 public class PeakListHandler {
 

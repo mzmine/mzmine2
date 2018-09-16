@@ -33,8 +33,6 @@ import net.sf.mzmine.datamodel.MassSpectrumType;
 import net.sf.mzmine.datamodel.PolarityType;
 import net.sf.mzmine.datamodel.impl.SimpleDataPoint;
 import com.google.common.collect.Range;
-import io.github.msdk.MSDKException;
-import io.github.msdk.MSDKRuntimeException;
 
 /**
  * Extended implementation of IsotopePattern interface. This can calculate isotope patterns starting
@@ -43,9 +41,6 @@ import io.github.msdk.MSDKRuntimeException;
  * getDetailedPeakDescription.
  * 
  * set up via setUp(...)
- * 
- *  @author Steffen Heuckeroth s_heuc03@uni-muenster.de
- *  
  */
 public class ExtendedIsotopePattern implements IsotopePattern {
 
@@ -84,18 +79,12 @@ public class ExtendedIsotopePattern implements IsotopePattern {
    * @param sumFormula
    * @param minAbundance minimum abundance to be used to calculate the pattern 0.0-1.0
    * @param minIntensity the minimum intensity of a peak in finished pattern
-   * @throws MSDKException if the sum formula was invalid
    */
   public void setUpFromFormula(String sumFormula, double minAbundance, double mzMerge,
       double minIntensity) {
     highestDpIndex = 0;
-    IMolecularFormula form;
-    try {
-      form = MolecularFormulaManipulator.getMajorIsotopeMolecularFormula(sumFormula, builder);
-    }
-    catch (Exception e) {
-      throw new MSDKRuntimeException("Could not set up formula. Invalid input.");
-    }
+    IMolecularFormula form =
+        MolecularFormulaManipulator.getMajorIsotopeMolecularFormula(sumFormula, builder);
     description = sumFormula;
     formula = form;
     this.minAbundance = minAbundance;
@@ -104,7 +93,7 @@ public class ExtendedIsotopePattern implements IsotopePattern {
     addMolecule(form);
     mergeDuplicates();
     mergePeaks(mzMerge);
-    removePeaksBelowIntensity(minIntensity);
+    removePeaksBelowAbundance(minIntensity);
     sortByAscendingMZ();
   }
 
@@ -144,16 +133,12 @@ public class ExtendedIsotopePattern implements IsotopePattern {
     {
       for (IIsotope iso : isotopes) { // when adding new isotopes intensities only get smaller, so
                                       // we can to this here to avoid useless calculation
-        if ((iso.getNaturalAbundance() / 100.0d) < minAbundance) {
+        if (iso.getNaturalAbundance() < minAbundance
+            || ((iso.getNaturalAbundance() / 100) * dataPoints.get(i).getIntensity()) < 1E-12) {
           continue;
         }
-        if (((iso.getNaturalAbundance() / 100.0d) * dataPoints.get(i).getIntensity()) < 1E-12) {
-          continue;
-        }
-        
-        
         newDp.add(new SimpleDataPoint(dataPoints.get(i).getMZ() + iso.getExactMass(),
-            dataPoints.get(i).getIntensity() * (iso.getNaturalAbundance() / 100.0d)));
+            dataPoints.get(i).getIntensity() * (iso.getNaturalAbundance() / 100)));
         // System.out.println(iso.getMassNumber() + iso.getSymbol());
 
         if (dpDescr != null)
@@ -286,17 +271,16 @@ public class ExtendedIsotopePattern implements IsotopePattern {
   /**
    * Removes peaks below given intensity.
    * 
-   * @param minIntensity threshold min=0.0, max=1.0
+   * @param minAbundance threshold min=0.0, max=1.0
    */
-  private void removePeaksBelowIntensity(double minIntensity) {
+  private void removePeaksBelowAbundance(double minAbundance) {
     ArrayList<DataPoint> newDp = new ArrayList<DataPoint>();
     ArrayList<String> newDpDescr = new ArrayList<String>();
 
     normalizePatternToHighestPeak();
 
     for (int i = 0; i < dataPoints.size(); i++) {
-      if (dataPoints.get(i).getIntensity() < minIntensity) {
-//        System.out.println("will remove peak " + i + dpDescr.get(i) + " bc " + dataPoints.get(i).getIntensity() + " < " + minIntensity);
+      if (dataPoints.get(i).getIntensity() < minAbundance) {
         dataPoints.set(i, null);
         dpDescr.set(i, null);
       }

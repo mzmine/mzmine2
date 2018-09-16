@@ -28,7 +28,6 @@ import net.sf.mzmine.datamodel.PeakListRow;
  * m/z are either taken directly from the peakListRow or given to this class by the Candidates
  * class.
  * 
- *  @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
 public class Candidate {
