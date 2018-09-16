@@ -16,7 +16,6 @@
  * USA
  */
 
-
 package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
 
 import java.awt.BasicStroke;
