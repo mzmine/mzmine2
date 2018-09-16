@@ -16,12 +16,11 @@
  * USA
  */
 
-package net.sf.mzmine.modules.peaklistmethods.isotopes.isotopepeakscanner;
+package net.sf.mzmine.modules.tools.isotopepatternpreview;
 
 import java.util.Collection;
 import javax.annotation.Nonnull;
 import net.sf.mzmine.datamodel.MZmineProject;
-import net.sf.mzmine.datamodel.PeakList;
 import net.sf.mzmine.modules.MZmineModuleCategory;
 import net.sf.mzmine.modules.MZmineProcessingModule;
 import net.sf.mzmine.parameters.ParameterSet;
@@ -32,11 +31,11 @@ import net.sf.mzmine.util.ExitCode;
  * @author Steffen Heuckeroth s_heuc03@uni-muenster.de
  *
  */
-public class IsotopePeakScannerModule implements MZmineProcessingModule {
+public class IsotopePatternPreviewModule implements MZmineProcessingModule {
 
-  private static final String MODULE_NAME = "Isotope peak scanner";
+  private static final String MODULE_NAME = "Isotope pattern preview";
   private static final String MODULE_DESCRIPTION =
-      "Searches for m/z and intensity distribution of a calculated isotope pattern within a peak list.";
+      "Calculate and view isotope patterns.";
 
   @Override
   public @Nonnull String getName() {
@@ -44,12 +43,12 @@ public class IsotopePeakScannerModule implements MZmineProcessingModule {
   }
 
   public @Nonnull MZmineModuleCategory getModuleCategory() {
-    return MZmineModuleCategory.ISOTOPES;
+    return MZmineModuleCategory.TOOLS;
   }
 
   @Override
   public @Nonnull Class<? extends ParameterSet> getParameterSetClass() {
-    return IsotopePeakScannerParameters.class;
+    return IsotopePatternPreviewParameters.class;
   }
 
   public @Nonnull String getDescription() {
@@ -59,13 +58,7 @@ public class IsotopePeakScannerModule implements MZmineProcessingModule {
   @Override
   public @Nonnull ExitCode runModule(@Nonnull MZmineProject project,
       @Nonnull ParameterSet parameters, @Nonnull Collection<Task> tasks) {
-    PeakList peakLists[] = parameters.getParameter(IsotopePeakScannerParameters.PEAK_LISTS)
-        .getValue().getMatchingPeakLists();
-
-    for (PeakList peakList : peakLists) {
-      Task newTask = new IsotopePeakScannerTask(project, peakList, parameters);
-      tasks.add(newTask);
-    }
+    
     return ExitCode.OK;
   }
 
