@@ -87,11 +87,7 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
   private JTable table;
   private JButton btnCalc;
   private JSplitPane pnSplit;
-  
-  private StringComponent cmpMolecule;
-  private PercentComponent cmpMinAbundance;
-  private DoubleComponent cmpMinIntensity, cmpMergeWidth;
-  private JCheckBox cmpCustom;
+ 
   
   private DoubleParameter pMinIntensity, pMergeWidth;
   private PercentParameter pMinAbundance;
@@ -110,9 +106,6 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
   public IsotopePatternPreviewDialog(Window parent, boolean valueCheckRequired,
       ParameterSet parameters) {
     super(parent, valueCheckRequired, parameters);
-    
-    cmpMolecule =
-        (StringComponent) this.getComponentForParameter(IsotopePatternPreviewParameters.molecule);
     
     pMolecule = parameterSet.getParameter(IsotopePatternPreviewParameters.molecule);
     pCustom = parameterSet.getParameter(IsotopePatternPreviewParameters.optionals);
@@ -183,6 +176,11 @@ public class IsotopePatternPreviewDialog extends ParameterSetupDialog {
       updatePreview();
     }
   }
+  
+  @Override protected void parametersChanged() {
+    updatePreview();
+  }
+  
 //-----------------------------------------------------
 //methods
 //-----------------------------------------------------  
