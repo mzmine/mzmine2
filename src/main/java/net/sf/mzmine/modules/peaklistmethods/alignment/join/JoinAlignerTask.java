@@ -18,12 +18,15 @@
 
 package net.sf.mzmine.modules.peaklistmethods.alignment.join;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
-import java.util.Vector;
 import java.util.logging.Logger;
-
+import com.google.common.collect.Range;
 import net.sf.mzmine.datamodel.IsotopePattern;
 import net.sf.mzmine.datamodel.MZmineProject;
 import net.sf.mzmine.datamodel.PeakList;
@@ -40,8 +43,6 @@ import net.sf.mzmine.taskcontrol.AbstractTask;
 import net.sf.mzmine.taskcontrol.TaskStatus;
 import net.sf.mzmine.util.PeakUtils;
 import net.sf.mzmine.util.RangeUtils;
-
-import com.google.common.collect.Range;
 
 class JoinAlignerTask extends AbstractTask {
 
@@ -62,6 +63,8 @@ class JoinAlignerTask extends AbstractTask {
 
   // ID counter for the new peaklist
   private int newRowID = 1;
+
+  private boolean sortPeakList;
 
   JoinAlignerTask(MZmineProject project, ParameterSet parameters) {
 
@@ -88,11 +91,14 @@ class JoinAlignerTask extends AbstractTask {
     compareIsotopePattern =
         parameters.getParameter(JoinAlignerParameters.compareIsotopePattern).getValue();
 
+    sortPeakList = parameters.getParameter(JoinAlignerParameters.OrderPeakLists).getValue();
+
   }
 
   /**
    * @see net.sf.mzmine.taskcontrol.Task#getTaskDescription()
    */
+  @Override
   public String getTaskDescription() {
     return "Join aligner, " + peakListName + " (" + peakLists.length + " peak lists)";
   }
@@ -100,6 +106,7 @@ class JoinAlignerTask extends AbstractTask {
   /**
    * @see net.sf.mzmine.taskcontrol.Task#getFinishedPercentage()
    */
+  @Override
   public double getFinishedPercentage() {
     if (totalRows == 0)
       return 0f;
@@ -109,6 +116,7 @@ class JoinAlignerTask extends AbstractTask {
   /**
    * @see Runnable#run()
    */
+  @Override
   public void run() {
 
     if ((mzWeight == 0) && (rtWeight == 0)) {
@@ -120,6 +128,15 @@ class JoinAlignerTask extends AbstractTask {
     setStatus(TaskStatus.PROCESSING);
     logger.info("Running join aligner");
 
+    // sort peak lists by name to have reproducible results
+    if (sortPeakList)
+      Arrays.sort(peakLists, new Comparator<PeakList>() {
+        @Override
+        public int compare(PeakList a, PeakList b) {
+          return a.getName().compareTo(b.getName());
+        }
+      });
+
     // Remember how many rows we need to process. Each row will be processed
     // twice, first for score calculation, second for actual alignment.
     for (int i = 0; i < peakLists.length; i++) {
@@ -127,7 +144,7 @@ class JoinAlignerTask extends AbstractTask {
     }
 
     // Collect all data files
-    Vector<RawDataFile> allDataFiles = new Vector<RawDataFile>();
+    List<RawDataFile> allDataFiles = new ArrayList<RawDataFile>();
     for (PeakList peakList : peakLists) {
 
       for (RawDataFile dataFile : peakList.getRawDataFiles()) {
