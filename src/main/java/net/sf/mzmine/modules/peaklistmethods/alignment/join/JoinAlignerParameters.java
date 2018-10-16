@@ -33,6 +33,9 @@ public class JoinAlignerParameters extends SimpleParameterSet {
 
   public static final PeakListsParameter peakLists = new PeakListsParameter();
 
+  public static final BooleanParameter OrderPeakLists = new BooleanParameter("Order peak lists",
+      "Orders the peak lists to yield the same result with the same parameters.");
+
   public static final StringParameter peakListName =
       new StringParameter("Peak list name", "Peak list name", "Aligned peak list");
 
@@ -58,8 +61,8 @@ public class JoinAlignerParameters extends SimpleParameterSet {
           new IsotopePatternScoreParameters());
 
   public JoinAlignerParameters() {
-    super(new Parameter[] {peakLists, peakListName, MZTolerance, MZWeight, RTTolerance, RTWeight,
-        SameChargeRequired, SameIDRequired, compareIsotopePattern});
+    super(new Parameter[] {peakLists, OrderPeakLists, peakListName, MZTolerance, MZWeight,
+        RTTolerance, RTWeight, SameChargeRequired, SameIDRequired, compareIsotopePattern});
   }
 
 }
