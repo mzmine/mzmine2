@@ -91,7 +91,7 @@ public class NistMspParser extends SpectralDBParser {
               }
             }
           }
-          if (isData) {
+          if (l.isEmpty()) {
             // empty row after data
             // add entry and reset
             SpectralDBEntry entry =
