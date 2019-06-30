@@ -19,6 +19,7 @@
 package net.sf.mzmine.modules.peaklistmethods.identification.spectraldbsearch;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Level;
@@ -328,6 +329,9 @@ public class PeakListSpectralMatchTask extends AbstractTask {
     // add new identity to the row
     row.addPeakIdentity(new SpectralDBPeakIdentity(getScan(row), massListName, ident, sim, METHOD),
         false);
+    // add score to comment
+    DecimalFormat COS_FORM = new DecimalFormat("0.000");
+    row.setComment("cos=" + COS_FORM.format(sim.getScore()));
   }
 
   public int getCount() {

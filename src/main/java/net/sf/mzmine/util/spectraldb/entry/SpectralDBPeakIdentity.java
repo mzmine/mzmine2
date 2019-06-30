@@ -18,7 +18,6 @@
 
 package net.sf.mzmine.util.spectraldb.entry;
 
-import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import net.sf.mzmine.datamodel.DataPoint;
@@ -30,7 +29,6 @@ import net.sf.mzmine.util.SortingProperty;
 import net.sf.mzmine.util.scans.similarity.SpectralSimilarity;
 
 public class SpectralDBPeakIdentity extends SimplePeakIdentity {
-  private static final DecimalFormat COS_FORM = new DecimalFormat("0.000");
 
   private final SpectralDBEntry entry;
   private final SpectralSimilarity similarity;
@@ -41,12 +39,11 @@ public class SpectralDBPeakIdentity extends SimplePeakIdentity {
   public SpectralDBPeakIdentity(Scan queryScan, String massListName, SpectralDBEntry entry,
       SpectralSimilarity similarity, String method) {
     super(
-        MessageFormat.format("{0} as {3} ({1}) {2} cos={4}",
+        MessageFormat.format("{0} as {3} ({1}) {2}",
             entry.getField(DBEntryField.NAME).orElse("NONAME"), // Name
             entry.getField(DBEntryField.MZ).orElse(""), // precursor m/z
             entry.getField(DBEntryField.FORMULA).orElse(""), // molecular formula
-            entry.getField(DBEntryField.ION_TYPE).orElse(""), // Ion type
-            COS_FORM.format(similarity.getScore())), // cosine similarity
+            entry.getField(DBEntryField.ION_TYPE).orElse("")), // Ion type
         entry.getField(DBEntryField.FORMULA).orElse("").toString(), method, "", "");
     this.entry = entry;
     this.similarity = similarity;
