@@ -40,7 +40,7 @@ repositories {
     }
     maven { // For SIRIUS ID modules
         url = "https://bio.informatik.uni-jena.de/repository/libs-release-oss/"
-        metadataSources {
+        metadataSources { // This is required becaues this file is broken: https://bio.informatik.uni-jena.de/repository/libs-release-oss/de/unijena/bioinf/java-utilities/1.0-SNAPSHOT/maven-metadata.xml
             artifact()
         }
     }
