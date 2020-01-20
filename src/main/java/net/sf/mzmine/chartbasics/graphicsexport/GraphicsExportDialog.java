@@ -19,6 +19,7 @@
 package net.sf.mzmine.chartbasics.graphicsexport;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -43,6 +44,8 @@ import javax.swing.border.EmptyBorder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.DefaultDrawingSupplier;
+import org.jfree.chart.plot.DrawingSupplier;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import net.miginfocom.swing.MigLayout;
@@ -53,6 +56,7 @@ import net.sf.mzmine.chartbasics.chartthemes.EStandardChartTheme;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.framework.fontspecs.FontSpecs;
 import net.sf.mzmine.framework.fontspecs.JFontSpecs;
+import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.parametertypes.ComboComponent;
@@ -62,6 +66,7 @@ import net.sf.mzmine.parameters.parametertypes.FontParameter;
 import net.sf.mzmine.parameters.parametertypes.OptionalParameterComponent;
 import net.sf.mzmine.parameters.parametertypes.StringComponent;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
+import net.sf.mzmine.util.ColorPalettes;
 import net.sf.mzmine.util.DialogLoggerUtil;
 import net.sf.mzmine.util.components.GridBagPanel;
 import net.sf.mzmine.util.files.FileAndPathUtil;
@@ -95,6 +100,8 @@ public class GraphicsExportDialog extends JFrame {
   private JButton btnApply;
   private boolean listenersEnabled = true;
 
+  protected Color[] colors;
+
   // ###################################################################
   // Vars
   protected ChartPanel chartPanel;
@@ -125,6 +132,9 @@ public class GraphicsExportDialog extends JFrame {
     parameters = new GraphicsExportParameters();
     chartParam = new ChartThemeParameters();
     parametersAndComponents = new HashMap<String, JComponent>();
+
+    colors =
+        ColorPalettes.getSevenColorPalette(MZmineCore.getConfiguration().getColorVision(), true);
 
     String[] formats = parameters.getParameter(GraphicsExportParameters.exportFormat).getChoices();
     chooser.addChoosableFileFilter(new FileTypeFilter(formats, "Export images"));
@@ -337,8 +347,25 @@ public class GraphicsExportDialog extends JFrame {
     // apply settings
     chartParam.applyToChartTheme(theme);
     chartParam.applyToChart(chartPanel.getChart());
+
+    setStandardColors();
     theme.apply(chartPanel.getChart());
+
     // renewPreview();
+    chartPanel.getChart().getXYPlot().setRangeCrosshairVisible(false);
+    chartPanel.getChart().getXYPlot().setDomainCrosshairVisible(false);
+  }
+
+  /**
+   * Sets the colours of the selected colour palette to the chart theme.
+   */
+  protected void setStandardColors() {
+    DrawingSupplier ds = new DefaultDrawingSupplier(colors, colors, colors,
+        DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+        DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+        DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE);
+
+    theme.setDrawingSupplier(ds);
   }
 
   /**
