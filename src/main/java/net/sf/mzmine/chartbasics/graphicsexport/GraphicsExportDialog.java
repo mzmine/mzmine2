@@ -23,11 +23,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
-import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -46,14 +44,8 @@ import javax.swing.border.EmptyBorder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.LegendItem;
-import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.plot.DefaultDrawingSupplier;
 import org.jfree.chart.plot.DrawingSupplier;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import net.miginfocom.swing.MigLayout;
@@ -355,50 +347,18 @@ public class GraphicsExportDialog extends JFrame {
     // apply settings
     chartParam.applyToChartTheme(theme);
     chartParam.applyToChart(chartPanel.getChart());
+
     setStandardColors();
     theme.apply(chartPanel.getChart());
+
     // renewPreview();
     chartPanel.getChart().getXYPlot().setRangeCrosshairVisible(false);
     chartPanel.getChart().getXYPlot().setDomainCrosshairVisible(false);
-
-    LegendItemCollection legends = chartPanel.getChart().getXYPlot().getLegendItems();
-    for (int i = 0; i < legends.getItemCount(); i++) {
-      System.out.println(i + " " + legends.get(i).getLabel() + " clr: "
-          + legends.get(i).getFillPaint().toString());
-    }
-
-    // chartPanel.getChart().getXYPlot()
-    // chartPanel.getChart().getXYPlot().getRenderer().getLegendItem(datasetIndex, series);
-
-    XYPlot plot = chartPanel.getChart().getXYPlot();
-    for (int i = 0; i < plot.getDatasetCount(); i++) {
-      XYDataset ds = plot.getDataset(i);
-      if (ds == null)
-        continue;
-
-      XYItemRenderer r = plot.getRendererForDataset(ds);
-      Paint p = r.getSeriesPaint(0);
-      
-//      System.out.println(r.getDefaultFillPaint().toString());
-//      System.out.println(r.getDefaultItemLabelPaint().toString());
-//      System.out.println(r.getDefaultOutlinePaint().toString());
-//      System.out.println(r.getSeriesPaint(0).toString());
-
-      LegendItemCollection lc = r.getLegendItems();
-      for (int j = 0; j < lc.getItemCount(); j++) {
-        if (lc.get(j) == null)
-          continue;
-        System.out.println("DS: " + i + "p: " + p.toString() + " legend: " + lc.get(j).getLabel()
-            + " clr: " + lc.get(j).getFillPaint());
-        lc.get(j).setFillPaint(p);
-        lc.get(j).setLinePaint(p);
-        lc.get(j).setLabelPaint(p);
-        lc.get(j).setOutlinePaint(p);
-        
-      }
-    }
   }
 
+  /**
+   * Sets the colours of the selected colour palette to the chart theme.
+   */
   protected void setStandardColors() {
     DrawingSupplier ds = new DefaultDrawingSupplier(colors, colors, colors,
         DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,

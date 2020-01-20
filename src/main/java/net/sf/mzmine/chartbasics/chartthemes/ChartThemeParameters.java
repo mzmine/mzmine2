@@ -143,7 +143,7 @@ public class ChartThemeParameters extends SimpleParameterSet {
     Color cygrid = this.getParameter(ChartThemeParameters.yGridPaint).getEmbeddedParameter().getValue();
 
     theme.setShowTitle(showTitle);
-    theme.getShowSubtitles(showLegends);
+    theme.setShowSubtitles(showLegends);
 
     FontSpecs master = this.getParameter(ChartThemeParameters.masterFont).getValue();
     FontSpecs large = this.getParameter(ChartThemeParameters.titleFont).getValue();
