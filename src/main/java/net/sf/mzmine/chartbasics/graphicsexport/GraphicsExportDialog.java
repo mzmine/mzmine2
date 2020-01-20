@@ -19,12 +19,15 @@
 package net.sf.mzmine.chartbasics.graphicsexport;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
+import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -43,6 +46,14 @@ import javax.swing.border.EmptyBorder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.LegendItem;
+import org.jfree.chart.LegendItemCollection;
+import org.jfree.chart.plot.DefaultDrawingSupplier;
+import org.jfree.chart.plot.DrawingSupplier;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import net.miginfocom.swing.MigLayout;
@@ -53,6 +64,7 @@ import net.sf.mzmine.chartbasics.chartthemes.EStandardChartTheme;
 import net.sf.mzmine.chartbasics.gui.swing.EChartPanel;
 import net.sf.mzmine.framework.fontspecs.FontSpecs;
 import net.sf.mzmine.framework.fontspecs.JFontSpecs;
+import net.sf.mzmine.main.MZmineCore;
 import net.sf.mzmine.parameters.Parameter;
 import net.sf.mzmine.parameters.UserParameter;
 import net.sf.mzmine.parameters.parametertypes.ComboComponent;
@@ -62,6 +74,7 @@ import net.sf.mzmine.parameters.parametertypes.FontParameter;
 import net.sf.mzmine.parameters.parametertypes.OptionalParameterComponent;
 import net.sf.mzmine.parameters.parametertypes.StringComponent;
 import net.sf.mzmine.parameters.parametertypes.StringParameter;
+import net.sf.mzmine.util.ColorPalettes;
 import net.sf.mzmine.util.DialogLoggerUtil;
 import net.sf.mzmine.util.components.GridBagPanel;
 import net.sf.mzmine.util.files.FileAndPathUtil;
@@ -95,6 +108,8 @@ public class GraphicsExportDialog extends JFrame {
   private JButton btnApply;
   private boolean listenersEnabled = true;
 
+  protected Color[] colors;
+
   // ###################################################################
   // Vars
   protected ChartPanel chartPanel;
@@ -125,6 +140,9 @@ public class GraphicsExportDialog extends JFrame {
     parameters = new GraphicsExportParameters();
     chartParam = new ChartThemeParameters();
     parametersAndComponents = new HashMap<String, JComponent>();
+
+    colors =
+        ColorPalettes.getSevenColorPalette(MZmineCore.getConfiguration().getColorVision(), true);
 
     String[] formats = parameters.getParameter(GraphicsExportParameters.exportFormat).getChoices();
     chooser.addChoosableFileFilter(new FileTypeFilter(formats, "Export images"));
@@ -337,8 +355,57 @@ public class GraphicsExportDialog extends JFrame {
     // apply settings
     chartParam.applyToChartTheme(theme);
     chartParam.applyToChart(chartPanel.getChart());
+    setStandardColors();
     theme.apply(chartPanel.getChart());
     // renewPreview();
+    chartPanel.getChart().getXYPlot().setRangeCrosshairVisible(false);
+    chartPanel.getChart().getXYPlot().setDomainCrosshairVisible(false);
+
+    LegendItemCollection legends = chartPanel.getChart().getXYPlot().getLegendItems();
+    for (int i = 0; i < legends.getItemCount(); i++) {
+      System.out.println(i + " " + legends.get(i).getLabel() + " clr: "
+          + legends.get(i).getFillPaint().toString());
+    }
+
+    // chartPanel.getChart().getXYPlot()
+    // chartPanel.getChart().getXYPlot().getRenderer().getLegendItem(datasetIndex, series);
+
+    XYPlot plot = chartPanel.getChart().getXYPlot();
+    for (int i = 0; i < plot.getDatasetCount(); i++) {
+      XYDataset ds = plot.getDataset(i);
+      if (ds == null)
+        continue;
+
+      XYItemRenderer r = plot.getRendererForDataset(ds);
+      Paint p = r.getSeriesPaint(0);
+      
+//      System.out.println(r.getDefaultFillPaint().toString());
+//      System.out.println(r.getDefaultItemLabelPaint().toString());
+//      System.out.println(r.getDefaultOutlinePaint().toString());
+//      System.out.println(r.getSeriesPaint(0).toString());
+
+      LegendItemCollection lc = r.getLegendItems();
+      for (int j = 0; j < lc.getItemCount(); j++) {
+        if (lc.get(j) == null)
+          continue;
+        System.out.println("DS: " + i + "p: " + p.toString() + " legend: " + lc.get(j).getLabel()
+            + " clr: " + lc.get(j).getFillPaint());
+        lc.get(j).setFillPaint(p);
+        lc.get(j).setLinePaint(p);
+        lc.get(j).setLabelPaint(p);
+        lc.get(j).setOutlinePaint(p);
+        
+      }
+    }
+  }
+
+  protected void setStandardColors() {
+    DrawingSupplier ds = new DefaultDrawingSupplier(colors, colors, colors,
+        DefaultDrawingSupplier.DEFAULT_STROKE_SEQUENCE,
+        DefaultDrawingSupplier.DEFAULT_OUTLINE_STROKE_SEQUENCE,
+        DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE);
+
+    theme.setDrawingSupplier(ds);
   }
 
   /**
