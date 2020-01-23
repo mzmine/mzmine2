@@ -83,14 +83,14 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
   protected Range<Double> mzRange, rtRange;
   protected RawDataFile rawDataFile;
   protected ParameterSet parameters;
-  protected DoubleRangeComponent rtRangeComp;
+  protected DoubleRangeComponent rtRangeComp, mzRangeComp;
   // protected JComponent origRangeComp;
 
   protected double lower, upper;
 
   protected TICDataSet dataSet;
 
-  protected JButton setLower, setUpper;
+  protected JButton setLower, setUpper, applyMassRange;
   protected JTextField txtArea;
 
   protected NumberFormat intensityFormat, mzFormat;
@@ -125,8 +125,8 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
     Scan[] scans = sel.getMatchingScans(rawDataFile);
     dataSet = new TICDataSet(rawDataFile, scans, mzRange, null);
 
+//    getTicPlot().setPlotType(TICPlotType.BASEPEAK);
     getTicPlot().addTICDataset(dataSet);
-    getTicPlot().setPlotType(TICPlotType.TIC);
 
     lower = rtRange.lowerEndpoint();
     upper = rtRange.upperEndpoint();
@@ -139,6 +139,7 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
     intensityFormat = MZmineCore.getConfiguration().getIntensityFormat();
 
     rtRangeComp.setValue(rtRange);
+    mzRangeComp.setValue(mzRange);
     setButtonBackground();
     calcArea();
   }
@@ -154,10 +155,18 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
     remove(this.mainPanel);
 
     rtRangeComp = new DoubleRangeComponent(MZmineCore.getConfiguration().getRTFormat());
+    mzRangeComp = new DoubleRangeComponent(MZmineCore.getConfiguration().getMZFormat());
+    applyMassRange = new JButton("Set");
+    applyMassRange.addActionListener(a -> setMassRange());
+
     addListenertoRTComp(rtRangeComp);
     JLabel rtLabel = new JLabel("Retention time range");
+    JLabel mzLabel = new JLabel("m/z range");
     mainPanel.add(rtLabel, 0, getNumberOfParameters() + 1);
     mainPanel.add(rtRangeComp, 1, getNumberOfParameters() + 1);
+    mainPanel.add(mzLabel, 0, getNumberOfParameters() + 2);
+    mainPanel.add(mzRangeComp, 1, getNumberOfParameters() + 2);
+    mainPanel.add(applyMassRange, 2, getNumberOfParameters() + 2);
 
     BorderLayout borderLayout = new BorderLayout();
     Panel pnlNewMain = new Panel(borderLayout);
@@ -190,7 +199,6 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
     ticPlot.setPreferredSize(
         new Dimension((int) (screenSize.getWidth() / 1.3d), (int) (screenSize.getHeight() / 1.8d)));
     pnlNewMain.add(ticPlot, BorderLayout.CENTER);
-
 
     // add a mouse listener to place the boundaries
     getTicPlot().addChartMouseListener(new ChartMouseListener() {
@@ -227,6 +235,24 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
     pack();
   }
 
+  private void setMassRange() {
+    Range<Double> r = mzRangeComp.getValue();
+    if (r == null || r.upperEndpoint() < r.lowerEndpoint()) {
+      MZmineCore.getDesktop().displayErrorMessage(null, "Manual integration",
+          "Mass range invalid.");
+      return;
+    }
+
+    parameters.getParameter(XICManualPickerParameters.mzRange).setValue(r);
+
+    ScanSelection sel = new ScanSelection(rawDataFile.getDataRTRange(), 1);
+    Scan[] scans = sel.getMatchingScans(rawDataFile);
+    TICDataSet ds = new TICDataSet(dataSet.getDataFile(), scans, r, null);
+
+    getTicPlot().removeAllTICDataSets();
+    getTicPlot().addTICDataset(ds);
+  }
+
   private void setRTBoundary(double rt) {
     if (rt <= rtRange.lowerEndpoint() || nextBorder == NextBorder.LOWER) {
       lower = rt;
@@ -256,7 +282,7 @@ public class XICManualPickerDialog extends ParameterSetupDialog {
   private void setValuesToRangeParameter() {
     if (!checkRanges() || rtRange == null)
       return;
-    parameters.getParameter(XICManualPickerParameters.rtRange).setValue(rtRange);;
+    parameters.getParameter(XICManualPickerParameters.rtRange).setValue(rtRange);
   }
 
   @Override
