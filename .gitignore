@@ -10,3 +10,5 @@
 /src/main/log/mzmine.log
 /src/main/log/mzmine.log.lck
 /conf/config.xml
+.idea
+mzmine2.iml
