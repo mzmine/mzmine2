@@ -250,7 +250,16 @@ public class ADAPChromatogramBuilderTask extends AbstractTask {
     // Set<Chromatogram> buildingChromatograms;
     // buildingChromatograms = new LinkedHashSet<Chromatogram>();
 
+    // Exit if no peaks
+    if (simpleAllMzVals.length == 0) {
+        progress = 1.0;
 
+        setStatus(TaskStatus.FINISHED);
+
+        logger.info("Finished chromatogram builder with no peaks on " + dataFile);
+
+        return;
+    }
 
     double maxIntensity = simpleAllMzVals[0].getIntensity();
 
