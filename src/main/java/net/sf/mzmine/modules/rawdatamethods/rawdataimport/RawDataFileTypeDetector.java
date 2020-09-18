@@ -21,6 +21,7 @@ package net.sf.mzmine.modules.rawdatamethods.rawdataimport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,9 +33,10 @@ public class RawDataFileTypeDetector {
   private static Logger logger = Logger.getLogger(RawDataFileTypeDetector.class.getName());
   
   /*
-   * See "http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/File-Format-Specification.html"
+   * See "https://unidata.ucar.edu/software/netcdf/docs/netcdf_introduction.html#netcdf_format"
    */
   private static final String CDF_HEADER = "CDF";
+  private static final String HDF_HEADER = "HDF";
 
   /*
    * mzML files with index start with <indexedmzML><mzML>tags, but files with no index contain only
@@ -79,8 +81,8 @@ public class RawDataFileTypeDetector {
     try {
 
       // Read the first 1kB of the file into a String
-      InputStreamReader reader = new InputStreamReader(new FileInputStream(fileName), "ISO-8859-1");
-      char buffer[] = new char[1024];
+      InputStreamReader reader = new InputStreamReader(new FileInputStream(fileName), StandardCharsets.ISO_8859_1);
+      char[] buffer = new char[1024];
       reader.read(buffer);
       reader.close();
       String fileHeader = new String(buffer);
@@ -107,7 +109,13 @@ public class RawDataFileTypeDetector {
         return RawDataFileType.ZIP;
       }
 
-      if (fileHeader.startsWith(CDF_HEADER)) {
+      /*
+      *   remove specials (Unicode block) from header if any
+      *   https://en.wikipedia.org/wiki/Specials_(Unicode_block)
+      * */
+      fileHeader = fileHeader.replaceAll("[^\\x00-\\x7F]", "");
+
+      if (fileHeader.startsWith(CDF_HEADER) || fileHeader.startsWith(HDF_HEADER)) {
         return RawDataFileType.NETCDF;
       }
 
