@@ -63,7 +63,7 @@ public class PeakListOpenHandler_2_0 extends DefaultHandler implements PeakListO
   private double mass, rt, area;
   private int[] scanNumbers;
   private int[] allMS2FragmentScanNumbers;
-  private Vector<Integer> currentAllMS2FragmentScans;
+  private Vector<Integer> currentAllMS2FragmentScans = new Vector<Integer>();
   private double height;
   private double[] masses, intensities;
   private String peakStatus, peakListName, name, identityPropertyName, rawDataFileID;
