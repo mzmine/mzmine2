@@ -300,3 +300,10 @@ processResources {
         expand(project.properties) 
     }
 }
+
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.fork = true
+    }
+
+}
