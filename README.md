@@ -1,3 +1,9 @@
+# Latest Development Moved to mzmine 
+All development happens in a new repository: [mzmine GitHub](https://github.com/mzmine/mzmine3)
+
+This repository is only there as a reference to the old MZmine 2 that was succeeded by mzmine.
+
+
 # About MZmine 2
 [![Build Status](https://travis-ci.org/mzmine/mzmine2.svg?branch=master)](https://travis-ci.org/mzmine/mzmine2)
 
